@@ -1,0 +1,34 @@
+# continuous-delivery:
+#   enabled: true
+# control-plane:
+#   apiGatewayNginx:
+#     type: ClusterIP
+#   bridge:
+#     installationType: QUALITY_GATES,CONTINUOUS_OPERATIONS,CONTINUOUS_DELIVERY
+#   enabled: true
+#   # enable volumePermissions
+#   mongo:
+#     volumePermissions:
+#       enabled: true
+
+
+# Keptn 0.17 and newer
+apiGatewayNginx:
+  type: LoadBalancer
+features:
+  automaticProvisioning:
+    serviceURL: http://keptn-gitea-provisioner-service.default
+# Keptn 0.16 compatibility
+control-plane:
+  apiGatewayNginx:
+    type: LoadBalancer
+  features:
+    automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
+# For Keptn 0.18 (to make room for more CPU)
+statisticsService:
+  enabled: false
+webhookService:
+  enabled: false
+# For Keptn 1.0.0 (to make room for more resources and reduce helm installationj time)
+approvalService:
+  enabled: false
