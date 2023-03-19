@@ -13,7 +13,7 @@ splunkservice:
   existingSecret: "" # If you want to use existing Secret in the cluster
   image:
     repository: kuro08/splunk-service # Container Image Name
-    pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
+    # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
     tag: latest                                # Container Tag
   service:
     enabled: true                              # Creates a Kubernetes Service for the splunk-service
