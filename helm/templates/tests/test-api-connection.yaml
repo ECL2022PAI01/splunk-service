@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "datadog-service.fullname" . }}-test-api-connection"
+  name: "{{ include "splunk-service.fullname" . }}-test-api-connection"
   labels:
-  {{- include "datadog-service.labels" . | nindent 4 }}
+  {{- include "splunk-service.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
 spec:

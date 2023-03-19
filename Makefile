@@ -1,11 +1,5 @@
 IMG_TAG ?= dev
-IMG_REPO ?= ghcr.io/keptn-sandbox/datadog-service
-
-build:
-	go build -ldflags '-linkmode=external' -v -o datadog-service
-
-test:
-	go test -race -v ./...
+IMG_REPO ?= kuro08/splunk-service
 
 docker-build:
 	docker build . -t $(IMG_REPO):$(IMG_TAG)

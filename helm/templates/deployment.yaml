@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "datadog-service.fullname" . }}
+  name: {{ include "splunk-service.fullname" . }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
-    {{- include "datadog-service.labels" . | nindent 4 }}
+    {{- include "splunk-service.labels" . | nindent 4 }}
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "datadog-service.selectorLabels" . | nindent 6 }}
+      {{- include "splunk-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,37 +18,37 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "datadog-service.selectorLabels" . | nindent 8 }}
+        {{- include "splunk-service.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "datadog-service.serviceAccountName" . }}
+      serviceAccountName: {{ include "splunk-service.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: datadog-service
+        - name: splunk-service
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           {{- if .Values.image }}
           image: {{ .Values.image }} # use image from .Values.image (e.g., when starting via skaffold)
           {{- else }}
-          image: "{{ .Values.datadogservice.image.repository }}:{{ .Values.datadogservice.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.splunkservice.image.repository }}:{{ .Values.splunkservice.image.tag | default .Chart.AppVersion }}"
           {{- end }}
-          imagePullPolicy: {{ .Values.datadogservice.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.splunkservice.image.pullPolicy }}
           ports:
             - containerPort: 80
           envFrom:
           - secretRef:
-              name: "{{ include "datadog-service.secret" . }}"
+              name: "{{ include "splunk-service.secret" . }}"
           env:
           - name: env
             value: 'production'
           - name: SLEEP_BEFORE_API_IN_SECONDS
-            value: "{{ .Values.datadogservice.sleepBeforeAPIInSeconds }}"
+            value: "{{ .Values.splunkservice.sleepBeforeAPIInSeconds }}"
           - name: LOG_LEVEL
-            value: "{{ .Values.datadogservice.logLevel }}"
+            value: "{{ .Values.splunkservice.logLevel }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: distributor

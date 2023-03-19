@@ -5,7 +5,7 @@ FROM golang:1.17.7-alpine3.15 as builder
 
 RUN apk add --no-cache gcc libc-dev git
 
-WORKDIR /src/datadog-service
+WORKDIR /src/splunk-service
 
 ARG version=develop
 ENV VERSION="${version}"
@@ -32,7 +32,7 @@ COPY . .
 
 # Build the command inside the container.
 # (You may fetch or manage dependencies here, either manually or with a tool like "godep".)
-RUN GOOS=linux go build -ldflags '-linkmode=external' $BUILDFLAGS -v -o datadog-service
+RUN GOOS=linux go build -ldflags '-linkmode=external' $BUILDFLAGS -v -o splunk-service
 
 # Use a Docker multi-stage build to create a lean production image.
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
@@ -50,8 +50,20 @@ RUN    apk update && apk upgrade \
 ARG version=develop
 ENV VERSION="${version}"
 
+# Install python/pip
+ENV PYTHONUNBUFFERED=1
+RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+RUN python3 -m ensurepip
+RUN pip3 install --no-cache --upgrade pip setuptools
+
+COPY splunk.py /
+COPY requirements.txt /
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /src/datadog-service/datadog-service /datadog-service
+COPY --from=builder /src/splunk-service/splunk-service /splunk-service
 
 EXPOSE 8080
 
@@ -64,4 +76,4 @@ ENV GOTRACEBACK=all
 #build-uncomment ENTRYPOINT ["/entrypoint.sh"]
 
 # Run the web service on container startup.
-CMD ["/datadog-service"]
+CMD ["/splunk-service"]

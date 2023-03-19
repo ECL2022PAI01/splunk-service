@@ -2,27 +2,34 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-api-client-go/api/v1/datadog"
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	"github.com/keptn-sandbox/datadog-service/pkg/utils"
+	"github.com/kelseyhightower/envconfig"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 )
 
 const (
-	sliFile                        = "datadog/sli.yaml"
+	sliFile                        = "splunk/sli.yaml"
 	defaultSleepBeforeAPIInSeconds = 60
 )
 
-// We have to put a min of 60s of sleep for the datadog API to reflect the data correctly
-// More info: https://github.com/keptn-sandbox/datadog-service/issues/8
+// We have to put a min of 60s of sleep for the splunk API to reflect the data correctly
+// More info: https://github.com/Mouhamadou305/splunk-service/issues/8
 var sleepBeforeAPIInSeconds int
 
 func init() {
@@ -34,7 +41,12 @@ func init() {
 	}
 }
 
-// HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == datadog
+type splunkCredentials struct {
+	Host     string `json:"host" yaml:"host"`
+	Token	 string `json:"token" yaml:"token"`
+}
+
+// HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
 func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
@@ -44,7 +56,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 	// Step 1 - Do we need to do something?
 	// Lets make sure we are only processing an event that really belongs to our SLI Provider
-	if data.GetSLI.SLIProvider != "datadog" {
+	if data.GetSLI.SLIProvider != "splunk" {
 		logger.Infof("Not handling get-sli event as it is meant for %s", data.GetSLI.SLIProvider)
 		return nil
 	}
@@ -79,8 +91,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	}
 
 	// Step 5 - get SLI Config File
-	// Get SLI File from datadog subdirectory of the config repo - to add the file use:
-	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=datadog/sli.yaml
+	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
+	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
 	logger.Debugf("SLI config: %v", sliConfig)
 
@@ -106,43 +118,74 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// SLIResult: this is the array that will receive the results
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
-	ctx := datadog.NewDefaultContext(context.Background())
-	configuration := datadog.NewConfiguration()
-	apiClient := datadog.NewAPIClient(configuration)
-
+	
 	logger.Debug("indicators:", indicators)
 	errored := false
 
 	for _, indicatorName := range indicators {
 		// Pulling the data from Datadog api immediately gives incorrect data in api response
 		// we have to wait for some time for the correct data to be reflected in the api response
-		// TODO: Find a better way around the sleep time for datadog api
+		// TODO: Find a better way around the sleep time for splunk api
 		logger.Debugf("waiting for %vs so that the metrics data is reflected correctly in the api", sleepBeforeAPIInSeconds)
 		time.Sleep(time.Second * time.Duration(sleepBeforeAPIInSeconds))
 
 		query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
-		logger.Debugf("actual query sent to datadog: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
-		resp, r, err := apiClient.MetricsApi.QueryMetrics(ctx, start.Unix(), end.Unix(), query)
+		logger.Debugf("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
+
+		clusterConfig, err := rest.InClusterConfig()
 		if err != nil {
-			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, resp, err)
-			logger.Errorf("'%s': full HTTP response: %v\n", query, r)
+			logger.Fatalf("unable to create kubernetes cluster config: %e", err)
+		}
+
+		kubeClient, err := kubernetes.NewForConfig(clusterConfig)
+		if err != nil {
+			logger.Fatalf("unable to create kubernetes client: %e", err)
+		}
+
+		// get splunk API URL for the provided Project from Kubernetes Config Map
+		splunkCreds, err := getSplunkCredentials(data.Project, kubeClient.CoreV1())
+		if err != nil {
+			logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		}
+
+		cmd := exec.Command("python", "-c", "import splunk; "+
+		"sp= splunk.SplunkProvider(project="+data.Project+
+								",stage="+data.Stage+
+								",service="+data.Service+
+								", labels="+getMapContent(data.Labels)+
+								", customQueries="+getMapContent(sliConfig)+
+								", host="+splunkCreds.Host+
+								", token="+splunkCreds.Token+");"+
+		"print(sp.get_sli("+indicatorName+", "+ data.GetSLI.Start+","+ data.GetSLI.End+"))")
+		
+		out, err := cmd.CombinedOutput()
+		sliValue, _:= strconv.ParseFloat(string(out), 8)
+
+		if err != nil {
+			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
 			errored = true
 			continue
 		}
 
-		logger.Debugf("response from the metrics api: %v", resp)
+		logger.Debugf("response from the metrics api: %v", sliValue)
 
-		if len((*resp.Series)) != 0 {
-			points := *((*resp.Series)[0].Pointlist)
-			sliResult := &keptnv2.SLIResult{
+		if err != nil {
+			sliResult:= &keptnv2.SLIResult{
 				Metric:  indicatorName,
-				Value:   *points[len(points)-1][1],
+				Value:   0,
+				Success: false,
+				Message: err.Error(),
+			}
+			sliResults = append(sliResults, sliResult)
+			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("got 0 in the SLI result (indicates empty response from the API)")
+		} else {
+			sliResult:= &keptnv2.SLIResult{
+				Metric:  indicatorName,
+				Value:   sliValue,
 				Success: true,
 			}
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("SLI result from the metrics api: %v", sliResult)
 			sliResults = append(sliResults, sliResult)
-		} else {
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("got 0 in the SLI result (indicates empty response from the API)")
+			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("SLI result from the metrics api: %v", sliResult)
 		}
 
 	}
@@ -218,7 +261,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 func configureLogger(eventID, keptnContext string) {
 	logger.SetFormatter(&utils.Formatter{
 		Fields: logger.Fields{
-			"service":      "datadog-service",
+			"service":      "splunk-service",
 			"eventId":      eventID,
 			"keptnContext": keptnContext,
 		},
@@ -247,6 +290,15 @@ func replaceQueryParameters(data *keptnv2.GetSLITriggeredEventData, query string
 	return query
 }
 
+func getMapContent(mp map[string] string) string{
+	dictn :="{"
+	for key, element := range mp {
+		dictn= dictn+"\""+key+"\""+" : "+"\""+element+"\""+","
+	}
+	dictn=strings.TrimSuffix(dictn, ",")+"}"
+	return dictn
+}
+
 func getDurationInSeconds(start, end time.Time) int64 {
 
 	seconds := end.Sub(start).Seconds()
@@ -265,4 +317,55 @@ func parseUnixTimestamp(timestamp string) (time.Time, error) {
 	}
 	unix := time.Unix(timestampInt, 0)
 	return unix, nil
+}
+
+var env utils.EnvConfig
+
+// getSplunkCredentials fetches the splunk API URL for the provided project (e.g., from Kubernetes configmap)
+func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splunkCredentials, error) {
+
+	if err := envconfig.Process("", &env); err != nil {
+		logger.Error("Failed to process env var: " + err.Error())
+	}
+
+	logger.Debug("Checking if external splunk instance has been defined for project " + project)
+
+	secretName := fmt.Sprintf("splunk-credentials-%s", project)
+
+	secret, err := kubeClient.Secrets(env.PodNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
+
+	// fallback: return cluster-internal splunk URL (configured via SplunkEndpoint environment variable)
+	// in case no secret has been created for this project
+	if err != nil {
+		logger.Debug("Could not retrieve or read secret (" + err.Error() + ") for project " + project + ". Using default: " + env.SplunkEndpoint)
+		return nil, nil //attention : ecouter audio
+	}
+
+	pc := splunkCredentials{}
+
+	// Read Splunk config from Kubernetes secret as strings
+	// Example: keptn create secret splunk-credentials-<project> --scope="keptn-splunk-sli-provider" --from-literal="SP_HOST=$SP_HOST"
+	splunkHost, errHost := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_HOST")
+	splunkToken, errToken := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_API_TOKEN")
+
+	if errHost == nil && errToken == nil{
+		// found! using it
+		pc.Host = strings.Replace(splunkHost, " ", "", -1)
+		pc.Token = splunkToken
+	} else {
+		// deprecated: try to use legacy approach
+		err = yaml.Unmarshal(secret.Data["splunk-credentials"], &pc)
+
+		if err != nil {
+			logger.Debug("Could not parse credentials for external splunk instance: " + err.Error())
+			return nil, errors.New("invalid credentials format found in secret 'splunk-credentials-" + project)
+		}
+
+		// warn the user to migrate their credentials
+		logger.Debugf("Warning: Please migrate your splunk credentials for project %s. ", project)
+		logger.Debugf("See https://github.com/Mouhamadou305/splunk-sli-provider/issues/274 for more information.\n")
+	}
+
+	logger.Debug("Using external splunk instance for project " + project + ": " + pc.Host)
+	return &pc, nil
 }

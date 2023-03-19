@@ -1,8 +1,8 @@
 
 version: '3.7'
 services:
-  datadog-service:
-    container_name: 'datadog-service'
+  splunk-service:
+    container_name: 'splunk-service'
     build: .
     depends_on:
       - 'distributor'

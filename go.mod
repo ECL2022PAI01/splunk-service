@@ -1,4 +1,4 @@
-module github.com/keptn-sandbox/datadog-service
+module github.com/Mouhamadou305/splunk-service
 
 go 1.17
 

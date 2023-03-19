@@ -48,7 +48,7 @@
         }
       }
     },
-    "datadogservice": {
+    "splunkservice": {
       "type": "object",
       "required": [
         "image"
