@@ -42,8 +42,8 @@ func init() {
 }
 
 type splunkCredentials struct {
-	Host     string `json:"host" yaml:"host"`
-	Token	 string `json:"token" yaml:"token"`
+	Host  string `json:"host" yaml:"host"`
+	Token string `json:"token" yaml:"token"`
 }
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
@@ -94,7 +94,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
-	logger.Debugf("SLI config: %v", sliConfig)
+	logger.Infof("SLI config: %v", sliConfig)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
@@ -118,19 +118,19 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// SLIResult: this is the array that will receive the results
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
-	
-	logger.Debug("indicators:", indicators)
+
+	logger.Info("indicators:", indicators)
 	errored := false
 
 	for _, indicatorName := range indicators {
 		// Pulling the data from Datadog api immediately gives incorrect data in api response
 		// we have to wait for some time for the correct data to be reflected in the api response
 		// TODO: Find a better way around the sleep time for splunk api
-		logger.Debugf("waiting for %vs so that the metrics data is reflected correctly in the api", sleepBeforeAPIInSeconds)
+		logger.Infof("waiting for %vs so that the metrics data is reflected correctly in the api", sleepBeforeAPIInSeconds)
 		time.Sleep(time.Second * time.Duration(sleepBeforeAPIInSeconds))
 
 		query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
-		logger.Debugf("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
+		logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
 
 		clusterConfig, err := rest.InClusterConfig()
 		if err != nil {
@@ -149,17 +149,17 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		}
 
 		cmd := exec.Command("python", "-c", "import splunk; "+
-		"sp= splunk.SplunkProvider(project="+data.Project+
-								",stage="+data.Stage+
-								",service="+data.Service+
-								", labels="+getMapContent(data.Labels)+
-								", customQueries="+getMapContent(sliConfig)+
-								", host="+splunkCreds.Host+
-								", token="+splunkCreds.Token+");"+
-		"print(sp.get_sli("+indicatorName+", "+ data.GetSLI.Start+","+ data.GetSLI.End+"))")
-		
+			"sp= splunk.SplunkProvider(project="+data.Project+
+			",stage="+data.Stage+
+			",service="+data.Service+
+			", labels="+getMapContent(data.Labels)+
+			", customQueries="+getMapContent(sliConfig)+
+			", host="+splunkCreds.Host+
+			", token="+splunkCreds.Token+");"+
+			"print(sp.get_sli("+indicatorName+", "+data.GetSLI.Start+","+data.GetSLI.End+"))")
+
 		out, err := cmd.CombinedOutput()
-		sliValue, _:= strconv.ParseFloat(string(out), 8)
+		sliValue, _ := strconv.ParseFloat(string(out), 8)
 
 		if err != nil {
 			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
@@ -167,25 +167,25 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			continue
 		}
 
-		logger.Debugf("response from the metrics api: %v", sliValue)
+		logger.Infof("response from the metrics api: %v", sliValue)
 
 		if err != nil {
-			sliResult:= &keptnv2.SLIResult{
+			sliResult := &keptnv2.SLIResult{
 				Metric:  indicatorName,
 				Value:   0,
 				Success: false,
 				Message: err.Error(),
 			}
 			sliResults = append(sliResults, sliResult)
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("got 0 in the SLI result (indicates empty response from the API)")
+			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
 		} else {
-			sliResult:= &keptnv2.SLIResult{
+			sliResult := &keptnv2.SLIResult{
 				Metric:  indicatorName,
 				Value:   sliValue,
 				Success: true,
 			}
 			sliResults = append(sliResults, sliResult)
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Debugf("SLI result from the metrics api: %v", sliResult)
+			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 		}
 
 	}
@@ -209,7 +209,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		getSliFinishedEventData.EventData.Result = keptnv2.ResultFailed
 	}
 
-	logger.Debugf("SLI finished event: %v", *getSliFinishedEventData)
+	logger.Infof("SLI finished event: %v", *getSliFinishedEventData)
 
 	_, err = ddKeptn.SendTaskFinishedEvent(getSliFinishedEventData, ServiceName)
 
@@ -246,7 +246,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		},
 	}
 
-	logger.Debugf("Configure Monitoring finished event: %v", *configureMonitoringFinishedEventData)
+	logger.Infof("Configure Monitoring finished event: %v", *configureMonitoringFinishedEventData)
 
 	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, ServiceName)
 	if err != nil {
@@ -290,12 +290,12 @@ func replaceQueryParameters(data *keptnv2.GetSLITriggeredEventData, query string
 	return query
 }
 
-func getMapContent(mp map[string] string) string{
-	dictn :="{"
+func getMapContent(mp map[string]string) string {
+	dictn := "{"
 	for key, element := range mp {
-		dictn= dictn+"\""+key+"\""+" : "+"\""+element+"\""+","
+		dictn = dictn + "\"" + key + "\"" + " : " + "\"" + element + "\"" + ","
 	}
-	dictn=strings.TrimSuffix(dictn, ",")+"}"
+	dictn = strings.TrimSuffix(dictn, ",") + "}"
 	return dictn
 }
 
@@ -325,12 +325,10 @@ var env utils.EnvConfig
 func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splunkCredentials, error) {
 
 	if err := envconfig.Process("", &env); err != nil {
-		logger.Error("HERRRE")
-
 		logger.Error("Failed to process env var: " + err.Error())
 	}
 
-	logger.Debug("Checking if external splunk instance has been defined for project " + project)
+	logger.Info("Checking if external splunk instance has been defined for project " + project)
 
 	secretName := fmt.Sprintf("splunk-credentials-%s", project)
 
@@ -339,7 +337,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 	// fallback: return cluster-internal splunk URL (configured via SplunkEndpoint environment variable)
 	// in case no secret has been created for this project
 	if err != nil {
-		logger.Debug("Could not retrieve or read secret (" + err.Error() + ") for project " + project + ". Using default: " + env.SplunkEndpoint)
+		logger.Info("Could not retrieve or read secret (" + err.Error() + ") for project " + project + ". Using default: " + env.SplunkEndpoint)
 		return nil, nil //attention : ecouter audio
 	}
 
@@ -350,7 +348,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 	splunkHost, errHost := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_HOST")
 	splunkToken, errToken := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_API_TOKEN")
 
-	if errHost == nil && errToken == nil{
+	if errHost == nil && errToken == nil {
 		// found! using it
 		pc.Host = strings.Replace(splunkHost, " ", "", -1)
 		pc.Token = splunkToken
@@ -359,15 +357,15 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 		err = yaml.Unmarshal(secret.Data["splunk-credentials"], &pc)
 
 		if err != nil {
-			logger.Debug("Could not parse credentials for external splunk instance: " + err.Error())
+			logger.Info("Could not parse credentials for external splunk instance: " + err.Error())
 			return nil, errors.New("invalid credentials format found in secret 'splunk-credentials-" + project)
 		}
 
 		// warn the user to migrate their credentials
-		logger.Debugf("Warning: Please migrate your splunk credentials for project %s. ", project)
-		logger.Debugf("See https://github.com/Mouhamadou305/splunk-sli-provider/issues/274 for more information.\n")
+		logger.Infof("Warning: Please migrate your splunk credentials for project %s. ", project)
+		logger.Infof("See https://github.com/Mouhamadou305/splunk-sli-provider/issues/274 for more information.\n")
 	}
 
-	logger.Debug("Using external splunk instance for project " + project + ": " + pc.Host)
+	logger.Info("Using external splunk instance for project " + project + ": " + pc.Host)
 	return &pc, nil
 }
