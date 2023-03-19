@@ -7,7 +7,7 @@ splunkservice:
   spHost: "test"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
   # so that the API reflects correct metric data
-  sleepBeforeAPIInSeconds: "120"
+  sleepBeforeAPIInSeconds: "6"
   # Secret containing splunk's SP_API_TOKEN
   #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
   existingSecret: "" # If you want to use existing Secret in the cluster

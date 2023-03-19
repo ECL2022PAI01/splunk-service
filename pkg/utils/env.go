@@ -22,7 +22,7 @@ type EnvConfig struct {
 	// AlertManagerTemplateConfigMap string `envconfig:"ALERT_MANAGER_TEMPLATE_CM" default:"alertmanager-templates"`
 	// SplunkConfigFileName          string `envconfig:"SPLUNK_CONFIG_FILENAME" default:"splunk.yml"`
 	// AlertManagerConfigFileName    string `envconfig:"ALERT_MANAGER_CONFIG_FILENAME" default:"alertmanager.yml"`
-	PodNamespace                  string `envconfig:"POD_NAMESPACE" default:""`
-	SplunkEndpoint                string `envconfig:"SPLUNK_ENDPOINT" default:""`
+	PodNamespace                  string `envconfig:"POD_NAMESPACE" default:"keptn"`
+	SplunkEndpoint                string `envconfig:"SPLUNK_ENDPOINT" default:"localhost:8089"`
 	// K8sNamespace                  string `envconfig:"K8S_NAMESPACE" required:"true"`
 }
