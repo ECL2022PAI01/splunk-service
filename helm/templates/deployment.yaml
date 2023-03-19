@@ -49,6 +49,10 @@ spec:
             value: "{{ .Values.splunkservice.sleepBeforeAPIInSeconds }}"
           - name: LOG_LEVEL
             value: "{{ .Values.splunkservice.logLevel }}"
+          - name: POD_NAMESPACE
+            value: "{{ .Values.namespace }}"
+          - name: SPLUNK_ENDPOINT
+            value: "{{ .Values.splunkservice.SplunkEndpoint }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: distributor

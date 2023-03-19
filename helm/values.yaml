@@ -3,14 +3,15 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "gezg"
-  spHost: "test"
+  spApitoken: "gezg899255ddkjgdf"
+  spHost: "localhost:8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
   # so that the API reflects correct metric data
   sleepBeforeAPIInSeconds: "120"
   # Secret containing splunk's SP_API_TOKEN
   #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
   existingSecret: "" # If you want to use existing Secret in the cluster
+  KeptnEndpoint: "localhost:8089"
   image:
     repository: kuro08/splunk-service # Container Image Name
     pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
