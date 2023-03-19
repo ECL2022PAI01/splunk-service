@@ -73,7 +73,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 
 				return responseEventData.Result == "pass" && responseEventData.Status == "succeeded"
 			},
-			"datadog-service",
+			"splunk-service",
 		)
 	})
 
@@ -93,7 +93,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 			func(_ *models.KeptnContextExtendedCE) bool {
 				return true
 			},
-			"datadog-service",
+			"splunk-service",
 		)
 
 		requireWaitForEvent(t,
@@ -108,7 +108,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 
 				return responseEventData.Result == "pass" && responseEventData.Status == "succeeded"
 			},
-			"datadog-service",
+			"splunk-service",
 		)
 
 		requireWaitForEvent(t,
@@ -145,7 +145,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 			func(_ *models.KeptnContextExtendedCE) bool {
 				return true
 			},
-			"datadog-service",
+			"splunk-service",
 		)
 
 		requireWaitForEvent(t,
@@ -160,7 +160,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 
 				return responseEventData.Result == "pass" && responseEventData.Status == "succeeded"
 			},
-			"datadog-service",
+			"splunk-service",
 		)
 
 		requireWaitForEvent(t,

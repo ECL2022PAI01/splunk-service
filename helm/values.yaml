@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: ""
-  spHost: ""
+  spApitoken: "gezg"
+  spHost: "test"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
   # so that the API reflects correct metric data
   sleepBeforeAPIInSeconds: "120"
@@ -14,7 +14,7 @@ splunkservice:
   image:
     repository: kuro08/splunk-service # Container Image Name
     pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
-    tag: 1.0.0                                # Container Tag
+    tag: latest                                # Container Tag
   service:
     enabled: true                              # Creates a Kubernetes Service for the splunk-service
 

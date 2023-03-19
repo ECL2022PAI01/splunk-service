@@ -178,6 +178,8 @@ func main() {
 
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
+		logger.Error("HERRRE FROM MAIN")
+
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
