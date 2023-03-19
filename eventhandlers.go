@@ -325,12 +325,10 @@ var env utils.EnvConfig
 func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splunkCredentials, error) {
 
 	if err := envconfig.Process("", &env); err != nil {
-		logger.Error("HERRRE")
-
 		logger.Error("Failed to process env var: " + err.Error())
 	}
 
-	logger.Debug("Checking if external splunk instance has been defined for project " + project)
+	logger.Error("Checking if external splunk instance has been defined for project " + project)
 
 	secretName := fmt.Sprintf("splunk-credentials-%s", project)
 
