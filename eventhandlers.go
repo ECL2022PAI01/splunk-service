@@ -338,7 +338,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 	// in case no secret has been created for this project
 	if err != nil {
 		logger.Info("Could not retrieve or read secret (" + err.Error() + ") for project " + project + ". Using default: " + env.SplunkEndpoint)
-		return nil, nil //attention : ecouter audio
+		return nil, err //attention : ecouter audio
 	}
 
 	pc := splunkCredentials{}
@@ -352,6 +352,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 		// found! using it
 		pc.Host = strings.Replace(splunkHost, " ", "", -1)
 		pc.Token = splunkToken
+		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token)
 	} else {
 		// deprecated: try to use legacy approach
 		err = yaml.Unmarshal(secret.Data["splunk-credentials"], &pc)

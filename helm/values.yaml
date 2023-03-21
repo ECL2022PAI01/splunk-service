@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "gezg899255ddkjgdf"
-  spHost: "localhost:8089"
+  spApitoken: "gezg899255ddkjgdf"                       #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "localhost:8089"                              #attention NE PAS SPECIFIER DANS LE CODE
   # Make splunk-service wait for 120 seconds before querying the Splunk API
   # so that the API reflects correct metric data
   sleepBeforeAPIInSeconds: "6"
