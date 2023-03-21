@@ -332,7 +332,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 
 	logger.Info("Checking if external splunk instance has been defined for project " + project)
 
-	secretName := fmt.Sprintf("splunk-credentials-%s", project)
+	secretName := "splunk-sli-splunk-service"
 
 	secret, err := kubeClient.Secrets(env.PodNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 
