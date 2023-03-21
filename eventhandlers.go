@@ -164,7 +164,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		sliValue, _ := strconv.ParseFloat(string(out), 64)
 
 		if err != nil {
-			logger.Infof("\nOut :  %v\n", out)
+			logger.Infof("\nOut :  %v - \t %v \n", string(out), sliValue)
 			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
 			errored = true
 			continue
