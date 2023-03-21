@@ -42,8 +42,9 @@ func init() {
 }
 
 type splunkCredentials struct {
-	Host  string `json:"host" yaml:"host"`
-	Token string `json:"token" yaml:"token"`
+	Host  string `json:"host" yaml:"spHost"`
+	Token string `json:"token" yaml:"spToken"`
+	Port string `json:"port" yaml:"spPort"` 
 }
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
@@ -155,11 +156,12 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			", labels="+getMapContent(data.Labels)+
 			", customQueries="+getMapContent(sliConfig)+
 			", host="+splunkCreds.Host+
-			", token="+splunkCreds.Token+");"+
+			", token="+splunkCreds.Token+
+			", port="+splunkCreds.Port+");"+
 			"print(sp.get_sli("+indicatorName+", "+data.GetSLI.Start+","+data.GetSLI.End+"))")
 
 		out, err := cmd.CombinedOutput()
-		sliValue, _ := strconv.ParseFloat(string(out), 8)
+		sliValue, _ := strconv.ParseFloat(string(out), 64)
 
 		if err != nil {
 			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
@@ -347,12 +349,14 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 	// Example: keptn create secret splunk-credentials-<project> --scope="keptn-splunk-sli-provider" --from-literal="SP_HOST=$SP_HOST"
 	splunkHost, errHost := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_HOST")
 	splunkToken, errToken := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_API_TOKEN")
+	splunkPort, errPort := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_PORT")
 
-	if errHost == nil && errToken == nil {
+	if errHost == nil && errToken == nil  && errPort == nil {
 		// found! using it
 		pc.Host = strings.Replace(splunkHost, " ", "", -1)
 		pc.Token = splunkToken
-		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token)
+		pc.Port = splunkPort
+		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token + " and " + pc.Port)
 	} else {
 		// deprecated: try to use legacy approach
 		err = yaml.Unmarshal(secret.Data["splunk-credentials"], &pc)

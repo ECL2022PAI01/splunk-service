@@ -18,13 +18,14 @@ class SplunkProvider:
         password: str="",
         token: str="",
         autologin= True,
+        port: str="8089"
     ) -> None:
         if(username!="" and password!=""):
             #connecting using username and password
-            self.service = client.connect(host=host, username=username, password=password, autologin=autologin)
+            self.service = client.connect(host=host, port=int(port), username=username, password=password, autologin=autologin)
         elif(token!="" and host!=""):
             #connecting using bearer token
-            self.service = client.connect(host=host, splunkToken=token, autologin=autologin)
+            self.service = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin)
         else:
             error("Connection credentials are invalid")
 
