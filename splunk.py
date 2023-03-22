@@ -22,16 +22,16 @@ class SplunkProvider:
     ) -> None:
         if(username!="" and password!=""):
             #connecting using username and password
-            self.service = client.connect(host=host, port=int(port), username=username, password=password, autologin=autologin)
+            self.splunkService = client.connect(host=host, port=int(port), username=username, password=password, autologin=autologin)
         elif(token!="" and host!=""):
             #connecting using bearer token
-            self.service = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin)
+            self.splunkService = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin)
         else:
             error("Connection credentials are invalid")
 
         self.project = project
         self.stage = stage
-        self.service = service
+        self.service= service
         self.labels = labels
         self.custom_queries = customQueries
 
@@ -45,7 +45,7 @@ class SplunkProvider:
                   "output_mode": 'json'}
         searchquery_oneshot = self._get_metric_query(metric, start_unix, end_unix)
 
-        oneshotsearch_results = self.service.jobs.oneshot(searchquery_oneshot, **kwargs_oneshot)
+        oneshotsearch_results = self.splunkService.jobs.oneshot(searchquery_oneshot, **kwargs_oneshot)
 
         sli = 0.0
         for result in results.JSONResultsReader(oneshotsearch_results):
@@ -57,22 +57,17 @@ class SplunkProvider:
 
         return sli
 
-    def _get_metric_query(self, metric: str, start_time: str, end_time: str) -> str:
+    def _get_metric_query(self, metric: str, start_time: int, end_time: int) -> str:
         query = self.custom_queries.get(metric, None)
         if query is not None:
             return self._replace_query_parameters(query, start_time, end_time)
         raise ValueError(f"No Custom query specified for metric {metric}")
 
     def _replace_query_parameters(self, query: str, start_time: str, end_time: str) -> str:
-        for filter in self.custom_filters:
-            filter_value = filter.value.replace("'", "").replace('"', "")
-            query = query.replace("$" + filter.key, filter_value).replace(
-                "$" + filter.key.upper(), filter_value
-            )
+        
         query = query.replace("$PROJECT", self.project)
         query = query.replace("$STAGE", self.stage)
         query = query.replace("$SERVICE", self.service)
-        query = query.replace("$DEPLOYMENT", self.deployment_type)
 
         # replace labels
         for key, value in self.labels.items():
@@ -80,15 +75,15 @@ class SplunkProvider:
 
         # replace duration
         duration_seconds = str(
-            math.floor((end_time - start_time).total_seconds())
+            math.floor((end_time - start_time)/100)
         ) + "s"
 
         query = query.replace("$DURATION_SECONDS", duration_seconds)
         return query
 
     def _parse_unix_timestamps(self, start_time: str, end_time: str) -> Tuple[int, int]:
-        start_unix = int(datetime.datetime.fromisoformat(start_time).timestamp())
-        end_unix = int(datetime.datetime.fromisoformat(end_time).timestamp())
+        start_unix = int(datetime.fromisoformat(start_time).timestamp())
+        end_unix = int(datetime.fromisoformat(end_time).timestamp())
 
         return start_unix, end_unix
     
