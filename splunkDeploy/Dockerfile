@@ -1,0 +1,8 @@
+FROM  splunk/splunk:latest
+
+ENV SPLUNK_START_ARGS=--accept-license
+ENV SPLUNK_PASSWORD="mypassword"
+
+EXPOSE 8000
+
+CMD ["start"]

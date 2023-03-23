@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splunk-entreprise-deployment
+  namespace: splunk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splunk-entreprise
+  template:
+    metadata:
+      labels:
+        app: splunk-entreprise
+    spec:
+      containers:
+      - name: splunk-entreprise
+        image: kuro08/splunk-entreprise:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: SPLUNK_START_ARGS
+          value: --accept-license
+        - name: SPLUNK_PASSWORD
+          value: mypassword
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: splunk-entreprise-service
+  namespace: splunk
+spec:
+  selector:
+    app: splunk
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
