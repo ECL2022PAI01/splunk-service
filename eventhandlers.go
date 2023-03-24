@@ -148,8 +148,12 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		if err != nil {
 			logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		}
-
-		cmd := exec.Command("python", "-c", "import splunk;" +
+		sliStartTime,err1 := time.Parse(time.RFC3339Nano, data.GetSLI.Start)
+		sliEndTime,err2 := time.Parse(time.RFC3339Nano, data.GetSLI.End)
+		if err1 != nil || err2 != nil{
+			logger.Errorf("failed to pardse date : %v", err1.Error())
+		}
+		cmd := exec.Command("python", "-c", "import splunk;" + 
 		"print(splunk.SplunkProvider(project='"+data.Project+
 		"',stage='"+data.Stage+
 		"',service='"+data.Service+
@@ -158,7 +162,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		"', host='"+splunkCreds.Host+
 		"', token='"+splunkCreds.Token+
 		"', port='"+splunkCreds.Port+
-		"').get_sli('"+indicatorName+"', '"+data.GetSLI.Start+"','"+data.GetSLI.End+"'))")
+		"').get_sli('"+indicatorName+"', '"+sliStartTime.String()+"','"+sliEndTime.String()+"'))")
+
 
 		// cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='test-splunk',stage='qa',service='helloservice', labels={}, customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}, host='ccf6-156-18-66-3.eu.ngrok.io', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA', port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940'))")
 		
