@@ -156,8 +156,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		"',stage='"+data.Stage+
 		"',service='"+data.Service+
 		"', labels='"+getMapContent(data.Labels)+
-		"', customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}"+
-		"', host='"+splunkCreds.Host+
+		"', customQueries=" + getMapContent(sliConfig)+
+		", host='"+splunkCreds.Host+
 		"', token='"+splunkCreds.Token+
 		"', port='"+splunkCreds.Port+
 		"').get_sli('"+indicatorName+"', '"+sliStartTime+"','"+sliEndTime+"'))")
