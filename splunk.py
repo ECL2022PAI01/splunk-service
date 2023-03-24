@@ -4,6 +4,7 @@ import math
 from datetime import datetime
 import splunklib.client as client
 import splunklib.results as results
+import xml
 
 class SplunkProvider:
     def __init__(
@@ -22,13 +23,15 @@ class SplunkProvider:
     ) -> None:
         if(username!="" and password!=""):
             #connecting using username and password
-            self.splunkService = client.connect(host=host, port=int(port), username=username, password=password, autologin=autologin)
+            self.splunkService = client.connect(host=host, port=int(port), username=username, password=password, autologin=autologin, scheme="http")
         elif(token!="" and host!=""):
             #connecting using bearer token
-            self.splunkService = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin)
+            self.splunkService = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin, scheme="http")
         else:
             error("Connection credentials are invalid")
-
+            
+        self.splunkService._instance_type = "cloud"
+        self.splunkService._splunk_version = (8, 2, 0)
         self.project = project
         self.stage = stage
         self.service= service
@@ -44,9 +47,9 @@ class SplunkProvider:
                   "latest_time": end_time,
                   "output_mode": 'json'}
         searchquery_oneshot = self._get_metric_query(metric, start_unix, end_unix)
-
+        
         oneshotsearch_results = self.splunkService.jobs.oneshot(searchquery_oneshot, **kwargs_oneshot)
-
+        
         sli = 0.0
         for result in results.JSONResultsReader(oneshotsearch_results):
             try:
@@ -94,6 +97,7 @@ if __name__=="__main__":
         service='helloservice',
         labels={},
         customQueries={"test_query" : "search |inputcsv test.csv | stats count"}, 
-        host='localhost', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA',
+        host='20.4.250.173', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzY5Zjk0NDc3NC1xenBtMiIsInN1YiI6ImFkbWluIiwiYXVkIjoic3BsdW5rLXNlcnZpZSIsImlkcCI6IlNwbHVuayIsImp0aSI6IjlhYjIwNzdlNTMyY2ZjMDhhMmQ5MjI5YWI2Y2ZkNzI2YmRlOGE2ZDdjYjI4MGFlNDg5ZDk4MTA5OWY0MmUyODEiLCJpYXQiOjE2Nzk2NDM5NzIsImV4cCI6MTY4MjIzNTk3MiwibmJyIjoxNjc5NjQzOTcyfQ.Q2D9GM92x6o_3RUfX6YmUt-g-TKEtW3QV-32ZeG-VbUWtjHhMGoHSyVbreBOYzSgxgQIRRvzbrqgNqROgiNvcQ',
         port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940')
     print(sli)
+    
