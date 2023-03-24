@@ -31,7 +31,7 @@ metadata:
   namespace: splunk
 spec:
   selector:
-    app: splunk
+    app: splunk-entreprise
   type: LoadBalancer
   ports:
   - name: http

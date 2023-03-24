@@ -18,9 +18,9 @@ import (
 	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	// "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	// "k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -133,25 +133,34 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
 		logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
 
-		// clusterConfig, err := rest.InClusterConfig()
-		// if err != nil {
-		// 	logger.Fatalf("unable to create kubernetes cluster config: %e", err)
-		// }
+		clusterConfig, err := rest.InClusterConfig()
+		if err != nil {
+			logger.Fatalf("unable to create kubernetes cluster config: %e", err)
+		}
 
-		// kubeClient, err := kubernetes.NewForConfig(clusterConfig)
-		// if err != nil {
-		// 	logger.Fatalf("unable to create kubernetes client: %e", err)
-		// }
+		kubeClient, err := kubernetes.NewForConfig(clusterConfig)
+		if err != nil {
+			logger.Fatalf("unable to create kubernetes client: %e", err)
+		}
 
 		// get splunk API URL for the provided Project from Kubernetes Config Map
-		// splunkCreds, err := getSplunkCredentials(data.Project, kubeClient.CoreV1())
-		// if err != nil {
-		// 	logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-		// }
+		splunkCreds, err := getSplunkCredentials(data.Project, kubeClient.CoreV1())
+		if err != nil {
+			logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		}
 
-		// cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='"+data.Project+"',stage='"+data.Stage+"',service='"+data.Service+"', labels='"+getMapContent(data.Labels)+"', customQueries='"+getMapContent(sliConfig)+"', host='"+splunkCreds.Host+"', token='"+splunkCreds.Token+"', port='"+splunkCreds.Port+"').get_sli('"+indicatorName+"', '"+data.GetSLI.Start+"','"+data.GetSLI.End+"'))")
+		cmd := exec.Command("python", "-c", "import splunk;" +
+		"print(splunk.SplunkProvider(project='"+data.Project+
+		"',stage='"+data.Stage+
+		"',service='"+data.Service+
+		"', labels='"+getMapContent(data.Labels)+
+		"', customQueries='"+getMapContent(sliConfig)+
+		"', host='"+splunkCreds.Host+
+		"', token='"+splunkCreds.Token+
+		"', port='"+splunkCreds.Port+
+		"').get_sli('"+indicatorName+"', '"+data.GetSLI.Start+"','"+data.GetSLI.End+"'))")
 
-		cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='test-splunk',stage='qa',service='helloservice', labels={}, customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}, host='ccf6-156-18-66-3.eu.ngrok.io', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA', port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940'))")
+		// cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='test-splunk',stage='qa',service='helloservice', labels={}, customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}, host='ccf6-156-18-66-3.eu.ngrok.io', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA', port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940'))")
 		
 		out, err := cmd.CombinedOutput()
 		sliValue, _ := strconv.ParseFloat(string(out), 64)
