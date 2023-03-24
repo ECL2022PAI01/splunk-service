@@ -155,8 +155,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		"print(splunk.SplunkProvider(project='"+data.Project+
 		"',stage='"+data.Stage+
 		"',service='"+data.Service+
-		"', labels='"+getMapContent(data.Labels)+
-		"', customQueries=" + getMapContent(sliConfig)+
+		"',labels="+getMapContent(data.Labels)+
+		", customQueries=" + getMapContent(sliConfig)+
 		", host='"+splunkCreds.Host+
 		"', token='"+splunkCreds.Token+
 		"', port='"+splunkCreds.Port+
