@@ -29,6 +29,7 @@ class SplunkProvider:
         else:
             error("Connection credentials are invalid")
 
+        self.splunkService._instance_type= "cloud"
         self.project = project
         self.stage = stage
         self.service= service
