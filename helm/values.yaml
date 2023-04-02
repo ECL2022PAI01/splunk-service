@@ -4,7 +4,7 @@ splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
   spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIG1vdWhhbWFkb3UtVmlydHVhbEJveCIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI0OTM0OTVjNTI4MmU3ZWQwOTRmZGUwY2IzMmIxMzk3NjE2NWY2ZmExYWJiMjEzNmVmMzZkZDUwOTJjM2ViMDk5IiwiaWF0IjoxNjc5ODYwODk4LCJleHAiOjE2ODUwNDQ4OTgsIm5iciI6MTY3OTg2MDg5OH0.7JxH64w-KyEg07Jnxv4923fRq96jHg7s8ybtm7sz667goKhBTk7cGg_tQy46JAn73WXexlZ_cIYo7nU1fxZD1A"                       #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "https://aae5-2a01-cb16-6-48eb-ce1f-d7b-a8f2-59a9.eu.ngrok.io/"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "aae5-2a01-cb16-6-48eb-ce1f-d7b-a8f2-59a9.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
