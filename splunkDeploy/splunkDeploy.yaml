@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: splunk-entreprise
-        image: kuro08/splunk-entreprise:latest
+        image: mouhamadou305/splunk-entreprise:latest
         ports:
         - containerPort: 8000
         env:
