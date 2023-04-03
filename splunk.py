@@ -1,3 +1,4 @@
+import json
 from logging import error
 import time
 from typing import Dict, Tuple
@@ -13,7 +14,7 @@ class SplunkProvider:
         stage,
         service,
         labels: Dict[str, str] = None,
-        customQueries: Dict[str, str] = None,
+        customQueries= "",
         host: str="",
         username: str="",
         password: str="",
@@ -36,9 +37,9 @@ class SplunkProvider:
         self.stage = stage
         self.service= service
         self.labels = labels
-        self.custom_queries = customQueries
-        print("ATTENTION PYTHON CUSTOMQUERRY")
-        print(customQueries)
+        self.custom_queries = json.loads(customQueries)
+        error("ATTENTION PYTHON CUSTOMQUERRY")
+        error(customQueries)
 
     def get_sli(
         self, metric: str, start_time: str, end_time: str
@@ -64,8 +65,8 @@ class SplunkProvider:
         return sli
 
     def _get_metric_query(self, metric: str, start_time: int, end_time: int) -> str:
-        print("ATTENTION PYTHON METRIC")
-        print(self.custom_queries.get(metric, None))
+        error("ATTENTION PYTHON METRIC")
+        error(self.custom_queries.get(metric, None))
         query = self.custom_queries.get(metric, None)
         if query is not None:
             return self._replace_query_parameters(query, start_time, end_time)
