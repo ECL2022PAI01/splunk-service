@@ -104,5 +104,6 @@ class SplunkProvider:
       #  customQueries={"test_query" : "|inputcsv test.csv | stats count"}, 
        # host='localhost', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIG1vdWhhbWFkb3UtVmlydHVhbEJveCIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI0OTM0OTVjNTI4MmU3ZWQwOTRmZGUwY2IzMmIxMzk3NjE2NWY2ZmExYWJiMjEzNmVmMzZkZDUwOTJjM2ViMDk5IiwiaWF0IjoxNjc5ODYwODk4LCJleHAiOjE2ODUwNDQ4OTgsIm5iciI6MTY3OTg2MDg5OH0.7JxH64w-KyEg07Jnxv4923fRq96jHg7s8ybtm7sz667goKhBTk7cGg_tQy46JAn73WXexlZ_cIYo7nU1fxZD1A',
         #port=8089).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940')
-#        print(sli)
+  #  sli= SplunkProvider(project='fulltour',stage='qa',service='helloservice',labels={}, customQueries={'test_query' : '|inputcsv test.csv | stats count'}, host='localhost', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIG1vdWhhbWFkb3UtVmlydHVhbEJveCIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI0OTM0OTVjNTI4MmU3ZWQwOTRmZGUwY2IzMmIxMzk3NjE2NWY2ZmExYWJiMjEzNmVmMzZkZDUwOTJjM2ViMDk5IiwiaWF0IjoxNjc5ODYwODk4LCJleHAiOjE2ODUwNDQ4OTgsIm5iciI6MTY3OTg2MDg5OH0.7JxH64w-KyEg07Jnxv4923fRq96jHg7s8ybtm7sz667goKhBTk7cGg_tQy46JAn73WXexlZ_cIYo7nU1fxZD1A', port='8089').get_sli('test_query', '2023-04-03T04:40:03.880','2023-04-03T04:42:03.880')
+   # print(sli)
     

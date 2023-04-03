@@ -169,7 +169,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		
 		out, err := cmd.CombinedOutput()
 
-		sliValue, _ := strconv.ParseFloat(string(out), 64)
+		sliValue, _ := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
 
 		if err != nil {
 			logger.Infof("\nOut :  %v - \t %v \n", string(out), sliValue)
