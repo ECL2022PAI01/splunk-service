@@ -151,7 +151,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		sliStartTime := strings.TrimSuffix(data.GetSLI.Start, "Z")
 		sliEndTime := strings.TrimSuffix(data.GetSLI.End, "Z")
 		logger.Infof("\nCCUSTOMQUERRY GO :  %v - \t %v \n", getMapContent(sliConfig), getMapContent(sliConfig))
-		logger.Infof("\nMETRIC GO ou IndicatorName :  %v - \t %v \n", getMapContent(sliConfig), getMapContent(sliConfig))
+		logger.Infof("\nMETRIC GO ou IndicatorName :  %v - \t %v \n", indicatorName, indicatorName)
 		cmd := exec.Command("python", "-c", "import splunk;" + 
 		"print(splunk.SplunkProvider(project='"+data.Project+
 		"',stage='"+data.Stage+
