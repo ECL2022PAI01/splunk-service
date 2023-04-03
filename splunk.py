@@ -58,7 +58,7 @@ class SplunkProvider:
             try:
                 sli_value = float(result[list(result)[0]])
             except ValueError as e:
-                raise Valuelogging.info(f"failed to parse {metric}: {e}")
+                raise ValueError.info(f"failed to parse {metric}: {e}")
             sli = sli_value
 
         return sli
@@ -69,7 +69,7 @@ class SplunkProvider:
         query = self.custom_queries.get(metric, None)
         if query is not None:
             return self._replace_query_parameters(query, start_time, end_time)
-        raise Valuelogging.info(f"No Custom query specified for metric {metric}")
+        raise ValueError.info(f"No Custom query specified for metric {metric}")
 
     def _replace_query_parameters(self, query: str, start_time: str, end_time: str) -> str:
         
