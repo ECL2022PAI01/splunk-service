@@ -1,6 +1,4 @@
-import json
 from logging import error
-import time
 from typing import Dict, Tuple
 import math
 from datetime import datetime
@@ -37,7 +35,7 @@ class SplunkProvider:
         self.stage = stage
         self.service= service
         self.labels = labels
-        self.custom_queries = json.loads(customQueries)
+        self.custom_queries = customQueries
         error("ATTENTION PYTHON CUSTOMQUERRY")
         error(customQueries)
 
