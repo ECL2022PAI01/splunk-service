@@ -150,7 +150,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		}
 		sliStartTime := strings.TrimSuffix(data.GetSLI.Start, "Z")
 		sliEndTime := strings.TrimSuffix(data.GetSLI.End, "Z")
-		
+		logger.Infof("\nCustomQuery :  %v - \t %v \n", getMapContent(sliConfig), getMapContent(sliConfig))
 		cmd := exec.Command("python", "-c", "import splunk;" + 
 		"print(splunk.SplunkProvider(project='"+data.Project+
 		"',stage='"+data.Stage+

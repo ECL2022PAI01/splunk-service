@@ -37,6 +37,8 @@ class SplunkProvider:
         self.service= service
         self.labels = labels
         self.custom_queries = customQueries
+        print("ATTENTION")
+        print(customQueries)
 
     def get_sli(
         self, metric: str, start_time: str, end_time: str
