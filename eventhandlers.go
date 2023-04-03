@@ -178,7 +178,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			continue
 		}
 
-		logger.Infof("response from the metrics api: %v", sliValue)
+		logger.Infof("response from the metrics api: %v, stringResp: %v", sliValue, string(out))
 
 		if err != nil {
 			sliResult := &keptnv2.SLIResult{
