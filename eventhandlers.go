@@ -168,6 +168,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		// cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='test-splunk',stage='qa',service='helloservice', labels={}, customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}, host='ccf6-156-18-66-3.eu.ngrok.io', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA', port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940'))")
 		
 		out, err := cmd.CombinedOutput()
+
 		sliValue, _ := strconv.ParseFloat(string(out), 64)
 
 		if err != nil {
@@ -303,7 +304,7 @@ func replaceQueryParameters(data *keptnv2.GetSLITriggeredEventData, query string
 func getMapContent(mp map[string]string) string {
 	dictn := "{"
 	for key, element := range mp {
-		dictn = dictn + "\"" + key + "\"" + " : " + "\"" + element + "\"" + ","
+		dictn = dictn + "'" + key + "'" + " : " + "'" + element + "'" + ","
 	}
 	dictn = strings.TrimSuffix(dictn, ",") + "}"
 	return dictn
