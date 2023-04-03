@@ -1,4 +1,5 @@
 from logging import error
+import logging
 from typing import Dict, Tuple
 import math
 from datetime import datetime
@@ -27,7 +28,7 @@ class SplunkProvider:
             #connecting using bearer token
             self.splunkService = client.connect(host=host, port=int(port), splunkToken=token, autologin=autologin, scheme="https")
         else:
-            error("Connection credentials are invalid")
+            logging.info("Connection credentials are invalid")
             
         self.splunkService._instance_type = "cloud"
         self.splunkService._splunk_version = (8, 2, 0)
@@ -36,8 +37,8 @@ class SplunkProvider:
         self.service= service
         self.labels = labels
         self.custom_queries = customQueries
-        error("ATTENTION PYTHON CUSTOMQUERRY")
-        error(customQueries)
+        logging.info("ATTENTION PYTHON CUSTOMQUERRY")
+        logging.info(customQueries)
 
     def get_sli(
         self, metric: str, start_time: str, end_time: str
@@ -57,18 +58,18 @@ class SplunkProvider:
             try:
                 sli_value = float(result[list(result)[0]])
             except ValueError as e:
-                raise ValueError(f"failed to parse {metric}: {e}")
+                raise Valuelogging.info(f"failed to parse {metric}: {e}")
             sli = sli_value
 
         return sli
 
     def _get_metric_query(self, metric: str, start_time: int, end_time: int) -> str:
-        error("ATTENTION PYTHON METRIC")
-        error(self.custom_queries.get(metric, None))
+        logging.info("ATTENTION PYTHON METRIC")
+        logging.info(self.custom_queries.get(metric, None))
         query = self.custom_queries.get(metric, None)
         if query is not None:
             return self._replace_query_parameters(query, start_time, end_time)
-        raise ValueError(f"No Custom query specified for metric {metric}")
+        raise Valuelogging.info(f"No Custom query specified for metric {metric}")
 
     def _replace_query_parameters(self, query: str, start_time: str, end_time: str) -> str:
         

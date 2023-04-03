@@ -4,3 +4,4 @@ slo.yaml
 helloservice.tgz
 job-executor
 workflows/
+test.py
