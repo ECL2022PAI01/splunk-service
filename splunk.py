@@ -37,7 +37,7 @@ class SplunkProvider:
         self.service= service
         self.labels = labels
         self.custom_queries = customQueries
-        print("ATTENTION")
+        print("ATTENTION PYTHON CUSTOMQUERRY")
         print(customQueries)
 
     def get_sli(
@@ -64,6 +64,8 @@ class SplunkProvider:
         return sli
 
     def _get_metric_query(self, metric: str, start_time: int, end_time: int) -> str:
+        print("ATTENTION PYTHON METRIC")
+        print(self.custom_queries.get(metric, None))
         query = self.custom_queries.get(metric, None)
         if query is not None:
             return self._replace_query_parameters(query, start_time, end_time)
