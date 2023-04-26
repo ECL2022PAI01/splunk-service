@@ -15,7 +15,7 @@ splunkservice:
   existingSecret: "" # If you want to use existing Secret in the cluster
   KeptnEndpoint: "20.74.26.22:8080"
   image:
-    repository: Mouhamadou305/splunk-service # Container Image Name
+    repository: mouhamadou305/splunk-service # Container Image Name
     # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
     tag: latest                                # Container Tag
   service:
