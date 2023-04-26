@@ -15,8 +15,8 @@ class SplunkProvider:
         labels: Dict[str, str] = None,
         customQueries= "",
         host: str="",
-        username: str="",
-        password: str="",
+        username: str="admin",
+        password: str="mypassword",
         token: str="",
         autologin= True,
         port: str="8089"
@@ -55,7 +55,6 @@ class SplunkProvider:
         
         sli = 0.0
         for result in results.JSONResultsReader(oneshotsearch_results):
-            raise ValueError(f" HELLLLP {result}")
             try:
                 sli_value = float(result[list(result)[0]])
             except ValueError as e:
