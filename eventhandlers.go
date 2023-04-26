@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/kelseyhightower/envconfig"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,7 @@ const (
 )
 
 // We have to put a min of 60s of sleep for the splunk API to reflect the data correctly
-// More info: https://github.com/Mouhamadou305/splunk-service/issues/8
+// More info: https://github.com/kuro-jojo/splunk-service/issues/8
 var sleepBeforeAPIInSeconds int
 
 func init() {
@@ -44,7 +44,7 @@ func init() {
 type splunkCredentials struct {
 	Host  string `json:"host" yaml:"spHost"`
 	Token string `json:"token" yaml:"spToken"`
-	Port string `json:"port" yaml:"spPort"` 
+	Port  string `json:"port" yaml:"spPort"`
 }
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
@@ -152,21 +152,21 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		sliEndTime := strings.TrimSuffix(data.GetSLI.End, "Z")
 		logger.Infof("\nCCUSTOMQUERRY GO :  %v - \t %v \n", getMapContent(sliConfig), getMapContent(sliConfig))
 		logger.Infof("\nMETRIC GO ou IndicatorName :  %v - \t %v \n", indicatorName, indicatorName)
-		cmd := exec.Command("python", "-c", "import splunk;" + 
-		"print(splunk.SplunkProvider(project='"+data.Project+
-		"',stage='"+data.Stage+
-		"',service='"+data.Service+
-		"',labels="+getMapContent(data.Labels)+
-		", customQueries=" + getMapContent(sliConfig)+
-		", host='"+splunkCreds.Host+
-		"', token='"+splunkCreds.Token+
-		"', port='"+splunkCreds.Port+
-		"').get_sli('"+indicatorName+"', '"+sliStartTime+"','"+sliEndTime+"'))")
+		cmd := exec.Command("python", "-c", "import splunk;"+
+			"print(splunk.SplunkProvider(project='"+data.Project+
+			"',stage='"+data.Stage+
+			"',service='"+data.Service+
+			"',labels="+getMapContent(data.Labels)+
+			", customQueries="+getMapContent(sliConfig)+
+			", host='"+splunkCreds.Host+
+			"', token='"+splunkCreds.Token+
+			"', port='"+splunkCreds.Port+
+			"').get_sli('"+indicatorName+"', '"+sliStartTime+"','"+sliEndTime+"'))")
 
 		logger.Infof("command args: %v", cmd.Args)
 
 		// cmd := exec.Command("python", "-c", "import splunk; print(splunk.SplunkProvider(project='test-splunk',stage='qa',service='helloservice', labels={}, customQueries={\"test_query\" : \"search |inputcsv test.csv | stats count\"}, host='ccf6-156-18-66-3.eu.ngrok.io', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIGJhMzljNjk3ZTA5ZCIsInN1YiI6ImFkbWluIiwiYXVkIjoidGVzdCIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU4MTRjNjBmNDNlNzk5ZDI1YzEzZDMyOWE4NTY2ZGM0ZmM5Mjg4MjQyMTg0NTAwMDY1NTdhYTYyYTI0YzYyNjQiLCJpYXQiOjE2Nzk0MTQxMjIsImV4cCI6MTY4MDQ1MDkyMiwibmJyIjoxNjc5NDE0MTIyfQ.gK2mdx7X8L6sdi50E0RvEI7wAvjEdq1P489pQ1isIRF5TzbL_RIXoB0Ku-zeRmo_Wc8hAcSNDPftu8QUuBCRkA', port=8000).get_sli('test_query', '2023-03-21T22:00:43.940','2023-03-21T22:02:50.940'))")
-		
+
 		out, err := cmd.CombinedOutput()
 
 		sliValue, _ := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
@@ -360,7 +360,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 	splunkToken, errToken := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_API_TOKEN")
 	splunkPort, errPort := utils.ReadK8sSecretAsString(env.PodNamespace, secretName, "SP_PORT")
 
-	if errHost == nil && errToken == nil  && errPort == nil {
+	if errHost == nil && errToken == nil && errPort == nil {
 		// found! using it
 		pc.Host = strings.Replace(splunkHost, " ", "", -1)
 		pc.Token = splunkToken
@@ -377,7 +377,7 @@ func getSplunkCredentials(project string, kubeClient v1.CoreV1Interface) (*splun
 
 		// warn the user to migrate their credentials
 		logger.Infof("Warning: Please migrate your splunk credentials for project %s. ", project)
-		logger.Infof("See https://github.com/Mouhamadou305/splunk-sli-provider/issues/274 for more information.\n")
+		logger.Infof("See https://github.com/kuro-jojo/splunk-sli-provider/issues/274 for more information.\n")
 	}
 
 	logger.Info("Using external splunk instance for project " + project + ": " + pc.Host)

@@ -1,4 +1,4 @@
-module github.com/Mouhamadou305/splunk-service
+module github.com/kuro-jojo/splunk-service
 
 go 1.17
 

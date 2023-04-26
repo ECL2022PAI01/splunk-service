@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzc2YzY0Yzc5Ni1ocDdzNyIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI2YjUxMDUzZjc4NTUyZjY3ZmQ3MGNjMmEyZjZhM2E3NjYwYjU0ZTU1N2JjMDc4YjgyZDQxMWQyODQwNGU1ODhiIiwiaWF0IjoxNjgyNTM1NzM3LCJleHAiOjE2ODI1MzU3OTcsIm5iciI6MTY4MjUzNTczN30.mJVZBQd1XmhUVBn1ZdK2jv0HiQe2vKmZvnXy05enWmPcYgkV5PvU2mYvBwMEirTfdW3JgUvL8HNNI5NXkxP4QQ"           #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "40.76.159.167"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLTY2bW1iIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6IjVkMWI4YjA2ZjY2Yzc5N2U3MjcxMGRlNzA0YzE3NzY1YjI0M2RiYWUwMWRmOTY3MWU3NDJlZmU4MzM4OGQ3NzQiLCJpYXQiOjE2ODI1Mzc2MDYsImV4cCI6MTY4NTEyOTYwNiwibmJyIjoxNjgyNTM3NjA2fQ.mPZYxcR4nGLhECrMe0VGgRjN3bkT9YdUvvvPJtReemZvVvgLp8n7hd9JKHhaZxid3i7WOJWKr9e_f0O5VblNQw"           #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "20.74.14.146"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
@@ -13,9 +13,9 @@ splunkservice:
   # Secret containing splunk's SP_API_TOKEN
   #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
   existingSecret: "" # If you want to use existing Secret in the cluster
-  KeptnEndpoint: "20.74.26.22:8080"
+  KeptnEndpoint: "20.74.101.135:8080"
   image:
-    repository: mouhamadou305/splunk-service # Container Image Name
+    repository: kuro08/splunk-service # Container Image Name
     # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
     tag: latest                                # Container Tag
   service:

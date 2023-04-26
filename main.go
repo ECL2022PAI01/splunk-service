@@ -9,10 +9,11 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/kelseyhightower/envconfig"
 
-	"github.com/Mouhamadou305/splunk-service/pkg/utils"
-	keptnv1 "github.com/keptn/go-utils/pkg/lib"
+	keptnv1 "gitkuro-jojo/go-utils/pkg/lib"
+
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -110,7 +111,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* parseKeptnCloudEventPayload(event, eventData)
 	*
 	* See https://github.com/keptn/spec/blob/0.2.0-alpha/cloudevents.md for more details of Keptn Cloud Events and their payload
-	* Also, see https://github.com/Mouhamadou305/echo-service/blob/a90207bc119c0aca18368985c7bb80dea47309e9/pkg/events.go as an example how to create your own CloudEvents
+	* Also, see https://github.com/kuro-jojo/echo-service/blob/a90207bc119c0aca18368985c7bb80dea47309e9/pkg/events.go as an example how to create your own CloudEvents
 	**/
 
 	/**
@@ -121,26 +122,26 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	**/
 	switch event.Type() {
 
-		// -------------------------------------------------------
-		// sh.keptn.event.configure-monitoring (sent by keptnCLI to configure monitoring)
-		case keptnv2.ConfigureMonitoringTaskName: // sh.keptn.event.configure-monitoring.triggered
-			logger.Infof("Processing configure-monitoring.Triggered Event")
+	// -------------------------------------------------------
+	// sh.keptn.event.configure-monitoring (sent by keptnCLI to configure monitoring)
+	case keptnv2.ConfigureMonitoringTaskName: // sh.keptn.event.configure-monitoring.triggered
+		logger.Infof("Processing configure-monitoring.Triggered Event")
 
-			eventData := &keptnv2.ConfigureMonitoringTriggeredEventData{}
-			parseKeptnCloudEventPayload(event, eventData)
-			event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
+		eventData := &keptnv2.ConfigureMonitoringTriggeredEventData{}
+		parseKeptnCloudEventPayload(event, eventData)
+		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-			return HandleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
+		return HandleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
 
-		// -------------------------------------------------------
-		// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
-		case keptnv2.GetTriggeredEventType(keptnv2.GetSLITaskName): // sh.keptn.event.get-sli.triggered
-			logger.Infof("Processing get-sli.triggered Event")
+	// -------------------------------------------------------
+	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
+	case keptnv2.GetTriggeredEventType(keptnv2.GetSLITaskName): // sh.keptn.event.get-sli.triggered
+		logger.Infof("Processing get-sli.triggered Event")
 
-			eventData := &keptnv2.GetSLITriggeredEventData{}
-			parseKeptnCloudEventPayload(event, eventData)
+		eventData := &keptnv2.GetSLITriggeredEventData{}
+		parseKeptnCloudEventPayload(event, eventData)
 
-			return HandleGetSliTriggeredEvent(ddKeptn, event, eventData)
+		return HandleGetSliTriggeredEvent(ddKeptn, event, eventData)
 
 	}
 	// Unknown Event -> Throw Error!
