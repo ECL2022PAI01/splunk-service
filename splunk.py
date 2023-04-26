@@ -55,8 +55,8 @@ class SplunkProvider:
         
         sli = 0.0
         for result in results.JSONResultsReader(oneshotsearch_results):
+            raise ValueError(f" HELLLLP {result}")
             try:
-                # raise ValueError(f" HELLLLP {result}")
                 sli_value = float(result[list(result)[0]])
             except ValueError as e:
                 raise ValueError.info(f"failed to parse {metric}: {e} with result : {result}")
@@ -97,6 +97,6 @@ class SplunkProvider:
         return start_unix, end_unix
     
 if __name__=="__main__":
-    sli= SplunkProvider(project='test',stage='qa',service='helloservice',labels={}, customQueries={'test_query' : '|inputcsv test.csv | stats count'}, host='20.74.14.146', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLXptOWpiIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6Ijc4YTFiZDQ4MThlNjc1YmYzY2VkMWE4ZGI3ZTI3MjZjODdiYzZjZDg5NGJlODExNTYyNjIyM2RiM2YwMWIyZTciLCJpYXQiOjE2ODI1NDE0NjgsImV4cCI6MTY4NTEzMzQ2OCwibmJyIjoxNjgyNTQxNDY4fQ.yTMJV8HtitMg8c5areOf9a4IWRvF-lzRFsP-s5MSeNJ8-_GKYvECf1K-8pGW7pHk7rHgCCynlGhLaxyJ5CL7TQ', port='8089').get_sli('test_query', '2023-04-03T04:40:03.880','2023-04-03T04:42:03.880')
+    sli= SplunkProvider(project='test',stage='qa',service='helloservice',labels={}, customQueries={'test_query' : '|inputcsv test.csv | stats count'}, host='20.74.19.129', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLWc3bmhwIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6IjM2ZjljYWYyOTcwYzhjYTU2MjEyZTk1YmU4M2NkNWEwMTY0MzZiNmNiMmNhNmJkYmNkYTIwMjNhZjVkYjQzNzUiLCJpYXQiOjE2ODI1NDM0NjEsImV4cCI6MTY4NTEzNTQ2MSwibmJyIjoxNjgyNTQzNDYxfQ.IlgvwGI3UAjSJtJQu9cf54riHQNDTGCwITQq0zjHIBbaGjsEhe-oacEqD8bsdFRup5ogeKGj-J6WW7MuOjjr6g', port='8089').get_sli('test_query', '2023-04-03T04:40:03.880','2023-04-03T04:42:03.880')
     print(sli)
     
