@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzQ4OGQ3OTk2OS1zempueiIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiJhMTdhYzIxY2ZkYzZkMzk2NjdjYzlhZDhiNjhhNTc1MTA3OGViNmY2ZjRmMmNmYTZjYmRmM2VhNTk0NTM1ZTYyIiwiaWF0IjoxNjgwNjEyNTIxLCJleHAiOjE2ODMyMDQ1MjEsIm5iciI6MTY4MDYxMjUyMX0.HGWo3w1YnyBe4UbCtKI1EbWxYgPe6E7fQVkKlCDREXt_5XAqVcH91NlV-wRPbZfDv4oWVjPQ84V3nDlikGYuKA"                       #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "52.179.117.225"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzc2YzY0Yzc5Ni1uaHNiayIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiJmNTQyNTJiOGI5M2UwYTdjYWE2ZGY5NjhkNjM4YzU3ZTJkMmYxYTU1NzVjZTI1YWE1ZmRlODAzNDM5MTM1NjVjIiwiaWF0IjoxNjgyNTIzMzU5LCJleHAiOjE2ODI1MjM0MTksIm5iciI6MTY4MjUyMzM1OX0.Yfokd-M78ZhwabdVlD1-Ze_HAdfIvyy7Z-5YV773zgAw4hvmeCj86s2W4kR9eYHecacibc1MJ3K0opbHKPvyPQ"                       #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "40.76.159.167"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
