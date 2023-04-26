@@ -4,7 +4,7 @@ splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
   spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIDgwNGVhYzYyYjM3YiIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI4NGRiZmZlMTBmY2UzOTg1OGQxOTIzOTQ2OGQxMDc1ODgwYWVjZGQ1NDZjNjA1NmIwODc3OWQxNjE4Y2Y4YTE1IiwiaWF0IjoxNjgyNTQwOTIyLCJleHAiOjE2ODUxMzI5MjIsIm5iciI6MTY4MjU0MDkyMn0.kL6yXtm52s7L8PBzy_rZoYiBP3oOXoKxDCe7SSqCyPCt0A_kGr_r2J3DnajL5CRZAcP3c07co7ZRwVwuv0ZjlQ"           #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "localhost"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "127.0.0.1"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
