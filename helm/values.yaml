@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLTY2amhrIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6IjJjNzJjZjhkNWViMTcxNjFlZDY2ZDAzODNhMWNhZTJlZWU0MzVkYzViZDkxYzQ0Y2Q4YzRlMTAzN2Q2MGE4MjIiLCJpYXQiOjE2ODI1MzM2MDksImV4cCI6MTY4NTEyNTYwOSwibmJyIjoxNjgyNTMzNjA5fQ.-c2li6RzCMSo4WAPz1JEJejlDCQoXhCvM92k2ri9he9VJ5_ihaq4uWVKX2yoj2NXiv8QDdKZGv2hFGflCZ3xrA"           #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "20.74.102.31"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzc2YzY0Yzc5Ni1ocDdzNyIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI2YjUxMDUzZjc4NTUyZjY3ZmQ3MGNjMmEyZjZhM2E3NjYwYjU0ZTU1N2JjMDc4YjgyZDQxMWQyODQwNGU1ODhiIiwiaWF0IjoxNjgyNTM1NzM3LCJleHAiOjE2ODI1MzU3OTcsIm5iciI6MTY4MjUzNTczN30.mJVZBQd1XmhUVBn1ZdK2jv0HiQe2vKmZvnXy05enWmPcYgkV5PvU2mYvBwMEirTfdW3JgUvL8HNNI5NXkxP4QQ"           #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "40.76.159.167"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
@@ -15,7 +15,7 @@ splunkservice:
   existingSecret: "" # If you want to use existing Secret in the cluster
   KeptnEndpoint: "20.74.26.22:8080"
   image:
-    repository: kuro08/splunk-service # Container Image Name
+    repository: Mouhamadou305/splunk-service # Container Image Name
     # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
     tag: latest                                # Container Tag
   service:
