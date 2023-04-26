@@ -9,11 +9,10 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/kelseyhightower/envconfig"
 
-	keptnv1 "gitkuro-jojo/go-utils/pkg/lib"
-
+	"github.com/kuro-jojo/splunk-service/pkg/utils"
+	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
