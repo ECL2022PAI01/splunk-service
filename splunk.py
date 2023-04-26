@@ -97,6 +97,6 @@ class SplunkProvider:
         return start_unix, end_unix
     
 if __name__=="__main__":
-    sli= SplunkProvider(project='test',stage='qa',service='helloservice',labels={}, customQueries={'test_query' : '|inputcsv test.csv | stats count'}, host='localhost', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIDgwNGVhYzYyYjM3YiIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiI4NGRiZmZlMTBmY2UzOTg1OGQxOTIzOTQ2OGQxMDc1ODgwYWVjZGQ1NDZjNjA1NmIwODc3OWQxNjE4Y2Y4YTE1IiwiaWF0IjoxNjgyNTQwOTIyLCJleHAiOjE2ODUxMzI5MjIsIm5iciI6MTY4MjU0MDkyMn0.kL6yXtm52s7L8PBzy_rZoYiBP3oOXoKxDCe7SSqCyPCt0A_kGr_r2J3DnajL5CRZAcP3c07co7ZRwVwuv0ZjlQ', port='8089').get_sli('test_query', '2023-04-03T04:40:03.880','2023-04-03T04:42:03.880')
+    sli= SplunkProvider(project='test',stage='qa',service='helloservice',labels={}, customQueries={'test_query' : '|inputcsv test.csv | stats count'}, host='20.74.14.146', token='eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLXptOWpiIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6Ijc4YTFiZDQ4MThlNjc1YmYzY2VkMWE4ZGI3ZTI3MjZjODdiYzZjZDg5NGJlODExNTYyNjIyM2RiM2YwMWIyZTciLCJpYXQiOjE2ODI1NDE0NjgsImV4cCI6MTY4NTEzMzQ2OCwibmJyIjoxNjgyNTQxNDY4fQ.yTMJV8HtitMg8c5areOf9a4IWRvF-lzRFsP-s5MSeNJ8-_GKYvECf1K-8pGW7pHk7rHgCCynlGhLaxyJ5CL7TQ', port='8089').get_sli('test_query', '2023-04-03T04:40:03.880','2023-04-03T04:42:03.880')
     print(sli)
     
