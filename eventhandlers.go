@@ -25,7 +25,7 @@ import (
 
 const (
 	sliFile                        = "splunk/sli.yaml"
-	defaultSleepBeforeAPIInSeconds = 20
+	defaultSleepBeforeAPIInSeconds = 10
 )
 
 // We have to put a min of 60s of sleep for the splunk API to reflect the data correctly
