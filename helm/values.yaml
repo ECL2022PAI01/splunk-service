@@ -3,7 +3,7 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzc2YzY0Yzc5Ni1uaHNiayIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiJmNTQyNTJiOGI5M2UwYTdjYWE2ZGY5NjhkNjM4YzU3ZTJkMmYxYTU1NzVjZTI1YWE1ZmRlODAzNDM5MTM1NjVjIiwiaWF0IjoxNjgyNTIzMzU5LCJleHAiOjE2ODI1MjM0MTksIm5iciI6MTY4MjUyMzM1OX0.Yfokd-M78ZhwabdVlD1-Ze_HAdfIvyy7Z-5YV773zgAw4hvmeCj86s2W4kR9eYHecacibc1MJ3K0opbHKPvyPQ"                       #attention NE PAS SPECIFIER DANS LE CODE
+  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzc2YzY0Yzc5Ni1uaHNiayIsInN1YiI6ImFkbWluIiwiYXVkIjoia2VwdG4iLCJpZHAiOiJTcGx1bmsiLCJqdGkiOiIxZWM5YTNjZGZjOTIyMjg0MDc0NTVhNDEyYmI2OGFlZDJlNDhkMTNmNGJhMjM0ODVmMjExMzM3ZjMwODNjNDk3IiwiaWF0IjoxNjgyNTI4OTY4LCJleHAiOjE2ODI1MjkwMjgsIm5iciI6MTY4MjUyODk2OH0.cCwxISMp2JzTywi5qw0nFzIYdtRulKPY-PkuTKhuDQiZ41WBAnQnyZ6d5Me9LeB8MoFP8FW5kWn5y97_wWhDKw"           #attention NE PAS SPECIFIER DANS LE CODE
   spHost: "40.76.159.167"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
