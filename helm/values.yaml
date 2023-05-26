@@ -3,8 +3,8 @@ namespace: keptn
 splunkservice:
   logLevel: info
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIHNwbHVuay1lbnRyZXByaXNlLWRlcGxveW1lbnQtNzU2NjU0ZDhjLTdmYnhoIiwic3ViIjoiYWRtaW4iLCJhdWQiOiJrZXB0biIsImlkcCI6IlNwbHVuayIsImp0aSI6IjU1NDQ3Yzk5ZmFlMDJhOTZlNTBmZWVkMjNlYmYyMzVkODUyMDMwMDg3NDg5MWZiMjIyOWUxMjAwZDYyOGUxMGUiLCJpYXQiOjE2ODI1ODA2NDEsImV4cCI6MTY4NTE3MjY0MSwibmJyIjoxNjgyNTgwNjQxfQ.iaTaiGxxxkLQ7n_zGocQh9q-3XGPwU45UMI5WancgFUJ8sEobDGITF5R-jRX1gl3gBLXPV3nDlsStRB2sDZr7g"           #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: "20.74.2.83"                              #attention NE PAS SPECIFIER DANS LE CODE
+  spApitoken: "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIE5DRUwxNDExOTIiLCJzdWIiOiJhZG1pbiIsImF1ZCI6ImZobiIsImlkcCI6IlNwbHVuayIsImp0aSI6ImM0NjNmMThkMTNmY2EzMzZkZGFhZTJmYzQxZjQxNmQ5NjRlZDY3N2VmZWE2OGUzNTUxODg2OGI4YmZjMzE3NmIiLCJpYXQiOjE2ODUwOTQ3OTYsImV4cCI6MTY4NzY4Njc5NiwibmJyIjoxNjg1MDk0Nzk2fQ.Kee4Ao8x5Xoso6G3gGvo1J34hBmW86tfbUpLK04YCNUIUxCX_7cfGYCcPXW_e7lQDIn_Zw6vDtI4iGCbdmI_jA"           #attention NE PAS SPECIFIER DANS LE CODE
+  spHost: "172.29.226.241"                              #attention NE PAS SPECIFIER DANS LE CODE
   # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
   spPort: "8089"
   # Make splunk-service wait for 120 seconds before querying the Splunk API
@@ -13,7 +13,7 @@ splunkservice:
   # Secret containing splunk's SP_API_TOKEN
   #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
   existingSecret: "" # If you want to use existing Secret in the cluster
-  KeptnEndpoint: "20.74.101.135:8080"
+  KeptnEndpoint: "localhost:8080"
   image:
     repository: kuro08/splunk-service # Container Image Name
     # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy

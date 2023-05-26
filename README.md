@@ -1,4 +1,4 @@
-- [datadog-service](#datadog-service)
+- [splunk-service](#splunk-service)
   * [Quickstart](#quickstart)
   * [If you already have a Keptn cluster running](#if-you-already-have-a-keptn-cluster-running)
   * [Compatibility Matrix](#compatibility-matrix)
@@ -17,64 +17,64 @@
   * [How to release a new version of this service](#how-to-release-a-new-version-of-this-service)
   * [Known problems](#known-problems)
   * [License](#license)
-# datadog-service
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/keptn-sandbox/datadog-service)
-[![Go Report Card](https://goreportcard.com/badge/github.com/keptn-sandbox/datadog-service)](https://goreportcard.com/report/github.com/keptn-sandbox/datadog-service)
+# splunk-service
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/keptn-sandbox/splunk-service)
+[![Go Report Card](https://goreportcard.com/badge/github.com/keptn-sandbox/splunk-service)](https://goreportcard.com/report/github.com/keptn-sandbox/splunk-service)
 
-This implements the `datadog-service` that integrates the [Datadog](https://en.wikipedia.org/wiki/Datadog) observability platform with Keptn. This enables you to use Datadog as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
+This implements the `splunk-service` that integrates the [splunk](https://en.wikipedia.org/wiki/splunk) observability platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
 If you want to learn more about Keptn visit us on [keptn.sh](https://keptn.sh)
 
 Check the issue on the main repo for more info: https://github.com/keptn/keptn/issues/2652
 
 
 ## Quickstart
-If you are on Mac or Linux, you can use [examples/kup.sh](./examples/kup.sh) to set up a local Keptn installation that uses Datadog. This script creates a local minikube cluster, installs Keptn, Istio, Datadog and the Datadog integration for Keptn (check the script for pre-requisites). 
+If you are on Mac or Linux, you can use [examples/kup.sh](./examples/kup.sh) to set up a local Keptn installation that uses splunk. This script creates a local minikube cluster, installs Keptn, Istio, splunk and the splunk integration for Keptn (check the script for pre-requisites). 
 
 To use the script,
 ```bash
-export DD_API_KEY="<your-datadog-api-key>" DD_APP_KEY="<your-datadog-app-key>" DD_SITE="datadoghq.com" 
+export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
 examples/kup.sh
 ```
-Check [the official docs](https://docs.datadoghq.com/account_management/api-app-keys/) for how to create the Datadog API key and Application key
+Check [the official docs](https://docs.splunkhq.com/account_management/api-app-keys/) for how to create the splunk API key and Application key
 
-Note: Application keys get the same permissions as you. You might want to narrow down the permissions (datadog-service only reads metrics from the API. Check the official docs linked above for more information).
+Note: Application keys get the same permissions as you. You might want to narrow down the permissions (splunk-service only reads metrics from the API. Check the official docs linked above for more information).
 
 ## If you already have a Keptn cluster running
-1. Install datadog
+1. Install splunk
 
-Add datadog helm repo:
+Add splunk helm repo:
 ```bash
-helm repo add datadog https://helm.datadoghq.com
+helm repo add splunk https://helm.splunkhq.com
 ```
-Install datadog helm chart:
+Install splunk helm chart:
 ```bash
-export DD_API_KEY="<your-datadog-api-key>" DD_APP_KEY="<your-datadog-app-key>" DD_SITE="datadoghq.com" 
-helm install datadog --set datadog.apiKey=${DD_API_KEY} datadog/datadog --set datadog.appKey=${DD_APP_KEY} --set datadog.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
+export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
+helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
 
 ```
-2. Install Keptn datadog-service to integrate Datadog with Keptn
+2. Install Keptn splunk-service to integrate splunk with Keptn
 ```bash
-export DD_API_KEY="<your-datadog-api-key>" DD_APP_KEY="<your-datadog-app-key>" DD_SITE="datadoghq.com" 
-# cd datadog-service
-helm install datadog-service ./helm --set datadogservice.ddApikey=${DD_API_KEY} --set datadogservice.ddAppKey=${DD_APP_KEY} --set datadogservice.ddSite=${DD_SITE}
+export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
+# cd splunk-service
+helm install splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
 ```
 
 3. Add SLI and SLO
 ```bash
-keptn add-resource --project="<your-project>" --stage="<stage-name>" --service="<service-name>" --resource=/path-to/your/sli-file.yaml --resourceUri=datadog/sli.yaml
+keptn add-resource --project="<your-project>" --stage="<stage-name>" --service="<service-name>" --resource=/path-to/your/sli-file.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="<your-project>"  --stage="<stage-name>" --service="<service-name>" --resource=/path-to/your/slo-file.yaml --resourceUri=slo.yaml
 ```
 Example:
 ```bash
-keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=datadog/sli.yaml
+keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/slo.yaml --resourceUri=slo.yaml
 ```
 Check [./quickstart/sli.yaml](./examples/quickstart/sli.yaml) and [./quickstart/slo.yaml](./examples/quickstart/slo.yaml) for example SLI and SLO. 
 
-4. Configure Keptn to use datadog SLI provider
+4. Configure Keptn to use splunk SLI provider
 Use keptn CLI version [0.15.0](https://github.com/keptn/keptn/releases/tag/0.15.0) or later.
 ```bash
-keptn configure monitoring datadog --project <project-name>  --service <service-name>
+keptn configure monitoring splunk --project <project-name>  --service <service-name>
 ```
 
 5. Trigger delivery
@@ -90,51 +90,51 @@ Observe the results in the [Keptn Bridge](https://keptn.sh/docs/0.19.x/bridge/)
 
 *Please fill in your versions accordingly*
 
-| Keptn Version    | [datadog-service Docker Image](https://github.com/keptn-sandbox/datadog-service/pkgs/container/datadog-service) |
+| Keptn Version    | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 |:----------------:|:----------------------------------------:|
-|       0.11.4      | ghcr.io/keptn-sandbox/datadog-service:0.1.0 |
-|       0.11.4      | ghcr.io/keptn-sandbox/datadog-service:0.2.0 |
-|       0.15.0      | ghcr.io/keptn-sandbox/datadog-service:0.15.0 |  
-|       0.15.1      | ghcr.io/keptn-sandbox/datadog-service:0.15.1 |
-|       0.16.0      | ghcr.io/keptn-sandbox/datadog-service:0.16.0 |
-|       0.17.0      | ghcr.io/keptn-sandbox/datadog-service:0.17.0 | 
-|       0.18.1      | ghcr.io/keptn-sandbox/datadog-service:0.18.1 | 
-|       0.19.0      | ghcr.io/keptn-sandbox/datadog-service:0.19.0 | 
+|       0.11.4      | ghcr.io/keptn-sandbox/splunk-service:0.1.0 |
+|       0.11.4      | ghcr.io/keptn-sandbox/splunk-service:0.2.0 |
+|       0.15.0      | ghcr.io/keptn-sandbox/splunk-service:0.15.0 |  
+|       0.15.1      | ghcr.io/keptn-sandbox/splunk-service:0.15.1 |
+|       0.16.0      | ghcr.io/keptn-sandbox/splunk-service:0.16.0 |
+|       0.17.0      | ghcr.io/keptn-sandbox/splunk-service:0.17.0 | 
+|       0.18.1      | ghcr.io/keptn-sandbox/splunk-service:0.18.1 | 
+|       0.19.0      | ghcr.io/keptn-sandbox/splunk-service:0.19.0 | 
 
-datadog-service version will match Keptn version starting from 0.15.0 version of Keptn e.g., datadog-service 0.15.x is compatible with Keptn 0.15.x 
+splunk-service version will match Keptn version starting from 0.15.0 version of Keptn e.g., splunk-service 0.15.x is compatible with Keptn 0.15.x 
 
 ## Installation
 
 ```bash
-export DD_API_KEY="<your-datadog-api-key>" DD_APP_KEY="<your-datadog-app-key>" DD_SITE="datadoghq.com" 
-# cd datadog-service
-helm install datadog-service ./helm --set datadogservice.ddApikey=${DD_API_KEY} --set datadogservice.ddAppKey=${DD_APP_KEY} --set datadogservice.ddSite=${DD_SITE}
+export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
+# cd splunk-service
+helm install splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
 ```
-Tell Keptn to use datadog as SLI provider for your project/service
+Tell Keptn to use splunk as SLI provider for your project/service
 ```bash
-keptn configure monitoring datadog --project <project-name>  --service <service-name>
+keptn configure monitoring splunk --project <project-name>  --service <service-name>
 ```
 
-This should install the `datadog-service` together with a Keptn `distributor` into the `keptn` namespace, which you can verify using
+This should install the `splunk-service` together with a Keptn `distributor` into the `keptn` namespace, which you can verify using
 
 ```console
-kubectl -n keptn get deployment datadog-service -o wide
-kubectl -n keptn get pods -l run=datadog-service
+kubectl -n keptn get deployment splunk-service -o wide
+kubectl -n keptn get pods -l run=splunk-service
 ```
 ### Up- or Downgrading
 
 Adapt and use the following command in case you want to up- or downgrade your installed version (specified by the `$VERSION` placeholder):
 
 ```bash
-helm upgrade datadog-service ./helm --set datadogservice.ddApikey=${DD_API_KEY} --set datadogservice.ddAppKey=${DD_APP_KEY} --set datadogservice.ddSite=${DD_SITE}
+helm upgrade splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
 ```
 
 ### Uninstall
 
-To delete a deployed *datadog-service* helm chart:
+To delete a deployed *splunk-service* helm chart:
 
 ```bash
-helm uninstall datadog-service
+helm uninstall splunk-service
 ```
 ## Running tests on your local machine
 port-forward Keptn API so that our tests can create/delete Keptn resources
@@ -143,7 +143,7 @@ port-forward Keptn API so that our tests can create/delete Keptn resources
 kubectl port-forward svc/api-gateway-nginx 5000:80 -nkeptn # in a separate terminal window
 ``` 
 
-from datadog-service repo
+from splunk-service repo
 
 ```bash 
 export ENABLE_E2E_TEST=true
@@ -190,14 +190,14 @@ If you want to get more insights into processing those CloudEvents or even defin
 
 ### Common tasks
 
-* Build the binary: `go build -ldflags '-linkmode=external' -v -o datadog-service`
+* Build the binary: `go build -ldflags '-linkmode=external' -v -o splunk-service`
 * Run tests: `go test -race -v ./...`
-* Build the docker image: `docker build . -t ghcr.io/keptn-sandbox/datadog-service:latest`
-* Run the docker image locally: `docker run --rm -it -p 8080:8080 ghcr.io/keptn-sandbox/datadog-service:latest`
-* Push the docker image to DockerHub: `docker push ghcr.io/keptn-sandbox/datadog-service:latest`
-* Watch the deployment using `kubectl`: `kubectl -n keptn get deployment datadog-service -o wide`
-* Get logs using `kubectl`: `kubectl -n keptn logs deployment/datadog-service -f`
-* Watch the deployed pods using `kubectl`: `kubectl -n keptn get pods -l run=datadog-service`
+* Build the docker image: `docker build . -t ghcr.io/keptn-sandbox/splunk-service:latest`
+* Run the docker image locally: `docker run --rm -it -p 8080:8080 ghcr.io/keptn-sandbox/splunk-service:latest`
+* Push the docker image to DockerHub: `docker push ghcr.io/keptn-sandbox/splunk-service:latest`
+* Watch the deployment using `kubectl`: `kubectl -n keptn get deployment splunk-service -o wide`
+* Get logs using `kubectl`: `kubectl -n keptn logs deployment/splunk-service -f`
+* Watch the deployed pods using `kubectl`: `kubectl -n keptn get pods -l run=splunk-service`
 
 
 ### Testing Cloud Events
@@ -234,13 +234,13 @@ If any problems occur, fix them in the release branch and test them again.
 
 Once you have confirmed that everything works and your version is ready to go, you should
 
-* create a new release on the release branch using the [GitHub releases page](https://github.com/keptn-sandbox/datadog-service/releases), and
+* create a new release on the release branch using the [GitHub releases page](https://github.com/keptn-sandbox/splunk-service/releases), and
 * merge any changes from the release branch back to the master branch.
 
 ## Known problems
-1. If the evaluation window of the query is too short, the api might return an empty result which datadog-service treats as 0 and fails the evaluation. [Issue](https://github.com/keptn-sandbox/datadog-service/issues/10)
-2. There is an on-purpose 60s delay before the datadog metrics API is called. This is because, calling the metrics API earlier leads to incorrect data. [Issue](https://github.com/keptn-sandbox/datadog-service/issues/8)
-3. Does not support default queries for throughput, error rate, request latency etc., i.e., you have to enter the entire query. [Issue](https://github.com/keptn-sandbox/datadog-service/issues/9)
+1. If the evaluation window of the query is too short, the api might return an empty result which splunk-service treats as 0 and fails the evaluation. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/10)
+2. There is an on-purpose 60s delay before the splunk metrics API is called. This is because, calling the metrics API earlier leads to incorrect data. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/8)
+3. Does not support default queries for throughput, error rate, request latency etc., i.e., you have to enter the entire query. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/9)
 
 ## License
 

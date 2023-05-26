@@ -30,7 +30,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		{FilePath: "../data/podtatoserver-0.1.0.tgz", ResourceName: "charts/podtatoserver.tgz"},
 		// {FilePath: "../data/locust.basic.py", ResourceName: "locust/basic.py"},
 		// {FilePath: "../data/locust.conf", ResourceName: "locust/locust.conf"},
-		{FilePath: "../data/podtatohead.sli.yaml", ResourceName: "datadog/sli.yaml"},
+		{FilePath: "../data/podtatohead.sli.yaml", ResourceName: "splunk/sli.yaml"},
 		{FilePath: "../data/podtatohead.slo.yaml", ResourceName: "slo.yaml"},
 	}
 
@@ -52,7 +52,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	}
 
 	// Test if the configuration of prometheus was without errors
-	t.Run("Configure Datadog", func(t *testing.T) {
+	t.Run("Configure splunk", func(t *testing.T) {
 		// Configure monitoring
 		configureMonitoring, err := readKeptnContextExtendedCE("../events/podtatohead.configure-monitoring.json")
 		require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		configureMonitoringContext, err := testEnv.API.SendEvent(configureMonitoring)
 		require.NoError(t, err)
 
-		// wait until datadog is configured correctly ...
+		// wait until splunk is configured correctly ...
 		requireWaitForEvent(t,
 			testEnv.API,
 			5*time.Second,

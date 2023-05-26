@@ -3,7 +3,7 @@
   "data": {
     "project": "e2e-project",
     "service": "podtatoserver",
-    "type": "datadog"
+    "type": "splunk"
   },
   "source": "https://github.com/keptn/keptn/cli#configuremonitoring",
   "specversion": "1.0",

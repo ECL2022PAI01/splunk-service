@@ -1,20 +1,20 @@
 
-datadog-service
+splunk-service
 ===========
 
-Helm Chart for the keptn datadog-service
+Helm Chart for the keptn splunk-service
 
 
 ## Configuration
 
-The following table lists the configurable parameters of the datadog-service chart and their default values.
+The following table lists the configurable parameters of the splunk-service chart and their default values.
 
 | Parameter                | Description             | Default        |
 | ------------------------ | ----------------------- | -------------- |
-| `datadogservice.image.repository` | Container image name | `"ghcr.io/keptn-sandbox/datadog-service"` |
-| `datadogservice.image.pullPolicy` | Kubernetes image pull policy | `"IfNotPresent"` |
-| `datadogservice.image.tag` | Container tag | `""` |
-| `datadogservice.service.enabled` | Creates a kubernetes service for the datadog-service | `true` |
+| `splunkservice.image.repository` | Container image name | `"ghcr.io/keptn-sandbox/splunk-service"` |
+| `splunkservice.image.pullPolicy` | Kubernetes image pull policy | `"IfNotPresent"` |
+| `splunkservice.image.tag` | Container tag | `""` |
+| `splunkservice.service.enabled` | Creates a kubernetes service for the splunk-service | `true` |
 | `distributor.stageFilter` | Sets the stage this helm service belongs to | `""` |
 | `distributor.serviceFilter` | Sets the service this helm service belongs to | `""` |
 | `distributor.projectFilter` | Sets the project this helm service belongs to | `""` |

@@ -38,13 +38,13 @@ keptn create project e2e-project --shipyard=shipyard/podtatohead.deployment.yaml
 
 keptn create service podtatoserver --project=e2e-project
 
-keptn add-resource --project="e2e-project" --stage="staging" --service="podtatoserver" --resource=data/podtatohead.sli.yaml --resourceUri=datadog/sli.yaml
+keptn add-resource --project="e2e-project" --stage="staging" --service="podtatoserver" --resource=data/podtatohead.sli.yaml --resourceUri=splunk/sli.yaml
 
 keptn add-resource --project=e2e-project --service=podtatoserver --all-stages --resource=data/podtatoserver-0.1.0.tgz --resourceUri=charts/podtatoserver.tgz
 
 keptn add-resource --project="e2e-project" --stage="staging" --service="podtatoserver" --resource=data/podtatohead.slo.yaml --resourceUri=slo.yaml
 
-keptn configure monitoring datadog --project=e2e-project --service=podtatoserver 
+keptn configure monitoring splunk --project=e2e-project --service=podtatoserver 
 
 keptn add-resource --project=e2e-project --service=podtatoserver --stage="staging" --resource=data/podtatohead.jes-config.yaml --resourceUri job/config.yaml
 

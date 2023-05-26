@@ -150,7 +150,7 @@ function wait_for_deployment_in_namespace() {
 INGRESS_HOST=localhost
 INGRESS_PORT=5000
 
-# Datadog does not work with the docker driver
+# splunk does not work with the docker driver
 # Note: you might need less cpu and memory than this
 # The numbers below are to be on the safe side.
 # If you are low on resources, 
@@ -236,39 +236,39 @@ print_headline "Adding some load tests"
 keptn add-resource --project=$PROJECT --service=$SERVICE --stage=hardening --resource=./quickstart/jmeter/jmeter.conf.yaml --resourceUri=jmeter/jmeter.conf.yaml
 keptn add-resource --project=$PROJECT --service=$SERVICE --stage=hardening --resource=./quickstart/jmeter/load.jmx --resourceUri=jmeter/load.jmx
 
-# to tell lighthouse to use Datadog for podtatohead project
-keptn configure monitoring datadog --project $PROJECT --service $SERVICE
+# to tell lighthouse to use splunk for podtatohead project
+keptn configure monitoring splunk --project $PROJECT --service $SERVICE
 
 
 # ---------------------------------------------- #
 
 # This block of code
-# 1. Installs Datadog
+# 1. Installs splunk
 # 2. Sets it up with the API keys in a K8s Secret
-# 3. Installs datadog integration for Keptn
+# 3. Installs splunk integration for Keptn
 
-helm repo add datadog https://helm.datadoghq.com
+helm repo add splunk https://helm.splunkhq.com
 
-# Install datadog
-# Uncomment this line if you want to install the Datadog operator
-# helm install my-datadog-operator datadog/datadog-operator
+# Install splunk
+# Uncomment this line if you want to install the splunk operator
+# helm install my-splunk-operator splunk/splunk-operator
 # kubectl apply -f ~/sandbox/snippets/ddagent.yaml
 # kubectl apply -f ~/sandbox/snippets/ddmonitor.yaml 
-# install datadog api secret
-# kubectl create secret generic datadog-secret --from-literal api-key=${DD_API_KEY} --from-literal app-key=${DD_APP_KEY}
+# install splunk api secret
+# kubectl create secret generic splunk-secret --from-literal api-key=${DD_API_KEY} --from-literal app-key=${DD_APP_KEY}
 
-# # Install datadog using the Datadog helm chart
-# helm install datadog --set datadog.apiKey=${DD_API_KEY} datadog/datadog --set datadog.appKey=${DD_APP_KEY} --set datadog.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
+# # Install splunk using the splunk helm chart
+# helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
 
-helm install datadog --set datadog.apiKey=${DD_API_KEY} datadog/datadog --set datadog.appKey=${DD_APP_KEY} --set datadog.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
+helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
 
 
-# Install datadog-service integration for Keptn
-# kubectl apply -f ~/sandbox/datadog-service/deploy/service.yaml
-helm install datadog-service ../helm --set datadogservice.ddApikey=${DD_API_KEY} --set datadogservice.ddAppKey=${DD_APP_KEY} --set datadogservice.ddSite=${DD_SITE}
+# Install splunk-service integration for Keptn
+# kubectl apply -f ~/sandbox/splunk-service/deploy/service.yaml
+helm install splunk-service ../helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
 
-# Add datadog sli and slo
-keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=datadog/sli.yaml
+# Add splunk sli and slo
+keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/slo.yaml --resourceUri=slo.yaml
 
 
@@ -294,7 +294,7 @@ print_headline "Have a look at the Keptn Bridge and explore the demo project"
 echo "You can run a new delivery sequence with the following command"
 echo "keptn trigger delivery --project=$PROJECT --service=$SERVICE --image=$IMAGE:$VERSION"
 
-print_headline "Multi-stage delviery demo with SLO-based quality gates for Datadog Keptn integration has been successfully set up"
+print_headline "Multi-stage delviery demo with SLO-based quality gates for splunk Keptn integration has been successfully set up"
 
 echo "You can run a new delivery sequence with the following command"
 echo "keptn trigger delivery --project=$PROJECT --service=$SERVICE --image=$IMAGE:$VERSION"

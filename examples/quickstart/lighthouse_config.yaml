@@ -4,4 +4,4 @@ metadata:
   name: lighthouse-config-podtatohead
   namespace: keptn
 data:
-  sli-provider: "datadog"
+  sli-provider: "splunk"

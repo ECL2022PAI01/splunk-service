@@ -9,10 +9,10 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/kelseyhightower/envconfig"
 
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -30,8 +30,15 @@ type envConfig struct {
 	// Whether we are running locally (e.g., for testing) or on production
 	Env string `envconfig:"ENV" default:"local"`
 	// URL of the Keptn configuration service (this is where we can fetch files from the config repo)
+
 	ConfigurationServiceUrl string `envconfig:"CONFIGURATION_SERVICE" default:""`
+
+	SplunkApiToken string `envconfig:"SP_API_TOKEN" default:""`
+	SplunkHost     string `envconfig:"SP_HOST" default:""`
+	SplunkPort     string `envconfig:"SP_PORT" default:"1234"`
 }
+
+var env envConfig
 
 // ServiceName specifies the current services name (e.g., used as source when sending CloudEvents)
 const ServiceName = "splunk-service"
@@ -72,11 +79,6 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	logger.Infof("gotEvent(%s): %s - %s", event.Type(), ddKeptn.KeptnContext, event.Context.GetID())
-
-	if err != nil {
-		logger.Errorf("failed to parse incoming cloudevent: %v", err)
-		return err
-	}
 
 	/**
 	* CloudEvents types in Keptn 0.8.0 follow the following pattern:
@@ -158,28 +160,8 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
  * env=runlocal   -> will fetch resources from local drive instead of configuration service
  */
 func main() {
-	logger.SetFormatter(&utils.Formatter{
-		Fields: logger.Fields{
-			"service":      "splunk-service",
-			"eventId":      "",
-			"keptnContext": "",
-		},
-		BuiltinFormatter: &logger.TextFormatter{},
-	})
-
-	if os.Getenv(envVarLogLevel) != "" {
-		logLevel, err := logger.ParseLevel(os.Getenv(envVarLogLevel))
-		if err != nil {
-			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
-		} else {
-			logger.SetLevel(logLevel)
-		}
-	}
-
-	var env envConfig
+	configureLogger("", "")
 	if err := envconfig.Process("", &env); err != nil {
-		logger.Error("HERRRE FROM MAIN")
-
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
@@ -195,7 +177,6 @@ func _main(args []string, env envConfig) int {
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
 	}
-
 	keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 
 	logger.Info("Starting splunk-service...")
@@ -220,4 +201,24 @@ func _main(args []string, env envConfig) int {
 	logger.Infof("Starting receiver")
 	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
 	return 0
+}
+
+func configureLogger(eventID, keptnContext string) {
+	logger.SetFormatter(&utils.Formatter{
+		Fields: logger.Fields{
+			"service":      "splunk-service",
+			"eventId":      eventID,
+			"keptnContext": keptnContext,
+		},
+		BuiltinFormatter: &logger.TextFormatter{},
+	})
+
+	if os.Getenv(envVarLogLevel) != "" {
+		logLevel, err := logger.ParseLevel(os.Getenv(envVarLogLevel))
+		if err != nil {
+			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
+		} else {
+			logger.SetLevel(logLevel)
+		}
+	}
 }
