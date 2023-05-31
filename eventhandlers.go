@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
@@ -18,6 +19,10 @@ import (
 const (
 	sliFile = "splunk/sli.yaml"
 )
+
+// Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
+var wg sync.WaitGroup
+var mutex = &sync.RWMutex{}
 
 // We have to put a min of 60s of sleep for the splunk API to reflect the data correctly
 // More info: https://github.com/kuro-jojo/splunk-service/issues/8
@@ -100,70 +105,25 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
 
+	// get splunk API URL, PORT and TOKEN
+	splunkCreds, err := getSplunkCredentials()
+	if err != nil {
+		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		return err
+	}
+
 	logger.Info("indicators:", indicators)
 	errored := false
 
 	for _, indicatorName := range indicators {
-		// Pulling the data from splunk api immediately gives incorrect data in api response
-		// we have to wait for some time for the correct data to be reflected in the api response
-		// TODO: Find a better way around the sleep time for splunk api
-		query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
-		logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
-
-		// get splunk API URL for the provided Project from Kubernetes Config Map
-		splunkCreds, err := getSplunkCredentials()
-		if err != nil {
-			logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-		}
-
-		params := splunksdk.RequestParams{
-			SearchQuery: query,
-		}
-		spReq := splunksdk.SplunkRequest{
-			// create the http client
-			Client: &http.Client{
-				Timeout: time.Duration(1) * time.Second,
-			},
-			Params:  params,
-			Headers: map[string]string{},
-		}
-		sc := splunksdk.SplunkCreds{
-			Host:  splunkCreds.Host,
-			Port:  splunkCreds.Port,
-			Token: splunkCreds.Token,
-		}
-
-		// get the metric we want
-		sliValue, err := splunksdk.GetMetricFromNewJob(&spReq, &sc)
-
-		if err != nil {
-			logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
-			errored = true
+		wg.Add(1)
+		go handleSpecificSli(indicatorName, splunkCreds, data, sliConfig, start, end, sliResults, errored)
+		if errored {
 			continue
 		}
-
-		logger.Infof("response from the metrics api: %v", sliValue)
-
-		if err != nil {
-			sliResult := &keptnv2.SLIResult{
-				Metric:  indicatorName,
-				Value:   0,
-				Success: false,
-				Message: err.Error(),
-			}
-			sliResults = append(sliResults, sliResult)
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
-		} else {
-			sliResult := &keptnv2.SLIResult{
-				Metric:  indicatorName,
-				Value:   sliValue,
-				Success: true,
-			}
-			sliResults = append(sliResults, sliResult)
-			logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %s", sliResult)
-		}
-
 	}
+
+	wg.Wait()
 
 	// Step 7 - Build get-sli.finished event data
 	getSliFinishedEventData := &keptnv2.GetSLIFinishedEventData{
@@ -288,5 +248,68 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 	}
 
 	return &pc, nil
+
+}
+
+func handleSpecificSli(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, start time.Time, end time.Time, sliResults []*keptnv2.SLIResult, errored bool) {
+
+	// Pulling the data from splunk api immediately gives incorrect data in api response
+	// we have to wait for some time for the correct data to be reflected in the api response
+	// TODO: Find a better way around the sleep time for splunk api
+
+	defer wg.Done()
+
+	query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
+	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
+
+	params := splunksdk.RequestParams{
+		SearchQuery: query,
+	}
+	spReq := splunksdk.SplunkRequest{
+		// create the http client
+		Client: &http.Client{
+			Timeout: time.Duration(1) * time.Second,
+		},
+		Params:  params,
+		Headers: map[string]string{},
+	}
+	sc := splunksdk.SplunkCreds{
+		Host:  splunkCreds.Host,
+		Port:  splunkCreds.Port,
+		Token: splunkCreds.Token,
+	}
+
+	// get the metric we want
+	sliValue, err := splunksdk.GetMetricFromNewJob(&spReq, &sc)
+
+	if err != nil {
+		logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
+		errored = true
+	}
+
+	logger.Infof("response from the metrics api: %v", sliValue)
+
+	if err != nil {
+		sliResult := &keptnv2.SLIResult{
+			Metric:  indicatorName,
+			Value:   0,
+			Success: false,
+			Message: err.Error(),
+		}
+		sliResults = append(sliResults, sliResult)
+		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
+	} else {
+		sliResult := &keptnv2.SLIResult{
+			Metric:  indicatorName,
+			Value:   sliValue,
+			Success: true,
+		}
+
+		mutex.Lock()
+		sliResults = append(sliResults, sliResult)
+		mutex.Unlock()
+
+		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %s", sliResult)
+	}
 
 }
