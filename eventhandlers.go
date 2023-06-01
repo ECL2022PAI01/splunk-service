@@ -104,7 +104,10 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 	for _, indicatorName := range indicators {
 		wg.Add(1)
-		go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults)
+		go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults, &errored)
+		if errored {
+			break
+		}
 	}
 
 	wg.Wait()
@@ -200,7 +203,7 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 	return &pc, nil
 }
 
-func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, sliResults *[]*keptnv2.SLIResult) {
+func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, sliResults *[]*keptnv2.SLIResult, errored *bool) {
 
 	defer wg.Done()
 
@@ -236,6 +239,8 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 	sliValue, err := splunksdk.GetMetricFromNewJob(&spReq, &sc)
 	if err != nil {
 		logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
+		*errored = true
+		return
 	}
 
 	logger.Infof("response from the metrics api: %v", sliValue)
