@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
@@ -49,13 +51,13 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		return
 	}
 
-	specificEvent := &keptnv2.GetSLITriggeredEventData{}
-	err = incomingEvent.DataAs(specificEvent)
+	data := &keptnv2.GetSLITriggeredEventData{}
+	err = incomingEvent.DataAs(data)
 	if err != nil {
 		t.Errorf("Error getting keptn event data")
 	}
 
-	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, specificEvent)
+	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data)
 	if err != nil {
 		t.Errorf("Error: " + err.Error())
 	}
@@ -76,4 +78,29 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	if keptnv2.GetFinishedEventType(keptnv2.GetSLITaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
 		t.Errorf("Expected a get-sli.finished event type")
 	}
+}
+
+func TestHandleSpecificSli(t *testing.T){
+	indicatorName := "test"
+	splunkCreds := &splunkCredentials{Host : "localhost", Port: "8089", Token: "random"}
+	data := &keptnv2.GetSLITriggeredEventData{}
+	start := time.Time{}
+	end := time.Time{}
+	sliResults := []*keptnv2.SLIResult{}
+	errored := false
+	sliConfig := make(map[string]string, 1)
+	sliConfig["test"] = "test"
+
+	wg.Add(1)
+	go handleSpecificSli(indicatorName, splunkCreds, data, sliConfig, start, end, &sliResults, errored)
+	wg.Wait()
+
+	if len(sliResults)!=1{
+		t.Error("Ëxpected to add a keptnv2.SLIResult to sliResults but nothing added.")
+	}
+
+	if len(sliResults)==1 && reflect.TypeOf(sliResults[0]).String()!= "*github.com/keptn/go-utils/pkg/lib/v0_2_0.SLIResult"{
+		t.Errorf("Ëxpected to add a keptnv2.SLIResult to sliResults but %T was added, %v.", sliResults[0], reflect.TypeOf(sliResults[0]).String())
+	}
+
 }
