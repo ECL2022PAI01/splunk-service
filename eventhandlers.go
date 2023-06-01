@@ -3,9 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -54,17 +52,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to send task started CloudEvent (%s), aborting...", err.Error())
 		logger.Error(errMsg)
-		return err
-	}
-
-	start, err := parseUnixTimestamp(data.GetSLI.Start)
-	if err != nil {
-		logger.Errorf("unable to parse sli start timestamp: %v", err)
-		return err
-	}
-	end, err := parseUnixTimestamp(data.GetSLI.End)
-	if err != nil {
-		logger.Errorf("unable to parse sli end timestamp: %v", err)
 		return err
 	}
 
@@ -117,13 +104,13 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 	for _, indicatorName := range indicators {
 		wg.Add(1)
-		go handleSpecificSli(indicatorName, splunkCreds, data, sliConfig, start, end, sliResults, errored)
-		if errored {
-			continue
-		}
+		go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults)
 	}
 
 	wg.Wait()
+	for _, sliResult := range sliResults {
+		logger.Infof("SLI RESULTS for indicator %s : %v", sliResult.Metric, sliResult.Value)
+	}
 
 	// Step 7 - Build get-sli.finished event data
 	getSliFinishedEventData := &keptnv2.GetSLIFinishedEventData{
@@ -163,7 +150,6 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
 
 	logger.Infof("Handling configure-monitoring.triggered Event: %s", incomingEvent.Context.GetID())
-
 	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
 	if err != nil {
 		logger.Errorf("err when sending task started the event: %v", err)
@@ -193,40 +179,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	return nil
 }
 
-func replaceQueryParameters(data *keptnv2.GetSLITriggeredEventData, query string, start, end time.Time) string {
-	query = strings.Replace(query, "$PROJECT", data.Project, -1)
-	query = strings.Replace(query, "$STAGE", data.Stage, -1)
-	query = strings.Replace(query, "$SERVICE", data.Service, -1)
-	query = strings.Replace(query, "$project", data.Project, -1)
-	query = strings.Replace(query, "$stage", data.Stage, -1)
-	query = strings.Replace(query, "$service", data.Service, -1)
-	durationString := strconv.FormatInt(getDurationInSeconds(start, end), 10)
-	query = strings.Replace(query, "$DURATION", durationString, -1)
-	return query
-}
-
-func getDurationInSeconds(start, end time.Time) int64 {
-
-	seconds := end.Sub(start).Seconds()
-	return int64(math.Ceil(seconds))
-}
-
-func parseUnixTimestamp(timestamp string) (time.Time, error) {
-	parsedTime, err := time.Parse(time.RFC3339, timestamp)
-	if err == nil {
-		return parsedTime, nil
-	}
-
-	timestampInt, err := strconv.ParseInt(timestamp, 10, 64)
-	if err != nil {
-		return time.Now(), err
-	}
-	unix := time.Unix(timestampInt, 0)
-	return unix, nil
-}
-
 // getSplunkCredentials get the splunk host, port and api token from the environment variables set from secret
-
 func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
@@ -240,35 +193,35 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token + " and " + pc.Port)
 
 	} else {
-
 		logger.Info("SP_HOST, SP_PORT and/or SP_API_TOKEN have not correctly been set")
-
 		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT and/or SP_API_TOKEN")
-
 	}
 
 	return &pc, nil
-
 }
 
-func handleSpecificSli(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, start time.Time, end time.Time, sliResults []*keptnv2.SLIResult, errored bool) {
-
-	// Pulling the data from splunk api immediately gives incorrect data in api response
-	// we have to wait for some time for the correct data to be reflected in the api response
-	// TODO: Find a better way around the sleep time for splunk api
+func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, sliResults *[]*keptnv2.SLIResult) {
 
 	defer wg.Done()
 
-	query := replaceQueryParameters(data, sliConfig[indicatorName], start, end)
-	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, start.Unix(), end.Unix())
+	query := sliConfig[indicatorName]
+	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, data.GetSLI.Start, data.GetSLI.End)
 
 	params := splunksdk.RequestParams{
 		SearchQuery: query,
 	}
+
+	// no time range specified in the splunk search
+	if !retrieveSearchTimeRange(&params) {
+		// use the time specified in keptn evaluation event instead
+		params.EarliestTime = data.GetSLI.Start
+		params.LatestTime = data.GetSLI.End
+	}
+
 	spReq := splunksdk.SplunkRequest{
 		// create the http client
 		Client: &http.Client{
-			Timeout: time.Duration(1) * time.Second,
+			Timeout: time.Duration(60) * time.Second,
 		},
 		Params:  params,
 		Headers: map[string]string{},
@@ -281,10 +234,8 @@ func handleSpecificSli(indicatorName string, splunkCreds *splunkCredentials, dat
 
 	// get the metric we want
 	sliValue, err := splunksdk.GetMetricFromNewJob(&spReq, &sc)
-
 	if err != nil {
 		logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
-		errored = true
 	}
 
 	logger.Infof("response from the metrics api: %v", sliValue)
@@ -296,8 +247,11 @@ func handleSpecificSli(indicatorName string, splunkCreds *splunkCredentials, dat
 			Success: false,
 			Message: err.Error(),
 		}
-		sliResults = append(sliResults, sliResult)
+		mutex.Lock()
+		*sliResults = append(*sliResults, sliResult)
+		mutex.Unlock()
 		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
+
 	} else {
 		sliResult := &keptnv2.SLIResult{
 			Metric:  indicatorName,
@@ -306,10 +260,31 @@ func handleSpecificSli(indicatorName string, splunkCreds *splunkCredentials, dat
 		}
 
 		mutex.Lock()
-		sliResults = append(sliResults, sliResult)
+		*sliResults = append(*sliResults, sliResult)
 		mutex.Unlock()
 
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %s", sliResult)
+		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 	}
 
+}
+
+// get the earliest and latest time from the splunk search
+func retrieveSearchTimeRange(params *splunksdk.RequestParams) bool {
+
+	// check if an earliest and/or latest time are set in the search
+	search := params.SearchQuery
+	queries := strings.Split(search, " ")
+	for _, q := range queries {
+
+		if strings.HasPrefix(q, "earliest") && params.EarliestTime == "" {
+			params.EarliestTime = q[len("earliest")+1:]
+		} else if strings.HasPrefix(q, "latest") && params.LatestTime == "" {
+			params.LatestTime = q[len("latest")+1:]
+		}
+
+		if params.EarliestTime != "" && params.LatestTime != "" {
+			return true
+		}
+	}
+	return false
 }

@@ -7,7 +7,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.12.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/keptn/go-utils v0.20.0
-	github.com/kuro-jojo/splunk-sdk-go v0.0.1
+	github.com/kuro-jojo/splunk-sdk-go v1.0.8
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.1
@@ -71,5 +71,4 @@ require (
 require (
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-
 )
