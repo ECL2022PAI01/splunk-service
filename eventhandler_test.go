@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
@@ -84,15 +83,13 @@ func TestHandleSpecificSli(t *testing.T){
 	indicatorName := "test"
 	splunkCreds := &splunkCredentials{Host : "localhost", Port: "8089", Token: "random"}
 	data := &keptnv2.GetSLITriggeredEventData{}
-	start := time.Time{}
-	end := time.Time{}
 	sliResults := []*keptnv2.SLIResult{}
 	errored := false
 	sliConfig := make(map[string]string, 1)
 	sliConfig["test"] = "test"
 
 	wg.Add(1)
-	go handleSpecificSli(indicatorName, splunkCreds, data, sliConfig, start, end, &sliResults, errored)
+	go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults, &errored)
 	wg.Wait()
 
 	if len(sliResults)!=1{
