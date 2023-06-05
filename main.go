@@ -7,11 +7,11 @@ import (
 	"os"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-
-	keptnv1 "github.com/keptn/go-utils/pkg/lib"
-	"github.com/keptn/go-utils/pkg/lib/keptn"
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	keptnv1 "github.com/kuro-jojo/go-utils/pkg/lib"
+	"github.com/kuro-jojo/go-utils/pkg/lib/keptn"
+	keptnv2 "github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
@@ -35,7 +35,7 @@ type envConfig struct {
 
 	SplunkApiToken string `envconfig:"SP_API_TOKEN" default:""`
 	SplunkHost     string `envconfig:"SP_HOST" default:""`
-	SplunkPort     string `envconfig:"SP_PORT" default:"1234"`
+	SplunkPort     string `envconfig:"SP_PORT" default:"8089"`
 }
 
 var env envConfig
@@ -74,6 +74,9 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
+	logger.Infof("%v", ddKeptn.ResourceHandler.AuthHeader)
+	logger.Infof("%v", ddKeptn.ResourceHandler.AuthToken)
+	// ddKeptn.ResourceHandler.AuthToken = "nBsd0T3fHwX8csWJQPgwAXlTJBJzL2z4xK1LAgnBfvMdb"
 	if err != nil {
 		return errors.New("Could not create Keptn Handler: " + err.Error())
 	}
@@ -96,7 +99,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* Keptn reserves some Cloud Event types, please read up on that here: https://keptn.sh/docs/0.8.x/manage/shipyard/
 	*
 	* For those Cloud Events the keptn/go-utils library conveniently provides several data structures
-	* and strings in github.com/keptn/go-utils/pkg/lib/v0_2_0, e.g.:
+	* and strings in github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0, e.g.:
 	* - deployment: DeploymentTaskName, DeploymentTriggeredEventData, DeploymentStartedEventData, DeploymentFinishedEventData
 	* - test: TestTaskName, TestTriggeredEventData, TestStartedEventData, TestFinishedEventData
 	* - ... (they all follow the same pattern)
@@ -165,21 +168,31 @@ func main() {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
-	os.Exit(_main(os.Args[1:], env))
+	os.Exit(_main(os.Args[1:]))
 }
 
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
-func _main(args []string, env envConfig) int {
+func _main(args []string) int {
 	// configure keptn options
+	// env.Env = "dev"
 	if env.Env == "local" {
+		godotenv.Load(".env.local")
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
-	}
-	keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 
-	logger.Info("Starting splunk-service...")
+		keptnOptions.ConfigurationServiceURL = os.Getenv("RESOURCE_SERVICE_URL")
+		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
+		env.SplunkHost = os.Getenv("SPLUNK_HOST")
+		env.SplunkPort = os.Getenv("SPLUNK_PORT")
+	} else {
+		// keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
+		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/api/resource-service"
+	}
+	keptnOptions.ConfigurationServiceURL = "localhost:8080"
+
+	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
 
 	ctx := context.Background()

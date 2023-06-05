@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
+	keptnv2 "github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0"
+
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	splunksdk "github.com/kuro-jojo/splunk-sdk-go"
 	logger "github.com/sirupsen/logrus"
 )
@@ -71,13 +72,17 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
+
+	logger.Infof("EVENT %v", ddKeptn.ResourceHandler.AuthHeader)
+	logger.Infof("EVENT %v", ddKeptn.ResourceHandler.AuthToken)
+	logger.Infof("EVENT %v", ddKeptn.ResourceHandler)
 	if err != nil {
 		// failed to fetch sli config file
 		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFile, err.Error())
 		logger.Error(errMsg)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
-		_, err = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
+		_, _ = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
 			Status: keptnv2.StatusErrored,
 			Result: keptnv2.ResultFailed,
 			Labels: labels,
@@ -85,7 +90,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 		return err
 	}
-
+	logger.Infof("KEPTN %v", ddKeptn.ResourceHandler)
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results
@@ -210,6 +215,10 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 	query := sliConfig[indicatorName]
 	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, data.GetSLI.Start, data.GetSLI.End)
 
+	if query == "" {
+		*errored = true
+		return
+	}
 	params := splunksdk.RequestParams{
 		SearchQuery: query,
 	}

@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/keptn/go-utils/pkg/api/models"
+	"github.com/joho/godotenv"
+	"github.com/kuro-jojo/go-utils/pkg/api/models"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 
@@ -28,6 +29,7 @@ type KeptnConnectionDetails struct {
 
 // readKeptnConnectionDetailsFromEnv parses the environment variables and creates a KeptnConnectionDetails
 func readKeptnConnectionDetailsFromEnv() KeptnConnectionDetails {
+	godotenv.Load(".env")
 	return KeptnConnectionDetails{
 		Endpoint: os.Getenv("KEPTN_ENDPOINT"),
 		APIToken: os.Getenv("KEPTN_API_TOKEN"),

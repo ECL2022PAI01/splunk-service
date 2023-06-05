@@ -11,10 +11,10 @@
     },
     "labels": null,
     "message": "",
-    "project": "podtatohead",
+    "project": "test",
     "result": "",
-    "service": "helloservice",
-    "stage": "hardening",
+    "service": "splunk",
+    "stage": "production",
     "status": ""
   },
   "id": "409539ae-c0b9-436e-abc6-c257292e28ff",
