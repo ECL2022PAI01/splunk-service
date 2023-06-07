@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/kuro-jojo/go-utils/pkg/api/models"
-	api "github.com/kuro-jojo/go-utils/pkg/api/utils"
+	"github.com/keptn/go-utils/pkg/api/models"
+	api "github.com/keptn/go-utils/pkg/api/utils"
 )
 
 const authHeaderName = "x-token"

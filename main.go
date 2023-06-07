@@ -9,9 +9,10 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-	keptnv1 "github.com/kuro-jojo/go-utils/pkg/lib"
-	"github.com/kuro-jojo/go-utils/pkg/lib/keptn"
-	keptnv2 "github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0"
+	api "github.com/keptn/go-utils/pkg/api/utils"
+	keptnv1 "github.com/keptn/go-utils/pkg/lib"
+	"github.com/keptn/go-utils/pkg/lib/keptn"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
@@ -74,12 +75,12 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
-
 	if env.Env == "local" {
-		ddKeptn.ResourceHandler.ResourceHandler.AuthToken = os.Getenv("KEPTN_API_TOKEN")
-		ddKeptn.ResourceHandler.ResourceHandler.AuthHeader = "x-token"
+		authToken := os.Getenv("KEPTN_API_TOKEN")
+		authHeader := "x-token"
+		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
 	}
-	
+
 	if err != nil {
 		return errors.New("Could not create Keptn Handler: " + err.Error())
 	}
@@ -102,7 +103,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* Keptn reserves some Cloud Event types, please read up on that here: https://keptn.sh/docs/0.8.x/manage/shipyard/
 	*
 	* For those Cloud Events the keptn/go-utils library conveniently provides several data structures
-	* and strings in github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0, e.g.:
+	* and strings in github.com/keptn/go-utils/pkg/lib/v0_2_0, e.g.:
 	* - deployment: DeploymentTaskName, DeploymentTriggeredEventData, DeploymentStartedEventData, DeploymentFinishedEventData
 	* - test: TestTaskName, TestTriggeredEventData, TestStartedEventData, TestFinishedEventData
 	* - ... (they all follow the same pattern)

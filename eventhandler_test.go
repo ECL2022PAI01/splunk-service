@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0/fake"
+	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
-	keptn "github.com/kuro-jojo/go-utils/pkg/lib/keptn"
-	keptnv2 "github.com/kuro-jojo/go-utils/pkg/lib/v0_2_0"
+	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 )

@@ -7,7 +7,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.14.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/kuro-jojo/go-utils v0.0.14
+	github.com/keptn/go-utils v0.20.1
 	github.com/kuro-jojo/splunk-sdk-go v1.0.8
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/sirupsen/logrus v1.9.2
