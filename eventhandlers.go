@@ -68,16 +68,12 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
-	ddKeptn.ResourceHandler.ResourceHandler.AuthToken = "nBsd0T3fHwX8csWJQPgwAXlTJBJzL2z4xK1LAgnBfvMdb"
-	ddKeptn.ResourceHandler.ResourceHandler.AuthHeader = "x-token"
+
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 
-	logger.Infof("EVENT %v", ddKeptn.ResourceHandler.AuthHeader)
-	logger.Infof("EVENT %v", ddKeptn.ResourceHandler.AuthToken)
-	logger.Infof("EVENT %v", ddKeptn.ResourceHandler)
 	if err != nil {
 		// failed to fetch sli config file
 		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFile, err.Error())

@@ -74,9 +74,12 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
-	logger.Infof("%v", ddKeptn.ResourceHandler.AuthHeader)
-	logger.Infof("%v", ddKeptn.ResourceHandler.AuthToken)
-	// ddKeptn.ResourceHandler.AuthToken = "nBsd0T3fHwX8csWJQPgwAXlTJBJzL2z4xK1LAgnBfvMdb"
+
+	if env.Env == "local" {
+		ddKeptn.ResourceHandler.ResourceHandler.AuthToken = os.Getenv("KEPTN_API_TOKEN")
+		ddKeptn.ResourceHandler.ResourceHandler.AuthHeader = "x-token"
+	}
+	
 	if err != nil {
 		return errors.New("Could not create Keptn Handler: " + err.Error())
 	}
@@ -182,15 +185,14 @@ func _main(args []string) int {
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
 
-		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/"
+		keptnOptions.ConfigurationServiceURL = os.Getenv("RESOURCE_SERVICE_URL")
 		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
 		env.SplunkHost = os.Getenv("SPLUNK_HOST")
 		env.SplunkPort = os.Getenv("SPLUNK_PORT")
+
 	} else {
-		// keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
-		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/"
+		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
-	keptnOptions.ConfigurationServiceURL = "http://localhost:8090/api/resource-service"
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
