@@ -182,15 +182,15 @@ func _main(args []string) int {
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
 
-		keptnOptions.ConfigurationServiceURL = os.Getenv("RESOURCE_SERVICE_URL")
+		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/"
 		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
 		env.SplunkHost = os.Getenv("SPLUNK_HOST")
 		env.SplunkPort = os.Getenv("SPLUNK_PORT")
 	} else {
 		// keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
-		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/api/resource-service"
+		keptnOptions.ConfigurationServiceURL = "http://localhost:8090/"
 	}
-	keptnOptions.ConfigurationServiceURL = "localhost:8080"
+	keptnOptions.ConfigurationServiceURL = "http://localhost:8090/api/resource-service"
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)

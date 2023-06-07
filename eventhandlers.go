@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	sliFile = "splunk/sli.yaml"
+	sliFile = "sli.yaml"
 )
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
@@ -68,6 +68,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
+	ddKeptn.ResourceHandler.ResourceHandler.AuthToken = "nBsd0T3fHwX8csWJQPgwAXlTJBJzL2z4xK1LAgnBfvMdb"
+	ddKeptn.ResourceHandler.ResourceHandler.AuthHeader = "x-token"
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
