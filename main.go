@@ -14,12 +14,14 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
+	api "github.com/keptn/go-utils/pkg/api/utils"
 )
 
 var keptnOptions = keptn.KeptnOpts{}
 
 const (
 	envVarLogLevel = "LOG_LEVEL"
+	keptnApiToken = "8rYqK6TUbi7YXzlcFZFEtRwsJL2ncGxJE01nHfZ3USy7G"
 )
 
 type envConfig struct {
@@ -74,6 +76,8 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
+	ddKeptn.ResourceHandler= api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, keptnApiToken, "x-token" , ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
+	logger.Infof("RESSOURCE HANDLER %v", ddKeptn.ResourceHandler)
 	if err != nil {
 		return errors.New("Could not create Keptn Handler: " + err.Error())
 	}
@@ -164,6 +168,7 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
+	logger.Infof("ENV VARS : %v", env)
 
 	os.Exit(_main(os.Args[1:], env))
 }
@@ -178,6 +183,7 @@ func _main(args []string, env envConfig) int {
 		keptnOptions.UseLocalFileSystem = true
 	}
 	keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
+	keptnOptions.ConfigurationServiceURL = "http://localhost:8090/api/resource-service"
 
 	logger.Info("Starting splunk-service...")
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)

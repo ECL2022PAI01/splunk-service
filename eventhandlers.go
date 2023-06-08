@@ -14,9 +14,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-const (
-	sliFile = "splunk/sli.yaml"
-)
+var sliFile = "sli.yaml"
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
 var wg sync.WaitGroup
@@ -245,31 +243,17 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 
 	logger.Infof("response from the metrics api: %v", sliValue)
 
-	if err != nil {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   0,
-			Success: false,
-			Message: err.Error(),
-		}
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
-
-	} else {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   sliValue,
-			Success: true,
-		}
-
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
+	sliResult := &keptnv2.SLIResult{
+		Metric:  indicatorName,
+		Value:   sliValue,
+		Success: true,
 	}
+
+	mutex.Lock()
+	*sliResults = append(*sliResults, sliResult)
+	mutex.Unlock()
+
+	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 
 }
 
