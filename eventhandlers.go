@@ -8,14 +8,16 @@ import (
 	"sync"
 	"time"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunksdk "github.com/kuro-jojo/splunk-sdk-go"
+
+	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
 	logger "github.com/sirupsen/logrus"
 )
 
 const (
-	sliFile = "splunk/sli.yaml"
+	sliFile = "sli.yaml"
 )
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
@@ -67,17 +69,19 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
+
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
+
 	if err != nil {
 		// failed to fetch sli config file
 		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFile, err.Error())
 		logger.Error(errMsg)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
-		_, err = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
+		_, _ = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
 			Status: keptnv2.StatusErrored,
 			Result: keptnv2.ResultFailed,
 			Labels: labels,
@@ -85,7 +89,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 		return err
 	}
-
+	logger.Infof("ResourceHandler : %v", ddKeptn.ResourceHandler)
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results
@@ -210,7 +214,11 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 	query := sliConfig[indicatorName]
 	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", query, data.GetSLI.Start, data.GetSLI.End)
 
-	params := splunksdk.RequestParams{
+	if query == "" {
+		*errored = true
+		return
+	}
+	params := splunk.RequestParams{
 		SearchQuery: query,
 	}
 
@@ -220,61 +228,48 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		params.EarliestTime = data.GetSLI.Start
 		params.LatestTime = data.GetSLI.End
 	}
-
-	spReq := splunksdk.SplunkRequest{
-		// create the http client
+	client := splunk.SplunkClient{
 		Client: &http.Client{
 			Timeout: time.Duration(60) * time.Second,
 		},
-		Params:  params,
-		Headers: map[string]string{},
-	}
-	sc := splunksdk.SplunkCreds{
 		Host:  splunkCreds.Host,
 		Port:  splunkCreds.Port,
 		Token: splunkCreds.Token,
 	}
 
+	spReq := splunk.SplunkRequest{
+		Params:  params,
+		Headers: map[string]string{},
+	}
+
 	// get the metric we want
-	sliValue, err := splunksdk.GetMetricFromNewJob(&spReq, &sc)
+	sliValue, err := splunkjob.GetMetricFromNewJob(&client, &spReq)
 	if err != nil {
 		logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
 		*errored = true
+		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
+
 		return
 	}
 
 	logger.Infof("response from the metrics api: %v", sliValue)
 
-	if err != nil {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   0,
-			Success: false,
-			Message: err.Error(),
-		}
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
-
-	} else {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   sliValue,
-			Success: true,
-		}
-
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
+	sliResult := &keptnv2.SLIResult{
+		Metric:  indicatorName,
+		Value:   sliValue,
+		Success: true,
 	}
+
+	mutex.Lock()
+	*sliResults = append(*sliResults, sliResult)
+	mutex.Unlock()
+
+	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 
 }
 
 // get the earliest and latest time from the splunk search
-func retrieveSearchTimeRange(params *splunksdk.RequestParams) bool {
+func retrieveSearchTimeRange(params *splunk.RequestParams) bool {
 
 	// check if an earliest and/or latest time are set in the search
 	search := params.SearchQuery

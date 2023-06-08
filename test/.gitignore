@@ -6,3 +6,4 @@ job-executor
 workflows/
 test.py
 keptnHistoryCommands.txt
+local

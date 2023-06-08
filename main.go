@@ -7,8 +7,9 @@ import (
 	"os"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-
+	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
@@ -35,7 +36,7 @@ type envConfig struct {
 
 	SplunkApiToken string `envconfig:"SP_API_TOKEN" default:""`
 	SplunkHost     string `envconfig:"SP_HOST" default:""`
-	SplunkPort     string `envconfig:"SP_PORT" default:"1234"`
+	SplunkPort     string `envconfig:"SP_PORT" default:"8089"`
 }
 
 var env envConfig
@@ -74,6 +75,12 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
+	if env.Env == "local" {
+		authToken := os.Getenv("KEPTN_API_TOKEN")
+		authHeader := "x-token"
+		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
+	}
+
 	if err != nil {
 		return errors.New("Could not create Keptn Handler: " + err.Error())
 	}
@@ -165,21 +172,30 @@ func main() {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
-	os.Exit(_main(os.Args[1:], env))
+	os.Exit(_main(os.Args[1:]))
 }
 
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
-func _main(args []string, env envConfig) int {
+func _main(args []string) int {
 	// configure keptn options
+	// env.Env = "dev"
 	if env.Env == "local" {
+		godotenv.Load(".env.local")
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
-	}
-	keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 
-	logger.Info("Starting splunk-service...")
+		keptnOptions.ConfigurationServiceURL = os.Getenv("RESOURCE_SERVICE_URL")
+		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
+		env.SplunkHost = os.Getenv("SPLUNK_HOST")
+		env.SplunkPort = os.Getenv("SPLUNK_PORT")
+
+	} else {
+		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
+	}
+
+	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
 
 	ctx := context.Background()

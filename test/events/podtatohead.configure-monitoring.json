@@ -1,7 +1,7 @@
 {
   "contenttype": "application/json",
   "data": {
-    "project": "e2e-project",
+    "project": "test",
     "service": "podtatoserver",
     "type": "splunk"
   },

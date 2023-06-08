@@ -36,6 +36,8 @@ func initializeTestObjects(eventFileName string) (*keptnv2.Keptn, *cloudevents.E
 		EventSender: &fake.EventSender{},
 	}
 	keptnOptions.UseLocalFileSystem = true
+	keptnOptions.ConfigurationServiceURL = "http://localhost:8010"
+
 	ddKeptn, err := keptnv2.NewKeptn(incomingEvent, keptnOptions)
 
 	return ddKeptn, incomingEvent, err
@@ -44,6 +46,7 @@ func initializeTestObjects(eventFileName string) (*keptnv2.Keptn, *cloudevents.E
 // Tests the HandleGetSliTriggeredEvent Handler
 // TODO: Add your test-code
 func TestHandleGetSliTriggered(t *testing.T) {
+
 	ddKeptn, incomingEvent, err := initializeTestObjects("test/events/get-sli.triggered.json")
 	if err != nil {
 		t.Error(err)
@@ -54,11 +57,14 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	err = incomingEvent.DataAs(data)
 	if err != nil {
 		t.Errorf("Error getting keptn event data")
+		t.Fail()
 	}
 
 	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data)
+
 	if err != nil {
 		t.Errorf("Error: " + err.Error())
+		t.Fail()
 	}
 
 	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
@@ -66,16 +72,19 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	// Verify that HandleGetSliTriggeredEvent has sent 2 cloudevents
 	if gotEvents != 2 {
 		t.Errorf("Expected two events to be sent, but got %v", gotEvents)
+		t.Fail()
 	}
 
 	// Verify that the first CE sent is a .started event
 	if keptnv2.GetStartedEventType(keptnv2.GetSLITaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
 		t.Errorf("Expected a get-sli.started event type")
+		t.Fail()
 	}
 
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.GetSLITaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
 		t.Errorf("Expected a get-sli.finished event type")
+		t.Fail()
 	}
 }
 
