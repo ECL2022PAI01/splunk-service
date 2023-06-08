@@ -236,7 +236,7 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		Port:  splunkCreds.Port,
 		Token: splunkCreds.Token,
 	}
-	
+
 	spReq := splunk.SplunkRequest{
 		Params:  params,
 		Headers: map[string]string{},
@@ -247,36 +247,24 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 	if err != nil {
 		logger.Errorf("'%s': error getting value for the query: %v : %v\n", query, sliValue, err)
 		*errored = true
+		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
+
 		return
 	}
 
 	logger.Infof("response from the metrics api: %v", sliValue)
 
-	if err != nil {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   0,
-			Success: false,
-			Message: err.Error(),
-		}
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("got 0 in the SLI result (indicates empty response from the API)")
-
-	} else {
-		sliResult := &keptnv2.SLIResult{
-			Metric:  indicatorName,
-			Value:   sliValue,
-			Success: true,
-		}
-
-		mutex.Lock()
-		*sliResults = append(*sliResults, sliResult)
-		mutex.Unlock()
-
-		logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
+	sliResult := &keptnv2.SLIResult{
+		Metric:  indicatorName,
+		Value:   sliValue,
+		Success: true,
 	}
+
+	mutex.Lock()
+	*sliResults = append(*sliResults, sliResult)
+	mutex.Unlock()
+
+	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 
 }
 
