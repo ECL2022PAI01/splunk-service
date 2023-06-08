@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
@@ -52,18 +53,15 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		return
 	}
 
-	specificEvent := &keptnv2.GetSLITriggeredEventData{}
-	err = incomingEvent.DataAs(specificEvent)
+	data := &keptnv2.GetSLITriggeredEventData{}
+	err = incomingEvent.DataAs(data)
 	if err != nil {
 		t.Errorf("Error getting keptn event data")
 		t.Fail()
 	}
 
-	env.SplunkApiToken = "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIE5DRUwxNDExOTIiLCJzdWIiOiJhZG1pbiIsImF1ZCI6ImtlcHRuIiwiaWRwIjoiU3BsdW5rIiwianRpIjoiODBkOGFkNDQ4MWY3NWQwOTYzMjY3ZWM3NjAzNjQ1NDg4NDI0ZWE1YTkyZDk0NTYzNGRkNTk1NzU1YTk3YzEyZCIsImlhdCI6MTY4NTYwNTM2MywiZXhwIjoxNjg4MTk3MzYzLCJuYnIiOjE2ODU2MDUzNjN9.eLqkWeU6TQzmfMwoJY3E0USL36pxzUri7mst-HrQb2Ay3UgZpCBfUdEM6BZ-Qgfm1gLxvGWKBsqDPGezBeiuhg"
-	env.SplunkHost = "172.29.226.241"
-	env.SplunkPort = "8089"
+	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data)
 
-	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, specificEvent)
 	if err != nil {
 		t.Errorf("Error: " + err.Error())
 		t.Fail()
@@ -88,4 +86,27 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		t.Errorf("Expected a get-sli.finished event type")
 		t.Fail()
 	}
+}
+
+func TestHandleSpecificSli(t *testing.T){
+	indicatorName := "test"
+	splunkCreds := &splunkCredentials{Host : "localhost", Port: "8089", Token: "random"}
+	data := &keptnv2.GetSLITriggeredEventData{}
+	sliResults := []*keptnv2.SLIResult{}
+	errored := false
+	sliConfig := make(map[string]string, 1)
+	sliConfig["test"] = "test"
+
+	wg.Add(1)
+	go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults, &errored)
+	wg.Wait()
+
+	if len(sliResults)!=1{
+		t.Error("Ëxpected to add a keptnv2.SLIResult to sliResults but nothing added.")
+	}
+
+	if len(sliResults)==1 && reflect.TypeOf(sliResults[0]).String()!= "*github.com/keptn/go-utils/pkg/lib/v0_2_0.SLIResult"{
+		t.Errorf("Ëxpected to add a keptnv2.SLIResult to sliResults but %T was added, %v.", sliResults[0], reflect.TypeOf(sliResults[0]).String())
+	}
+
 }
