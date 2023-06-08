@@ -16,9 +16,11 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+
 const (
 	sliFile = "sli.yaml"
 )
+
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
 var wg sync.WaitGroup

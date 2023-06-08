@@ -15,6 +15,7 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
+	api "github.com/keptn/go-utils/pkg/api/utils"
 )
 
 var keptnOptions = keptn.KeptnOpts{}
@@ -75,6 +76,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	}
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
+
 	if env.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
 		authHeader := "x-token"
@@ -171,6 +173,7 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
+	logger.Infof("ENV VARS : %v", env)
 
 	os.Exit(_main(os.Args[1:]))
 }
