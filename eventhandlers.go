@@ -73,7 +73,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
-
+	
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 
@@ -230,6 +230,7 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		params.EarliestTime = data.GetSLI.Start
 		params.LatestTime = data.GetSLI.End
 	}
+	
 	client := splunk.SplunkClient{
 		Client: &http.Client{
 			Timeout: time.Duration(60) * time.Second,

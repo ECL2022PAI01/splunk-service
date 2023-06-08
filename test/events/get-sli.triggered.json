@@ -11,10 +11,10 @@
       },
       "labels": null,
       "message": "",
-      "project": "fulltour",
+      "project": "test",
       "result": "",
-      "service": "newservice",
-      "stage": "qa",
+      "service": "splunk",
+      "stage": "production",
       "status": ""
 
   },

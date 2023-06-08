@@ -15,7 +15,6 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
-	api "github.com/keptn/go-utils/pkg/api/utils"
 )
 
 var keptnOptions = keptn.KeptnOpts{}
