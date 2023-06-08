@@ -22,6 +22,8 @@ type KeptnAPI struct {
 
 // NewKeptnAPI creates a KeptnAPI structure from KeptnConnectionDetails
 func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
+	fmt.Printf("NEWWWW : %v", details)
+	fmt.Printf("NEWWWW : %s", details.APIToken)
 	apiSet, err := api.New(details.Endpoint, api.WithAuthToken(details.APIToken, authHeaderName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Keptn APISet: %w", err)
