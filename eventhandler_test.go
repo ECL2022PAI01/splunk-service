@@ -1,49 +1,38 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
-// You can configure it by adding your splunk credentials(host, port and token),
-// the parameters of your resource-service(baseUrl, authToken,authHeader and scheme)
-// and your custom indicators(table of strings)
+// You can configure your tests by specifying the path to get-sli triggered event file in json,
+// and the path to your sli.yaml file
+// Indicators given in get-sli.triggered.json should match indicators in the given sli file
 const (
-	//Splunk Configuration
-	customSplunkApiToken = "eyJraWQiOiJzcGx1bmsuc2VjcmV0IiwiYWxnIjoiSFM1MTIiLCJ2ZXIiOiJ2MiIsInR0eXAiOiJzdGF0aWMifQ.eyJpc3MiOiJhZG1pbiBmcm9tIE5DRUwxNDExOTIiLCJzdWIiOiJhZG1pbiIsImF1ZCI6ImtlcHRuIiwiaWRwIjoiU3BsdW5rIiwianRpIjoiODBkOGFkNDQ4MWY3NWQwOTYzMjY3ZWM3NjAzNjQ1NDg4NDI0ZWE1YTkyZDk0NTYzNGRkNTk1NzU1YTk3YzEyZCIsImlhdCI6MTY4NTYwNTM2MywiZXhwIjoxNjg4MTk3MzYzLCJuYnIiOjE2ODU2MDUzNjN9.eLqkWeU6TQzmfMwoJY3E0USL36pxzUri7mst-HrQb2Ay3UgZpCBfUdEM6BZ-Qgfm1gLxvGWKBsqDPGezBeiuhg"
-	customSplunkHost     = "172.29.226.241"
-	customSplunkPort     = "8089"
-	//Resource-service configuration
-	customResourceServiceBaseUrl    = "http://localhost:8090/api/resource-service"
-	customResourceServiceScheme     = "http"
-	customResourceServiceAuthToken  = "nBsd0T3fHwX8csWJQPgwAXlTJBJzL2z4xK1LAgnBfvMdb"
-	customResourceServiceAuthHeader = "x-token"
-	//don't forget to specify the right parameters for your get-sli.triggered event in test/events/get-sli.triggered.json or specify the path to your event.json file
-
-)
-
-var (
-	//Indicators
-	customIndicators = []string{"number_of_logs", "number_of_logs2"}
+	getSliTriggeredEventFile= "test/events/get-sli.triggered.json"
+	sliFilePath = "./test/data/sli.yaml"
 )
 
 /**
  * loads a cloud event from the passed test json file and initializes a keptn object with it
  */
-func initializeTestObjects(eventFileName string) (*keptnv2.Keptn, *cloudevents.Event, error) {
+func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*keptnv2.Keptn, *cloudevents.Event, error) {
 	// load sample event
 	eventFile, err := ioutil.ReadFile(eventFileName)
 	if err != nil {
@@ -60,27 +49,38 @@ func initializeTestObjects(eventFileName string) (*keptnv2.Keptn, *cloudevents.E
 	var keptnOptions = keptn.KeptnOpts{
 		EventSender: &fake.EventSender{},
 	}
+	keptnOptions.ConfigurationServiceURL= resourceServiceUrl
 	keptnOptions.UseLocalFileSystem = true
-	keptnOptions.ConfigurationServiceURL = customResourceServiceBaseUrl
 
 	ddKeptn, err := keptnv2.NewKeptn(incomingEvent, keptnOptions)
-	if err == nil {
-		ddKeptn.ResourceHandler = &api.ResourceHandler{
-			BaseURL:    customResourceServiceBaseUrl,
-			HTTPClient: nil,
-			Scheme:     customResourceServiceScheme,
-		}
-		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(customResourceServiceBaseUrl, customResourceServiceAuthToken, customResourceServiceAuthHeader, nil, customResourceServiceScheme)
-	}
 
 	return ddKeptn, incomingEvent, err
 }
 
 // Tests the HandleGetSliTriggeredEvent Handler
-// TODO: Add your test-code
 func TestHandleGetSliTriggered(t *testing.T) {
+	
+	//Building a mock resource service server
+	resourceServiceServer, err:= buildMockResourceServiceServer(sliFilePath)
+	if err!=nil{
+		t.Errorf("Error reading sli file : %s",err.Error())
+		t.Fail()
+	}
+	defer resourceServiceServer.Close()
 
-	ddKeptn, incomingEvent, err := initializeTestObjects("test/events/get-sli.triggered.json")
+	//Building a mock splunk server
+	splunkServer:= builMockSplunkServer()
+	defer splunkServer.Close()
+
+	//setting splunk credentials
+	env.SplunkPort = strings.Split(splunkServer.URL, ":")[2]
+	env.SplunkHost = strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1]
+	env.SplunkApiToken = "apiToken"
+
+	//Initializing test objects
+	t.Logf("INFO : %s",splunkServer.URL)
+	t.Logf("INFO : %s",resourceServiceServer.URL)
+	ddKeptn, incomingEvent, err := initializeTestObjects(getSliTriggeredEventFile, resourceServiceServer.URL)
 	if err != nil {
 		t.Error(err)
 		return
@@ -88,16 +88,11 @@ func TestHandleGetSliTriggered(t *testing.T) {
 
 	data := &keptnv2.GetSLITriggeredEventData{}
 	err = incomingEvent.DataAs(data)
-	data.GetSLI.Indicators = customIndicators
 
 	if err != nil {
 		t.Errorf("Error getting keptn event data")
 		t.Fail()
 	}
-
-	env.SplunkHost = customSplunkHost
-	env.SplunkApiToken = customSplunkApiToken
-	env.SplunkPort = customSplunkPort
 
 	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data)
 
@@ -125,8 +120,22 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		t.Errorf("Expected a get-sli.finished event type")
 		t.Fail()
 	}
+
+	finishedEvent:= ddKeptn.EventSender.(*fake.EventSender).SentEvents[1]
+	var respData keptnv2.GetSLIFinishedEventData
+	err= datacodec.Decode(context.Background(), finishedEvent.DataMediaType(), finishedEvent.Data(), respData)
+	//add another test
+	if(err!=nil){
+		t.Errorf("Unable to decode data from the event : %v", err.Error())
+		t.Fail()
+	}
+	if(respData.GetSLI.IndicatorValues!=nil ){
+		t.Errorf("Y a rien")
+	}
+
 }
 
+//Tests the HandleSpecificSli function
 func TestHandleSpecificSli(t *testing.T) {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -140,27 +149,14 @@ func TestHandleSpecificSli(t *testing.T) {
 	splunkResult := 1250.0
 
 	//Building a mock splunk server returning default responses when getting  get and post requests
-	jsonResponsePOST := `{
-		"sid": "10"
-	}`
-	jsonResponseGET := `{
-		"results":[{"count":"` + fmt.Sprint(1250) + `"}]
-	}`
-
-	responses := make([]map[string]interface{}, 2)
-	responses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
-	}
-	responses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
-	}
-	server := splunktest.MutitpleMockRequest(responses)
-	defer server.Close()
+	
+	splunkServer := builMockSplunkServer()
+	defer splunkServer.Close()
 
 	//Retrieving the mock splunk server credentials
 	splunkCreds := &splunkCredentials{
-		Host:  strings.Split(strings.Split(server.URL, ":")[1], "//")[1],
-		Port:  strings.Split(server.URL, ":")[2],
+		Host:  strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1],
+		Port:  strings.Split(splunkServer.URL, ":")[2],
 		Token: "apiToken",
 	}
 
@@ -171,5 +167,47 @@ func TestHandleSpecificSli(t *testing.T) {
 	if len(sliResults) == 0 || sliResults[0].Value != splunkResult {
 		t.Error("Expected to add a keptnv2.SLIResult to sliResults but nothing added.")
 	}
+
+}
+
+//Build a mock splunk server returning default responses when getting  get and post requests
+func builMockSplunkServer()*httptest.Server{
+
+	jsonResponsePOST := `{
+		"sid": "10"
+	}`
+	jsonResponseGET := `{
+		"results":[{"theRequest":"` + fmt.Sprint(1250) + `"}]
+	}`
+	splunkResponses := make([]map[string]interface{}, 2)
+	splunkResponses[0] = map[string]interface{}{
+		"POST": jsonResponsePOST,
+	}
+	splunkResponses[1] = map[string]interface{}{
+		"GET": jsonResponseGET,
+	}
+	splunkServer := splunktest.MutitpleMockRequest(splunkResponses)
+	return splunkServer
+
+}
+
+//Build a mock resource service server returning a response with the content of the sli file
+func buildMockResourceServiceServer(filePath string) (*httptest.Server, error){
+
+	fileContent, err:= ioutil.ReadFile(filePath)
+	if err!=nil{
+		return nil, err
+	}
+	jsonResourceFileResp := `{
+		"resourceContent": "`+base64.StdEncoding.EncodeToString(fileContent)+`",
+		"resourceURI": "sli.yaml",
+		"metadata": {
+		  "upstreamURL": "https://github.com/user/keptn.git",
+		  "version": "somethingugly"
+		}
+	  }`
+	
+	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp)
+	return resourceServiceServer, nil
 
 }
