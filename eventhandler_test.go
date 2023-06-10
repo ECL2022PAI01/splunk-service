@@ -12,12 +12,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0/fake"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
-	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
+	keptn "github.com/Mouhamadou305/go-utils2/pkg/lib/keptn"
+	keptnv2 "github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
@@ -25,8 +25,8 @@ import (
 // and the path to your sli.yaml file
 // Indicators given in get-sli.triggered.json should match indicators in the given sli file
 const (
-	getSliTriggeredEventFile= "test/events/get-sli.triggered.json"
-	sliFilePath = "./test/data/sli.yaml"
+	getSliTriggeredEventFile = "test/events/get-sli.triggered.json"
+	sliFilePath              = "./test/data/sli.yaml"
 )
 
 /**
@@ -49,7 +49,7 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 	var keptnOptions = keptn.KeptnOpts{
 		EventSender: &fake.EventSender{},
 	}
-	keptnOptions.ConfigurationServiceURL= resourceServiceUrl
+	keptnOptions.ConfigurationServiceURL = resourceServiceUrl
 	keptnOptions.UseLocalFileSystem = true
 
 	ddKeptn, err := keptnv2.NewKeptn(incomingEvent, keptnOptions)
@@ -59,17 +59,17 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 
 // Tests the HandleGetSliTriggeredEvent Handler
 func TestHandleGetSliTriggered(t *testing.T) {
-	
+
 	//Building a mock resource service server
-	resourceServiceServer, err:= buildMockResourceServiceServer(sliFilePath)
-	if err!=nil{
-		t.Errorf("Error reading sli file : %s",err.Error())
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	if err != nil {
+		t.Errorf("Error reading sli file : %s", err.Error())
 		t.Fail()
 	}
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer:= builMockSplunkServer()
+	splunkServer := builMockSplunkServer()
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -78,8 +78,8 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	env.SplunkApiToken = "apiToken"
 
 	//Initializing test objects
-	t.Logf("INFO : %s",splunkServer.URL)
-	t.Logf("INFO : %s",resourceServiceServer.URL)
+	t.Logf("INFO : %s", splunkServer.URL)
+	t.Logf("INFO : %s", resourceServiceServer.URL)
 	ddKeptn, incomingEvent, err := initializeTestObjects(getSliTriggeredEventFile, resourceServiceServer.URL)
 	if err != nil {
 		t.Error(err)
@@ -121,21 +121,21 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		t.Fail()
 	}
 
-	finishedEvent:= ddKeptn.EventSender.(*fake.EventSender).SentEvents[1]
+	finishedEvent := ddKeptn.EventSender.(*fake.EventSender).SentEvents[1]
 	var respData keptnv2.GetSLIFinishedEventData
-	err= datacodec.Decode(context.Background(), finishedEvent.DataMediaType(), finishedEvent.Data(), respData)
+	err = datacodec.Decode(context.Background(), finishedEvent.DataMediaType(), finishedEvent.Data(), respData)
 	//add another test
-	if(err!=nil){
+	if err != nil {
 		t.Errorf("Unable to decode data from the event : %v", err.Error())
 		t.Fail()
 	}
-	if(respData.GetSLI.IndicatorValues!=nil ){
+	if respData.GetSLI.IndicatorValues != nil {
 		t.Errorf("Y a rien")
 	}
 
 }
 
-//Tests the HandleSpecificSli function
+// Tests the HandleSpecificSli function
 func TestHandleSpecificSli(t *testing.T) {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -149,7 +149,7 @@ func TestHandleSpecificSli(t *testing.T) {
 	splunkResult := 1250.0
 
 	//Building a mock splunk server returning default responses when getting  get and post requests
-	
+
 	splunkServer := builMockSplunkServer()
 	defer splunkServer.Close()
 
@@ -170,8 +170,8 @@ func TestHandleSpecificSli(t *testing.T) {
 
 }
 
-//Build a mock splunk server returning default responses when getting  get and post requests
-func builMockSplunkServer()*httptest.Server{
+// Build a mock splunk server returning default responses when getting  get and post requests
+func builMockSplunkServer() *httptest.Server {
 
 	jsonResponsePOST := `{
 		"sid": "10"
@@ -191,23 +191,24 @@ func builMockSplunkServer()*httptest.Server{
 
 }
 
-//Build a mock resource service server returning a response with the content of the sli file
-func buildMockResourceServiceServer(filePath string) (*httptest.Server, error){
+// Build a mock resource service server returning a response with the content of the sli file
+func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 
-	fileContent, err:= ioutil.ReadFile(filePath)
-	if err!=nil{
+	fileContent, err := ioutil.ReadFile(filePath)
+	if err != nil {
 		return nil, err
 	}
 	jsonResourceFileResp := `{
-		"resourceContent": "`+base64.StdEncoding.EncodeToString(fileContent)+`",
+		"resourceContent": "` + base64.StdEncoding.EncodeToString(fileContent) + `",
 		"resourceURI": "sli.yaml",
 		"metadata": {
 		  "upstreamURL": "https://github.com/user/keptn.git",
 		  "version": "somethingugly"
 		}
 	  }`
-	
+
 	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp)
+
 	return resourceServiceServer, nil
 
 }

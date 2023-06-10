@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	keptnv2 "github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
@@ -16,11 +16,9 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-
 const (
 	sliFile = "sli.yaml"
 )
-
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
 var wg sync.WaitGroup
@@ -72,7 +70,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
-	
+
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 
@@ -229,7 +227,7 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		params.EarliestTime = data.GetSLI.Start
 		params.LatestTime = data.GetSLI.End
 	}
-	
+
 	client := splunk.SplunkClient{
 		Client: &http.Client{
 			Timeout: time.Duration(60) * time.Second,

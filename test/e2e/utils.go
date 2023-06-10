@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/Mouhamadou305/go-utils2/pkg/api/models"
 	"github.com/joho/godotenv"
-	"github.com/keptn/go-utils/pkg/api/models"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 
