@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 
-	api "github.com/Mouhamadou305/go-utils2/pkg/api/utils"
-	keptnv1 "github.com/Mouhamadou305/go-utils2/pkg/lib"
-	"github.com/Mouhamadou305/go-utils2/pkg/lib/keptn"
-	keptnv2 "github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	api "github.com/keptn/go-utils/pkg/api/utils"
+	keptnv1 "github.com/keptn/go-utils/pkg/lib"
+	"github.com/keptn/go-utils/pkg/lib/keptn"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
@@ -76,6 +76,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
 
+	//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
 	if env.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
 		authHeader := "x-token"
@@ -103,8 +104,8 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	*
 	* Keptn reserves some Cloud Event types, please read up on that here: https://keptn.sh/docs/0.8.x/manage/shipyard/
 	*
-	* For those Cloud Events the Mouhamadou305/go-utils2 library conveniently provides several data structures
-	* and strings in github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0, e.g.:
+	* For those Cloud Events the keptn/go-utils library conveniently provides several data structures
+	* and strings in github.com/keptn/go-utils/pkg/lib/v0_2_0, e.g.:
 	* - deployment: DeploymentTaskName, DeploymentTriggeredEventData, DeploymentStartedEventData, DeploymentFinishedEventData
 	* - test: TestTaskName, TestTriggeredEventData, TestStartedEventData, TestFinishedEventData
 	* - ... (they all follow the same pattern)

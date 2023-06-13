@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	keptnv2 "github.com/Mouhamadou305/go-utils2/pkg/lib/v0_2_0"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	splunk "github.com/kuro-jojo/splunk-sdk-go/client"

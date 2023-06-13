@@ -4,11 +4,11 @@ go 1.20
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/Mouhamadou305/go-utils2 v0.0.5
 	github.com/cloudevents/sdk-go/v2 v2.14.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/kuro-jojo/splunk-sdk-go v1.1.6
+	github.com/keptn/go-utils v0.20.0
+	github.com/kuro-jojo/splunk-sdk-go v1.1.10
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.3
