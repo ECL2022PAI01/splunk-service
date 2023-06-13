@@ -190,20 +190,20 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
 
-	pc := splunkCredentials{}
+	splunkCreds := splunkCredentials{}
 
 	if env.SplunkHost != "" && env.SplunkPort != "" && env.SplunkApiToken != "" {
-		pc.Host = strings.Replace(env.SplunkHost, " ", "", -1)
-		pc.Token = env.SplunkApiToken
-		pc.Port = env.SplunkPort
-		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token + " and " + pc.Port)
+		splunkCreds.Host = strings.Replace(env.SplunkHost, " ", "", -1)
+		splunkCreds.Token = env.SplunkApiToken
+		splunkCreds.Port = env.SplunkPort
+		logger.Info("Successfully retrieved splunk credentials " + splunkCreds.Host + " and " + splunkCreds.Token + " and " + splunkCreds.Port)
 
 	} else {
 		logger.Info("SP_HOST, SP_PORT and/or SP_API_TOKEN have not correctly been set")
 		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT and/or SP_API_TOKEN")
 	}
 
-	return &pc, nil
+	return &splunkCreds, nil
 }
 
 func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, sliResults *[]*keptnv2.SLIResult, errored *bool) {

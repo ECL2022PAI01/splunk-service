@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
+	"github.com/joho/godotenv"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
@@ -236,6 +238,23 @@ func TestHandleSpecificSli(t *testing.T) {
 
 //Tests the getSplunkCredentials function
 func TestGetSplunkCredentials(t *testing.T){
+
+	godotenv.Load(".env.local")
+	env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
+	env.SplunkHost = os.Getenv("SPLUNK_HOST")
+	env.SplunkPort = os.Getenv("SPLUNK_PORT")
+
+	sp, err := getSplunkCredentials()
+
+	if err== nil{
+		t.Logf("Splunk credentials : %v", sp)
+		if(sp.Host=="" || sp.Port=="" || sp.Token==""){
+			t.Errorf("If Host, Port or token are empty. An error should be returned")
+			t.Fail()
+		}
+	}else{
+		t.Logf("Received expected error : %s", err.Error())
+	}
 
 }
 
