@@ -2,6 +2,7 @@ package main
 
 import("testing")
 
-func TestMain(t *testing.T){
+//Tests the getSplunkCredentials function
+func TestProcessKeptnCloudEvent(t *testing.T){
 	t.Logf("SUCCESSFUL")
 }

@@ -101,13 +101,13 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T){
 
 	// Verify that the first CE sent is a .started event
 	if keptnv2.GetStartedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Errorf("Expected a configureMonitoring.started event type")
+		t.Errorf("Expected a configure-monitoring.started event type")
 		t.Fail()
 	}
 
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
-		t.Errorf("Expected a configureMonitoring.finished event type")
+		t.Errorf("Expected a configure-monitoring.finished event type")
 		t.Fail()
 	}
 
@@ -335,16 +335,16 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 }
 
 //ckeck if we have the expected values in params after executing retrieveSearchTimeRange function
-func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, newSearchQuery string, awaitedFinaleEarliest string, awaitedFinaleLatest string, defaultEarliest string, defaultLatest string){
+func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, newSearchQuery string, expectedEarliestParam string, expectedLatestParam string, defaultEarliest string, defaultLatest string){
 
 	splunkRequestParams.SearchQuery= newSearchQuery
 	splunkRequestParams.EarliestTime= defaultEarliest
 	splunkRequestParams.LatestTime= defaultLatest
 	retrieveSearchTimeRange(splunkRequestParams)
 
-	if(splunkRequestParams.EarliestTime!=awaitedFinaleEarliest || splunkRequestParams.LatestTime!=awaitedFinaleLatest){
+	if(splunkRequestParams.EarliestTime!=expectedEarliestParam || splunkRequestParams.LatestTime!=expectedLatestParam){
 		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
-		splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, awaitedFinaleEarliest, awaitedFinaleLatest)
+		splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, expectedEarliestParam, expectedLatestParam)
 		t.Fail()
 	}else{
 		t.Log("Checked")
