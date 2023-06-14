@@ -218,15 +218,14 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		return
 	}
 	params := splunk.RequestParams{
-		SearchQuery: query,
+		SearchQuery:  query,
+		EarliestTime: data.GetSLI.Start,
+		LatestTime:   data.GetSLI.End,
 	}
 
 	// no time range specified in the splunk search
-	if !retrieveSearchTimeRange(&params) {
-		// use the time specified in keptn evaluation event instead
-		params.EarliestTime = data.GetSLI.Start
-		params.LatestTime = data.GetSLI.End
-	}
+
+	retrieveSearchTimeRange(&params)
 
 	client := splunk.SplunkClient{
 		Client: &http.Client{
@@ -269,22 +268,25 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 }
 
 // get the earliest and latest time from the splunk search
-func retrieveSearchTimeRange(params *splunk.RequestParams) bool {
+func retrieveSearchTimeRange(params *splunk.RequestParams) {
 
 	// check if an earliest and/or latest time are set in the search
 	search := params.SearchQuery
 	queries := strings.Split(search, " ")
+	start := params.EarliestTime
+	end := params.LatestTime
+
+	// TODO: don't go through all the query
 	for _, q := range queries {
 
-		if strings.HasPrefix(q, "earliest") && params.EarliestTime == "" {
+		if strings.HasPrefix(q, "earliest") && params.EarliestTime == start {
 			params.EarliestTime = q[len("earliest")+1:]
-		} else if strings.HasPrefix(q, "latest") && params.LatestTime == "" {
+		} else if strings.HasPrefix(q, "latest") && params.LatestTime == end {
 			params.LatestTime = q[len("latest")+1:]
 		}
 
-		if params.EarliestTime != "" && params.LatestTime != "" {
-			return true
+		if params.EarliestTime != start && params.LatestTime != end {
+			return
 		}
 	}
-	return false
 }
