@@ -16,11 +16,9 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-
 const (
 	sliFile = "sli.yaml"
 )
-
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
 var wg sync.WaitGroup
@@ -71,9 +69,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
-
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
-	
+
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 
@@ -193,20 +190,20 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
 
-	pc := splunkCredentials{}
+	splunkCreds := splunkCredentials{}
 
 	if env.SplunkHost != "" && env.SplunkPort != "" && env.SplunkApiToken != "" {
-		pc.Host = strings.Replace(env.SplunkHost, " ", "", -1)
-		pc.Token = env.SplunkApiToken
-		pc.Port = env.SplunkPort
-		logger.Info("Successfully retrieved splunk credentials " + pc.Host + " and " + pc.Token + " and " + pc.Port)
+		splunkCreds.Host = strings.Replace(env.SplunkHost, " ", "", -1)
+		splunkCreds.Token = env.SplunkApiToken
+		splunkCreds.Port = env.SplunkPort
+		logger.Info("Successfully retrieved splunk credentials " + splunkCreds.Host + " and " + splunkCreds.Token + " and " + splunkCreds.Port)
 
 	} else {
 		logger.Info("SP_HOST, SP_PORT and/or SP_API_TOKEN have not correctly been set")
 		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT and/or SP_API_TOKEN")
 	}
 
-	return &pc, nil
+	return &splunkCreds, nil
 }
 
 func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string, sliResults *[]*keptnv2.SLIResult, errored *bool) {
@@ -230,7 +227,7 @@ func handleSpecificSLI(indicatorName string, splunkCreds *splunkCredentials, dat
 		params.EarliestTime = data.GetSLI.Start
 		params.LatestTime = data.GetSLI.End
 	}
-	
+
 	client := splunk.SplunkClient{
 		Client: &http.Client{
 			Timeout: time.Duration(60) * time.Second,

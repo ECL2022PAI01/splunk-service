@@ -76,6 +76,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
 
+	//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
 	if env.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
 		authHeader := "x-token"
