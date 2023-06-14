@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	sliFile = "sli.yaml"
+	SLI_FILE = "sli.yaml"
 )
 
 // Waitgroup structure needed to be able to use go routines in order to avoid waiting for a metric before executing the next one
@@ -69,14 +69,14 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
-	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFile)
+	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, SLI_FILE)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 
 	if err != nil {
 		// failed to fetch sli config file
-		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFile, err.Error())
+		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", SLI_FILE, err.Error())
 		logger.Error(errMsg)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
