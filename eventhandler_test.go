@@ -19,6 +19,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
@@ -27,10 +28,10 @@ import (
 // and the default result you await from splunk
 // Indicators given in get-sli.triggered.json should match indicators in the given sli file
 const (
-	getSliTriggeredEventFile = "test/events/get-sli.triggered.json"
-	configureMonitoringTriggeredEventFile = "test/events/monitoring.configure.json"
-	sliFilePath              = "./test/data/sli.yaml"
-	defaultSplunkTestResult  = 1250
+	GET_SLI_TRIGGERED_EVENT = "test/events/get-sli.triggered.json"
+	CONF_MONITORING_TRIGG_EVENT = "test/events/monitoring.configure.json"
+	SLI_FILE_PATH              = "./test/data/sli.yaml"
+	DEFAULT_SPLUNK_RESULT  = 1250
 )
 
 /**
@@ -64,7 +65,7 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 // Tests the HandleMonitoringTriggeredEvent
 func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T){
 
-	ddKeptn, incomingEvent, err := initializeTestObjects(configureMonitoringTriggeredEventFile, "")
+	ddKeptn, incomingEvent, err := initializeTestObjects(CONF_MONITORING_TRIGG_EVENT, "")
 	if err != nil {
 		t.Error(err)
 		return
@@ -117,7 +118,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T){
 func TestHandleGetSliTriggered(t *testing.T) {
 
 	//Building a mock resource service server
-	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	resourceServiceServer, err := buildMockResourceServiceServer(SLI_FILE_PATH)
 	if err != nil {
 		t.Errorf("Error reading sli file : %s", err.Error())
 		t.Fail()
@@ -137,7 +138,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	t.Logf("INFO : %s", splunkServer.URL)
 	t.Logf("INFO : %s", resourceServiceServer.URL)
 	//time.Sleep(2 * time.Minute)
-	ddKeptn, incomingEvent, err := initializeTestObjects(getSliTriggeredEventFile, resourceServiceServer.URL+"/api/resource-service")
+	ddKeptn, incomingEvent, err := initializeTestObjects(GET_SLI_TRIGGERED_EVENT, resourceServiceServer.URL+"/api/resource-service")
 	if err != nil {
 		t.Error(err)
 		return
@@ -191,7 +192,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	}else{
 		//printing SLI results if no error has occured
 		for _, sliResult := range respData.GetSLI.IndicatorValues {
-			if(sliResult.Value != float64(defaultSplunkTestResult)){
+			if(sliResult.Value != float64(DEFAULT_SPLUNK_RESULT)){
 				t.Errorf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
 			}
 		}
@@ -230,7 +231,7 @@ func TestHandleSpecificSli(t *testing.T) {
 	go handleSpecificSLI(indicatorName, splunkCreds, data, sliConfig, &sliResults, &errored)
 	wg.Wait()
 
-	if len(sliResults) == 0 || sliResults[0].Value != defaultSplunkTestResult {
+	if len(sliResults) == 0 || sliResults[0].Value != DEFAULT_SPLUNK_RESULT {
 		t.Error("Expected to add a keptnv2.SLIResult to sliResults but nothing added.")
 	}
 
@@ -265,7 +266,7 @@ func builMockSplunkServer() *httptest.Server {
 		"sid": "10"
 	}`
 	jsonResponseGET := `{
-		"results":[{"theRequest":"` + fmt.Sprint(defaultSplunkTestResult) + `"}]
+		"results":[{"theRequest":"` + fmt.Sprint(DEFAULT_SPLUNK_RESULT) + `"}]
 	}`
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
@@ -298,5 +299,44 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp, false)
 
 	return resourceServiceServer, nil
+
+}
+
+func TestRetrieveSearchTimeRange(t *testing.T){
+
+	const DEFAULT_EARLIEST_IN_REQ = "-2m"
+	const DEFAULT_LATEST_IN_REQ = "+2m"
+	const DEFAULT_EARLIEST_IN_PARAMS = "-1m"
+	const DEFAULT_LATEST_IN_PARAMS = "+1m"
+
+	splunkRequestParams:= &splunk.RequestParams{
+		SearchQuery: "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_REQ+" latest="+DEFAULT_LATEST_IN_REQ+" |stats count", 
+		EarliestTime: DEFAULT_EARLIEST_IN_PARAMS, 
+		LatestTime: DEFAULT_LATEST_IN_PARAMS,
+	}
+	retrieveSearchTimeRange(splunkRequestParams)
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_REQ, DEFAULT_LATEST_IN_REQ)
+
+	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure latest="+DEFAULT_LATEST_IN_REQ+" |stats count"
+	retrieveSearchTimeRange(splunkRequestParams)
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_REQ)
+
+	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure |stats count"
+	retrieveSearchTimeRange(splunkRequestParams)
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+	
+	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_REQ+" |stats count"
+	retrieveSearchTimeRange(splunkRequestParams)
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_REQ, DEFAULT_LATEST_IN_PARAMS)
+
+}
+
+func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, awaitedFinaleEarliest string, awaitedFinaleLatest string){
+
+	if(splunkRequestParams.EarliestTime!=awaitedFinaleEarliest || splunkRequestParams.LatestTime!=awaitedFinaleLatest){
+		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
+		splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, awaitedFinaleEarliest, awaitedFinaleLatest)
+		t.Fail()
+	}
 
 }
