@@ -237,6 +237,38 @@ func TestHandleSpecificSli(t *testing.T) {
 
 }
 
+//Tests the retrieveSearchTimeRange function
+func TestRetrieveSearchTimeRange(t *testing.T){
+
+	const DEFAULT_EARLIEST_IN_QUERY = "-2m"
+	const DEFAULT_LATEST_IN_QUERY = "+2m"
+	const DEFAULT_EARLIEST_IN_PARAMS = "-1m"
+	const DEFAULT_LATEST_IN_PARAMS = "+1m"
+
+	splunkRequestParams:= &splunk.RequestParams{}
+
+	//Verify if the function overwrites the time values in params and set theme to the values specified in the search query
+	searchQuery:= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_QUERY+" latest="+DEFAULT_LATEST_IN_QUERY+" |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, searchQuery, DEFAULT_EARLIEST_IN_QUERY, DEFAULT_LATEST_IN_QUERY, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+	
+	//Verify if the function overwrites only the latest time value in params
+	searchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure latest="+DEFAULT_LATEST_IN_QUERY+" |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, searchQuery, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_QUERY, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+
+	//Verify if the function keeps the default values in params
+	searchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, searchQuery, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+	
+	//Verify if the function overwrites only the earliest time value in params
+	searchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_QUERY+" |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, searchQuery, DEFAULT_EARLIEST_IN_QUERY, DEFAULT_LATEST_IN_PARAMS, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+
+	//Verify if the function ignores the second earliest time given in the query
+	searchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_QUERY+" earliest="+DEFAULT_EARLIEST_IN_PARAMS+" |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, searchQuery, DEFAULT_EARLIEST_IN_QUERY, DEFAULT_LATEST_IN_PARAMS, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
+
+}
+
 //Tests the getSplunkCredentials function
 func TestGetSplunkCredentials(t *testing.T){
 
@@ -302,41 +334,20 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 
 }
 
-func TestRetrieveSearchTimeRange(t *testing.T){
+//ckeck if we have the expected values in params after executing retrieveSearchTimeRange function
+func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, newSearchQuery string, awaitedFinaleEarliest string, awaitedFinaleLatest string, defaultEarliest string, defaultLatest string){
 
-	const DEFAULT_EARLIEST_IN_REQ = "-2m"
-	const DEFAULT_LATEST_IN_REQ = "+2m"
-	const DEFAULT_EARLIEST_IN_PARAMS = "-1m"
-	const DEFAULT_LATEST_IN_PARAMS = "+1m"
-
-	splunkRequestParams:= &splunk.RequestParams{
-		SearchQuery: "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_REQ+" latest="+DEFAULT_LATEST_IN_REQ+" |stats count", 
-		EarliestTime: DEFAULT_EARLIEST_IN_PARAMS, 
-		LatestTime: DEFAULT_LATEST_IN_PARAMS,
-	}
+	splunkRequestParams.SearchQuery= newSearchQuery
+	splunkRequestParams.EarliestTime= defaultEarliest
+	splunkRequestParams.LatestTime= defaultLatest
 	retrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_REQ, DEFAULT_LATEST_IN_REQ)
-
-	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure latest="+DEFAULT_LATEST_IN_REQ+" |stats count"
-	retrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_REQ)
-
-	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure |stats count"
-	retrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_PARAMS, DEFAULT_LATEST_IN_PARAMS)
-	
-	splunkRequestParams.SearchQuery= "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest="+DEFAULT_EARLIEST_IN_REQ+" |stats count"
-	retrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, splunkRequestParams, DEFAULT_EARLIEST_IN_REQ, DEFAULT_LATEST_IN_PARAMS)
-
-}
-
-func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, awaitedFinaleEarliest string, awaitedFinaleLatest string){
 
 	if(splunkRequestParams.EarliestTime!=awaitedFinaleEarliest || splunkRequestParams.LatestTime!=awaitedFinaleLatest){
 		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
 		splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, awaitedFinaleEarliest, awaitedFinaleLatest)
 		t.Fail()
+	}else{
+		t.Log("Checked")
 	}
 
 }
