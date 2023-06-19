@@ -24,9 +24,6 @@ const (
 var wg sync.WaitGroup
 var mutex = &sync.RWMutex{}
 
-// We have to put a min of 60s of sleep for the splunk API to reflect the data correctly
-// More info: https://github.com/kuro-jojo/splunk-service/issues/8
-
 type splunkCredentials struct {
 	Host  string `json:"host" yaml:"spHost"`
 	Token string `json:"token" yaml:"spToken"`

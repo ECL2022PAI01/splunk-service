@@ -58,6 +58,10 @@ func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) erro
 	return nil
 }
 
+// These variables facilitate tests
+var handleConfMonitEvent = HandleConfigureMonitoringTriggeredEvent
+var handleGetSli= HandleGetSliTriggeredEvent
+
 /**
  * This method gets called when a new event is received from the Keptn Event Distributor
  * Depending on the Event Type will call the specific event handler functions, e.g: handleDeploymentFinishedEvent
@@ -141,7 +145,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		parseKeptnCloudEventPayload(event, eventData)
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return HandleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
+		return handleConfMonitEvent(ddKeptn, event, eventData)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
@@ -151,7 +155,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventData)
 
-		return HandleGetSliTriggeredEvent(ddKeptn, event, eventData)
+		return handleGetSli(ddKeptn, event, eventData)
 
 	}
 	// Unknown Event -> Throw Error!
