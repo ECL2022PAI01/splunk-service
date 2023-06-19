@@ -97,6 +97,12 @@ github.com/kuro-jojo/splunk-sdk-go v1.1.9 h1:U85b9+4gMC0RIrOnYX/ZPZzXharMPS9H4AI
 github.com/kuro-jojo/splunk-sdk-go v1.1.9/go.mod h1:m6+I5GGunjCzqLHiyuTvvS3J6xC1aOFDaDKB+yMYh6I=
 github.com/kuro-jojo/splunk-sdk-go v1.1.10 h1:tpKlBf5uwCzxVaGJSv7QlrMfjVASqme4FWmbsPIxa9M=
 github.com/kuro-jojo/splunk-sdk-go v1.1.10/go.mod h1:m6+I5GGunjCzqLHiyuTvvS3J6xC1aOFDaDKB+yMYh6I=
+github.com/kuro-jojo/splunk-sdk-go v1.1.11 h1:EPfFK79t43jQsbwT0BCIHOJIl0Iml7VFmMYbO6AZL7c=
+github.com/kuro-jojo/splunk-sdk-go v1.1.11/go.mod h1:m6+I5GGunjCzqLHiyuTvvS3J6xC1aOFDaDKB+yMYh6I=
+github.com/kuro-jojo/splunk-sdk-go v1.1.12 h1:yj+u9OyNxF8Zm/gb0dMpmEE1zjovn4EeUIb2m6oaDss=
+github.com/kuro-jojo/splunk-sdk-go v1.1.12/go.mod h1:m6+I5GGunjCzqLHiyuTvvS3J6xC1aOFDaDKB+yMYh6I=
+github.com/kuro-jojo/splunk-sdk-go v1.1.13 h1:s3PODFnlpJsZiQhWmGyw9auKyZkpzD4baEwOINWpq4s=
+github.com/kuro-jojo/splunk-sdk-go v1.1.13/go.mod h1:m6+I5GGunjCzqLHiyuTvvS3J6xC1aOFDaDKB+yMYh6I=
 github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mailru/easyjson v0.7.6 h1:8yTIVnZgCoiM1TgqoeTl+LfU5Jg6/xL3QhGQnimLYnA=
