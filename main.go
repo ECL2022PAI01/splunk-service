@@ -40,10 +40,6 @@ type envConfig struct {
 }
 
 var env envConfig
-const UnhanKeptnCE = "Unhandled Keptn Cloud Event : "
-
-// ServiceName specifies the current services name (e.g., used as source when sending CloudEvents)
-const ServiceName = "splunk-service"
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
 
@@ -58,10 +54,6 @@ func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) erro
 	}
 	return nil
 }
-
-// These variables facilitate tests
-var handleConfMonitEvent = HandleConfigureMonitoringTriggeredEvent
-var handleGetSli= HandleGetSliTriggeredEvent
 
 /**
  * This method gets called when a new event is received from the Keptn Event Distributor
@@ -160,13 +152,12 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 	}
 	// Unknown Event -> Throw Error!
-	errorMsg := fmt.Sprintf("Unhandled Keptn Cloud Event: %s", event.Type())
+	errorMsg := fmt.Sprintf("%s %s", UnhanKeptnCE, event.Type())
 
 	logger.Error(errorMsg)
 	return errors.New(errorMsg)
 }
 
-var call_main = _main
 /**
  * Usage: ./main
  * no args: starts listening for cloudnative events on localhost:port/path
@@ -184,8 +175,6 @@ func main() {
 	os.Exit(call_main(os.Args[1:]))
 }
 
-
-var procKeptnCE = processKeptnCloudEvent
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
