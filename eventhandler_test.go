@@ -124,17 +124,17 @@ func TestHandleSpecificSli(t *testing.T) {
 	sliConfig[indicatorName] = "test"
 
 	//Building a mock splunk server returning default responses when getting  get and post requests
-	
+
 	splunkServer := builMockSplunkServer()
 	defer splunkServer.Close()
-	
+
 	//Retrieving the mock splunk server credentials
 	splunkCreds := &splunkCredentials{
 		Host:  strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1],
 		Port:  strings.Split(splunkServer.URL, ":")[2],
 		Token: "apiToken",
 	}
-	
+
 	client := splunk.NewClientAuthenticatedByToken(
 		&http.Client{
 			Timeout: time.Duration(60) * time.Second,
@@ -153,7 +153,7 @@ func TestHandleSpecificSli(t *testing.T) {
 	if sliResult.Value != float64(defaultSplunkTestResult) {
 		t.Errorf("Wrong value for the metric %s : expected %v, got %v", indicatorName, defaultSplunkTestResult, sliResult.Value)
 	}
-	
+
 }
 
 func TestHandleGetSliTriggered(t *testing.T) {
@@ -242,6 +242,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
 	}
 }
+
 // Tests the getSplunkCredentials function
 func TestGetSplunkCredentials(t *testing.T) {
 
@@ -272,34 +273,42 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 	const latestTimeInParams = "+1m"
 
 	splunkRequestParams := &splunk.RequestParams{}
-	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest=" + earliestTimeInRequest + " latest=" + latestTimeInRequest + " |stats count"
-	initSplunkRequestParams(splunkRequestParams, earliestTimeInParams, latestTimeInParams)
-	utils.RetrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, *splunkRequestParams, earliestTimeInRequest, latestTimeInRequest)
 
+	//Verify if the function overwrites the time values in params and set theme to the values specified in the search query
+	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest=" + earliestTimeInRequest + " latest=" + latestTimeInRequest + " |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, earliestTimeInParams, latestTimeInParams, earliestTimeInRequest, latestTimeInRequest)
+
+	//Verify if the function overwrites only the latest time value in params
 	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure latest=" + latestTimeInRequest + " |stats count"
-	initSplunkRequestParams(splunkRequestParams, earliestTimeInParams, latestTimeInParams)
-	utils.RetrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, *splunkRequestParams, earliestTimeInParams, latestTimeInRequest)
-	
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, earliestTimeInParams, latestTimeInParams, earliestTimeInParams, latestTimeInRequest)
+
+	//Verify if the function keeps the default values in params
 	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure |stats count"
-	initSplunkRequestParams(splunkRequestParams, earliestTimeInParams, latestTimeInParams)
-	utils.RetrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, *splunkRequestParams, earliestTimeInParams, latestTimeInParams)
-	
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, earliestTimeInParams, latestTimeInParams, earliestTimeInParams, latestTimeInParams)
+
+	//Verify if the function overwrites only the earliest time value in params
 	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest=" + earliestTimeInRequest + " |stats count"
-	initSplunkRequestParams(splunkRequestParams, earliestTimeInParams, latestTimeInParams)
-	utils.RetrieveSearchTimeRange(splunkRequestParams)
-	checkRetrieveSearchTimeRange(t, *splunkRequestParams, earliestTimeInRequest, latestTimeInParams)
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, earliestTimeInParams, latestTimeInParams, earliestTimeInRequest, latestTimeInParams)
+
+	//Verify if the function ignores the second earliest time given in the query
+	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest=" + earliestTimeInRequest + " earliest=" + earliestTimeInParams + " |stats count"
+	checkRetrieveSearchTimeRange(t, splunkRequestParams, earliestTimeInParams, latestTimeInParams, earliestTimeInRequest, latestTimeInParams)
 
 }
 
-func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams splunk.RequestParams, expectedEarliestTime string, expectedLatestTime string) {
+func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
 
+	// reinit the params
+	splunkRequestParams.EarliestTime = earliestTimeInParams
+	splunkRequestParams.LatestTime = latestTimeInParams
+
+	utils.RetrieveSearchTimeRange(splunkRequestParams)
 	if splunkRequestParams.EarliestTime != expectedEarliestTime || splunkRequestParams.LatestTime != expectedLatestTime {
 		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
 			splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, expectedEarliestTime, expectedLatestTime)
 		t.Fail()
+	} else {
+		t.Log("Checked")
 	}
 
 }
@@ -345,9 +354,4 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 
 	return resourceServiceServer, nil
 
-}
-
-func initSplunkRequestParams(params *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string) {
-	params.EarliestTime = earliestTimeInParams
-	params.LatestTime = latestTimeInParams
 }

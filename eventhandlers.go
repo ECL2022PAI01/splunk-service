@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	SLI_FILE = "sli.yaml"
+	sliFileUri = "splunk/sli.yaml"
 )
 
 type splunkCredentials struct {
@@ -62,14 +62,14 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Step 5 - get SLI Config File
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
-	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, SLI_FILE)
+	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
 
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 	logger.Infof("SLI Config: %s", sliConfig)
 	if err != nil {
 		// failed to fetch sli config file
-		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", SLI_FILE, err.Error())
+		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFileUri, err.Error())
 		logger.Error(errMsg)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
@@ -135,6 +135,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	if errSLI != nil {
 		getSliFinishedEventData.EventData.Status = keptnv2.StatusErrored
 		getSliFinishedEventData.EventData.Result = keptnv2.ResultFailed
+		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %s", ServiceName, errSLI.Error())
 	}
 
 	logger.Infof("SLI finished event: %v", *getSliFinishedEventData)
