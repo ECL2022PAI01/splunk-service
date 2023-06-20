@@ -7,7 +7,7 @@ import (
 )
 
 // check if the search string contains the earliest or latest time and return the value
-func getSearchTime(kind string, search string, params *splunk.RequestParams) string {
+func getSearchTime(kind string, search string, params *splunk.RequestParams, defaultTime string) string {
 	if strings.Contains(search, kind) {
 		startIndex := strings.Index(search, kind)
 		q1 := strings.Fields(search[startIndex:])
@@ -33,13 +33,13 @@ func getSearchTime(kind string, search string, params *splunk.RequestParams) str
 		return strings.TrimSuffix(val, "\"")
 	}
 
-	return ""
+	return defaultTime
 }
 
 // get the earliest and latest time from the splunk search is set
 func RetrieveSearchTimeRange(params *splunk.RequestParams) {
 	search := params.SearchQuery
 
-	params.EarliestTime = getSearchTime("earliest", search, params)
-	params.LatestTime = getSearchTime("latest", search, params)
+	params.EarliestTime = getSearchTime("earliest", search, params, params.EarliestTime)
+	params.LatestTime = getSearchTime("latest", search, params, params.LatestTime)
 }
