@@ -1,4 +1,0 @@
----
-spec_version: '1.0'
-indicators:
-  http_response_time: avg:network.http.response_time{*} by {$SERVICE}.rollup(avg, $DURATION)
