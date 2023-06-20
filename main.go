@@ -40,6 +40,7 @@ type envConfig struct {
 }
 
 var env envConfig
+const UnhanKeptnCE = "Unhandled Keptn Cloud Event : "
 
 // ServiceName specifies the current services name (e.g., used as source when sending CloudEvents)
 const ServiceName = "splunk-service"
@@ -57,6 +58,10 @@ func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) erro
 	}
 	return nil
 }
+
+// These variables facilitate tests
+var handleConfMonitEvent = HandleConfigureMonitoringTriggeredEvent
+var handleGetSli= HandleGetSliTriggeredEvent
 
 /**
  * This method gets called when a new event is received from the Keptn Event Distributor
@@ -141,7 +146,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		parseKeptnCloudEventPayload(event, eventData)
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return HandleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
+		return handleConfMonitEvent(ddKeptn, event, eventData)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
@@ -151,7 +156,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventData)
 
-		return HandleGetSliTriggeredEvent(ddKeptn, event, eventData)
+		return handleGetSli(ddKeptn, event, eventData)
 
 	}
 	// Unknown Event -> Throw Error!
@@ -161,6 +166,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	return errors.New(errorMsg)
 }
 
+var call_main = _main
 /**
  * Usage: ./main
  * no args: starts listening for cloudnative events on localhost:port/path
@@ -175,15 +181,15 @@ func main() {
 	}
 	logger.Infof("ENV VARS : %v", env)
 
-	os.Exit(_main(os.Args[1:]))
+	os.Exit(call_main(os.Args[1:]))
 }
 
+
+var procKeptnCE = processKeptnCloudEvent
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
 func _main(args []string) int {
-	// configure keptn options
-	// env.Env = "dev"
 	if env.Env == "local" {
 		godotenv.Load(".env.local")
 		logger.Info("env=local: Running with local filesystem to fetch resources")
@@ -218,7 +224,7 @@ func _main(args []string) int {
 	}
 
 	logger.Infof("Starting receiver")
-	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
+	logger.Fatal(c.StartReceiver(ctx, procKeptnCE).Error())
 	return 0
 }
 

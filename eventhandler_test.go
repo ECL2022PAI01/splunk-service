@@ -102,13 +102,13 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	// Verify that the first CE sent is a .started event
 	if keptnv2.GetStartedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Errorf("Expected a configureMonitoring.started event type")
+		t.Errorf("Expected a configure-monitoring.started event type")
 		t.Fail()
 	}
 
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
-		t.Errorf("Expected a configureMonitoring.finished event type")
+		t.Errorf("Expected a configure-monitoring.finished event type")
 		t.Fail()
 	}
 
