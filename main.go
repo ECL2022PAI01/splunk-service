@@ -40,6 +40,7 @@ type envConfig struct {
 }
 
 var env envConfig
+const UnhanKeptnCE = "Unhandled Keptn Cloud Event : "
 
 // ServiceName specifies the current services name (e.g., used as source when sending CloudEvents)
 const ServiceName = "splunk-service"
@@ -165,6 +166,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	return errors.New(errorMsg)
 }
 
+var call_main = _main
 /**
  * Usage: ./main
  * no args: starts listening for cloudnative events on localhost:port/path
@@ -179,15 +181,15 @@ func main() {
 	}
 	logger.Infof("ENV VARS : %v", env)
 
-	os.Exit(_main(os.Args[1:]))
+	os.Exit(call_main(os.Args[1:]))
 }
 
+
+var procKeptnCE = processKeptnCloudEvent
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
 func _main(args []string) int {
-	// configure keptn options
-	// env.Env = "dev"
 	if env.Env == "local" {
 		godotenv.Load(".env.local")
 		logger.Info("env=local: Running with local filesystem to fetch resources")
@@ -222,7 +224,7 @@ func _main(args []string) int {
 	}
 
 	logger.Infof("Starting receiver")
-	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
+	logger.Fatal(c.StartReceiver(ctx, procKeptnCE).Error())
 	return 0
 }
 
