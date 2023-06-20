@@ -25,7 +25,7 @@ import (
 
 var calledSLI bool
 var calledConfig bool
-var testPortforMain = 8090
+var testPortforMain = 38888
 //Tests the getSplunkCredentials function
 func TestProcessKeptnCloudEvent(t *testing.T){
 
