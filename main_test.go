@@ -27,6 +27,7 @@ var calledSLI bool
 var calledConfig bool
 var testPortforMain = 8090
 
+// Tests the parseKeptnCloudEventPayload function
 func TestParseKeptnCloudEventPayload(t *testing.T){
 	incomingEvent, err:= extractEvent("test/events/get-sli.triggered.json")
 	if err!= nil{
@@ -35,6 +36,7 @@ func TestParseKeptnCloudEventPayload(t *testing.T){
 	eventData := &keptnv2.GetSLITriggeredEventData{}
 	err = parseKeptnCloudEventPayload(*incomingEvent, eventData)
 
+	//fails if eventData has not been modified
 	if(err!=nil || eventData.Project==""){
 		t.Errorf("Failed to parse keptn cloud event payload")
 		t.Fail()
@@ -42,6 +44,7 @@ func TestParseKeptnCloudEventPayload(t *testing.T){
 	t.Logf("%v", eventData)
 }
 
+// Tests the processKeptnCloudEvent function by checking if it processes get-sli.triggered and configure monitoring events
 func TestProcessKeptnCloudEvent(t *testing.T){
 
 	t.Log("Initializing get sli triggered event")
@@ -55,32 +58,24 @@ func TestProcessKeptnCloudEvent(t *testing.T){
 		return nil
 	}
 
+	//Test for a get-sli.triggered event
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, err:= extractEvent("test/events/get-sli.triggered.json")
-	if err!= nil{
-		t.Errorf("Error getting keptn event : %s", err.Error())
-	}
-	checkProcessKeptnCloudEvent(t, incomingEvent)
+	checkProcessKeptnCloudEvent(t, "test/events/get-sli.triggered.json")
 
+	//Test for a monitoring.configure event
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, err= extractEvent("test/events/monitoring.configure.json")
-	if err!= nil{
-		t.Errorf("Error getting keptn event : %s", err.Error())
-	}
-	checkProcessKeptnCloudEvent(t, incomingEvent)
+	checkProcessKeptnCloudEvent(t, "test/events/monitoring.configure.json")
 
+	//Test for a random event
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, err= extractEvent("test/events/release.triggered.json")
-	if err!= nil{
-		t.Errorf("Error getting keptn event : %s", err.Error())
-	}
-	checkProcessKeptnCloudEvent(t, incomingEvent)
+	checkProcessKeptnCloudEvent(t, "test/events/release.triggered.json")
 
 }
 
+//Tests the _main function by ensuring that it listens to cloudevents and trigger the procKeptnCE function
 func Test_main(t *testing.T){
 
 	if err := envconfig.Process("", &env); err != nil {
@@ -95,7 +90,7 @@ func Test_main(t *testing.T){
 	}
 	args := []string{}
 	go _main(args)
-
+	//sleep for 2 seconds to let the previous go routine the time to start listening for events
 	time.Sleep(time.Duration(2) * time.Second)
 	err := sendTestCloudEvent("test/events/get-sli.triggered.json")
 	if err!=nil{
@@ -109,6 +104,7 @@ func Test_main(t *testing.T){
 
 }
 
+//Tests the main function by verifying if the exit code corresponds to the one returned by call_main function
 func TestMain(t *testing.T) {
 	const expectedReturn = 15
 
@@ -129,9 +125,9 @@ func TestMain(t *testing.T) {
     t.Fatalf("process ran with err %v, want exit status "+fmt.Sprint(expectedReturn), err)
 }
 
+//reads the json event file and convert its content into an event
 func extractEvent(eventFileName string) (*event.Event, error){
 
-	//eventFileName:= "test/events/get-sli.triggered.json"
 	eventFile, err := ioutil.ReadFile(eventFileName)
 	if err != nil {
 		return nil, err
@@ -147,11 +143,18 @@ func extractEvent(eventFileName string) (*event.Event, error){
 
 }
 
-func checkProcessKeptnCloudEvent(t *testing.T, incomingEvent *event.Event){
+//Check if events are handled (not handled) when they should be (shouldn't be)
+func checkProcessKeptnCloudEvent(t *testing.T, fileName string){
 	
-	err:= processKeptnCloudEvent(context.Background(), *incomingEvent)
+	incomingEvent, err:= extractEvent(fileName)
+	if err!= nil{
+		t.Errorf("Error getting keptn event : %s", err.Error())
+	}
+
+	err= processKeptnCloudEvent(context.Background(), *incomingEvent)
 	
 	if err==nil{
+		//verify if events that should be handled are handled correctly
 		if(incomingEvent.Type()==keptnv2.ConfigureMonitoringTaskName){
 			if(calledConfig==false){
 				t.Errorf("The configure monitoring event has not been handled.")
@@ -167,6 +170,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, incomingEvent *event.Event){
 			t.Fail()
 		}
 	}else{
+		//verify if events that should be handled are not skipped
 		if strings.HasPrefix(err.Error(), UnhanKeptnCE) &&
 		(incomingEvent.Type()==keptnv2.ConfigureMonitoringTaskName ||
 		incomingEvent.Type()==keptnv2.GetTriggeredEventType(keptnv2.GetSLITaskName) ||
@@ -178,6 +182,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, incomingEvent *event.Event){
 
 }
 
+//Sends a cloud event
 func sendTestCloudEvent(eventFileName string) error{
 	body, err := ioutil.ReadFile(eventFileName)
 	if err != nil {

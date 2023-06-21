@@ -114,7 +114,6 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 }
 
-// Tests the HandleGetSliTriggeredEvent Handler
 
 // Tests the HandleSpecificSli function
 func TestHandleSpecificSli(t *testing.T) {
@@ -156,6 +155,7 @@ func TestHandleSpecificSli(t *testing.T) {
 
 }
 
+// Tests the handleGetSliTriggered function
 func TestHandleGetSliTriggered(t *testing.T) {
 
 	//Building a mock resource service server
@@ -264,6 +264,7 @@ func TestGetSplunkCredentials(t *testing.T) {
 
 }
 
+// Tests the retrieveSearchTimeRange function
 func TestRetrieveSearchTimeRange(t *testing.T) {
 
 	const earliestTimeInRequest = "-2m"
@@ -295,6 +296,7 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 
 }
 
+//checks if we have the expected parameters in the final request seent to splunk
 func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
 
 	// reinit the params
