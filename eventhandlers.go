@@ -16,9 +16,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-const (
-	sliFileUri = "splunk/sli.yaml"
-)
+
 
 type splunkCredentials struct {
 	Host  string `json:"host" yaml:"spHost"`
@@ -28,6 +26,7 @@ type splunkCredentials struct {
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
 func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
+	const sliFileUri = "splunk/sli.yaml"
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)

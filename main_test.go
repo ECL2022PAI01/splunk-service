@@ -25,7 +25,7 @@ import (
 
 var calledSLI bool
 var calledConfig bool
-var testPortforMain = 8090
+var testPortforMain = 38888
 
 // Tests the parseKeptnCloudEventPayload function
 func TestParseKeptnCloudEventPayload(t *testing.T){
