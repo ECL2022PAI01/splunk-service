@@ -25,7 +25,7 @@ import (
 
 var calledSLI bool
 var calledConfig bool
-var testPortforMain = 8090
+var testPortforMain = 38888
 
 func TestParseKeptnCloudEventPayload(t *testing.T){
 	incomingEvent, err:= extractEvent("test/events/get-sli.triggered.json")
