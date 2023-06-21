@@ -25,8 +25,23 @@ import (
 
 var calledSLI bool
 var calledConfig bool
-var testPortforMain = 38888
-//Tests the getSplunkCredentials function
+var testPortforMain = 8090
+
+func TestParseKeptnCloudEventPayload(t *testing.T){
+	incomingEvent, err:= extractEvent("test/events/get-sli.triggered.json")
+	if err!= nil{
+		t.Errorf("Error getting keptn event : %s", err.Error())
+	}
+	eventData := &keptnv2.GetSLITriggeredEventData{}
+	err = parseKeptnCloudEventPayload(*incomingEvent, eventData)
+
+	if(err!=nil || eventData.Project==""){
+		t.Errorf("Failed to parse keptn cloud event payload")
+		t.Fail()
+	}
+	t.Logf("%v", eventData)
+}
+
 func TestProcessKeptnCloudEvent(t *testing.T){
 
 	t.Log("Initializing get sli triggered event")
@@ -42,17 +57,26 @@ func TestProcessKeptnCloudEvent(t *testing.T){
 
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, _:= extractEvent("test/events/get-sli.triggered.json")
+	incomingEvent, err:= extractEvent("test/events/get-sli.triggered.json")
+	if err!= nil{
+		t.Errorf("Error getting keptn event : %s", err.Error())
+	}
 	checkProcessKeptnCloudEvent(t, incomingEvent)
 
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, _= extractEvent("test/events/monitoring.configure.json")
+	incomingEvent, err= extractEvent("test/events/monitoring.configure.json")
+	if err!= nil{
+		t.Errorf("Error getting keptn event : %s", err.Error())
+	}
 	checkProcessKeptnCloudEvent(t, incomingEvent)
 
 	calledSLI = false
 	calledConfig = false
-	incomingEvent, _= extractEvent("test/events/release.triggered.json")
+	incomingEvent, err= extractEvent("test/events/release.triggered.json")
+	if err!= nil{
+		t.Errorf("Error getting keptn event : %s", err.Error())
+	}
 	checkProcessKeptnCloudEvent(t, incomingEvent)
 
 }
@@ -86,10 +110,10 @@ func Test_main(t *testing.T){
 }
 
 func TestMain(t *testing.T) {
-	const EXPECTED_RETURN = 15
+	const expectedReturn = 15
 
 	call_main = func(args []string) int {
-		return EXPECTED_RETURN
+		return expectedReturn
 	}
     if os.Getenv("BE_MAIN") == "1" {
         main()
@@ -99,10 +123,10 @@ func TestMain(t *testing.T) {
     cmd := exec.Command(os.Args[0], "-test.run=TestMain")
     cmd.Env = append(os.Environ(), "BE_MAIN=1")
     err := cmd.Run()
-    if e, ok := err.(*exec.ExitError); ok && e.ExitCode()==EXPECTED_RETURN {
+    if e, ok := err.(*exec.ExitError); ok && e.ExitCode()==expectedReturn {
         return
     }
-    t.Fatalf("process ran with err %v, want exit status "+fmt.Sprint(EXPECTED_RETURN), err)
+    t.Fatalf("process ran with err %v, want exit status "+fmt.Sprint(expectedReturn), err)
 }
 
 func extractEvent(eventFileName string) (*event.Event, error){
@@ -110,14 +134,12 @@ func extractEvent(eventFileName string) (*event.Event, error){
 	//eventFileName:= "test/events/get-sli.triggered.json"
 	eventFile, err := ioutil.ReadFile(eventFileName)
 	if err != nil {
-		fmt.Printf("Cant load %s: %s", eventFileName, err.Error())
 		return nil, err
 	}
 
 	incomingEvent := &cloudevents.Event{}
 	err = json.Unmarshal(eventFile, incomingEvent)
 	if err != nil {
-		fmt.Printf("Error parsing: %s", err.Error())
 		return nil, err
 	}
 

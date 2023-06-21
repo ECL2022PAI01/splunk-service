@@ -228,18 +228,17 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	// print respData
 	if respData.GetSLI.IndicatorValues == nil {
 		t.Errorf("No results added into the response event for the indicators.")
+		t.Fail()
 	} else {
 		//printing SLI results if no error has occured
 		for _, sliResult := range respData.GetSLI.IndicatorValues {
 			if sliResult.Value != float64(defaultSplunkTestResult) {
 				t.Errorf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
+				t.Fail()
+			}else{
+				t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
 			}
 		}
-	}
-
-	//printing SLI results if no error has occured
-	for _, sliResult := range respData.GetSLI.IndicatorValues {
-		t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
 	}
 }
 
