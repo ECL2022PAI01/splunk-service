@@ -1,5 +1,4 @@
 - [splunk-service](#splunk-service)
-  * [Quickstart](#quickstart)
   * [If you already have a Keptn cluster running](#if-you-already-have-a-keptn-cluster-running)
   * [Compatibility Matrix](#compatibility-matrix)
   * [Installation](#installation)
@@ -24,17 +23,8 @@
 This implements the `splunk-service` that integrates the [splunk](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
 If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
-
-## Quickstart
-If you are on Mac or Linux, you can use [examples/kup.sh](./examples/kup.sh) to set up a local Keptn installation that uses splunk. This script creates a local minikube cluster, installs Keptn, splunk and the splunk integration for Keptn (check the script for pre-requisites). 
-
-To use the script,
-```bash
-examples/kup.sh
-```
-
 ## If you already have a Keptn cluster running
-1. Install splunk
+1. Install splunk if you don't already have an instance of splunk running somewhere
 
 Add splunk helm repo:
 ```bash
@@ -42,13 +32,13 @@ helm repo add splunk https://helm.splunkhq.com
 ```
 Install splunk helm chart:
 ```bash
-helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
-
+docker run -p 8089:<specifiedSplunkdPort> -p 8000:<specifiedUIPort> -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
 ```
 2. Install Keptn splunk-service to integrate splunk with Keptn
 ```bash
 # cd splunk-service
-helm install splunk-service ./helm
+tar -czvf test/splunk/splunkChart.tgz helm/
+helm upgrade --install splunk-sli test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
 ```
 
 3. Add SLI and SLO
@@ -61,7 +51,6 @@ Example:
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/slo.yaml --resourceUri=slo.yaml
 ```
-Check [./quickstart/sli.yaml](./examples/quickstart/sli.yaml) and [./quickstart/slo.yaml](./examples/quickstart/slo.yaml) for example SLI and SLO. 
 
 4. Configure Keptn to use splunk SLI provider
 Use keptn CLI version [0.15.0](https://github.com/keptn/keptn/releases/tag/0.15.0) or later.
@@ -71,7 +60,7 @@ keptn configure monitoring splunk --project <project-name>  --service <service-n
 
 5. Trigger delivery
 ```bash
-keptn trigger delivery --project=<project-name> --service=<service-name> --image=<image> --tag=<tag>
+keptn trigger delivery --project=<project-name> --service=<service-name> --image=<appRegistredToSplunk> --tag=<tag>
 ```
 Example:
 ```bash
@@ -92,7 +81,8 @@ Observe the results in the [Keptn Bridge](https://keptn.sh/docs/0.19.x/bridge/)
 
 ```bash
 # cd splunk-service
-helm install splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
+tar -czvf test/splunk/splunkChart.tgz helm/
+helm upgrade --install splunk-service test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
 ```
 Tell Keptn to use splunk as SLI provider for your project/service
 ```bash
@@ -107,11 +97,11 @@ kubectl -n keptn get pods -l run=splunk-service
 ```
 ### Up- or Downgrading
 
-Adapt and use the following command in case you want to up- or downgrade your installed version (specified by the `$VERSION` placeholder):
+[comment]: # (Adapt and use the following command in case you want to up- or downgrade your installed version (specified by the `$VERSION` placeholder):)
 
-```bash
-helm upgrade splunk-service ./helm
-```
+[comment]: # (```bash)
+[comment]: # (helm upgrade splunk-service ./helm)
+[comment]: # (```)
 
 ### Uninstall
 
@@ -124,7 +114,7 @@ helm uninstall splunk-service
 port-forward Keptn API so that our tests can create/delete Keptn resources
 
 ``` bash
-kubectl port-forward svc/api-gateway-nginx 5000:80 -nkeptn # in a separate terminal window
+kubectl port-forward svc/api-gateway-nginx 5000:80 -n keptn # in a separate terminal window
 ``` 
 
 from splunk-service repo
