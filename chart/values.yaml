@@ -3,10 +3,11 @@ splunkservice:
     repository: kuro08/splunk-service # Container Image Name  logLevel: info
     tag: latest                                # Container Tag
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: ""           #attention NE PAS SPECIFIER DANS LE CODE
-  spHost: ""                              #attention NE PAS SPECIFIER DANS LE CODE
-  # spHost: "ccf6-156-18-66-3.eu.ngrok.io"                              #attention NE PAS SPECIFIER DANS LE CODE
-  spPort: ""
+  spApitoken: ""                        #don't specify it in here
+  spHost: ""                            #don't specify it in here
+  spPort: ""                            
+  spUser: ""                            #don't specify it in here
+  spPassword: ""                        #don't specify it in here
   # Make splunk-service wait for 120 seconds before querying the Splunk API
   # so that the API reflects correct metric data
   sleepBeforeAPIInSeconds: "6"

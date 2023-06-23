@@ -58,7 +58,7 @@ function check_if_helm_cli_is_installed(){
 function check_if_keptn_cli_is_installed(){
  if ! command -v keptn &> /dev/null
  then
-    echo "Could not find keptn. Please install keptn to proceed further."
+    echo "Could not find keptn. Please install keptn cli to proceed further."
     exit
  fi  
 }
@@ -70,15 +70,6 @@ function check_if_kubectl_cli_is_installed(){
     exit
  fi  
 }
-
-function check_if_istioctl_cli_is_installed(){
- if ! command -v istioctl &> /dev/null
- then
-    echo "Could not find istioctl. Please install istioctl to proceed further."
-    exit
- fi  
-}
-
 
 function print_error() {
   echo "::error file=${BASH_SOURCE[1]##*/},line=${BASH_LINENO[0]}::$(timestamp) ${*}"
@@ -250,22 +241,17 @@ keptn configure monitoring splunk --project $PROJECT --service $SERVICE
 helm repo add splunk https://helm.splunkhq.com
 
 # Install splunk
-# Uncomment this line if you want to install the splunk operator
-# helm install my-splunk-operator splunk/splunk-operator
-# kubectl apply -f ~/sandbox/snippets/ddagent.yaml
-# kubectl apply -f ~/sandbox/snippets/ddmonitor.yaml 
 # install splunk api secret
 # kubectl create secret generic splunk-secret --from-literal api-key=${DD_API_KEY} --from-literal app-key=${DD_APP_KEY}
 
-# # Install splunk using the splunk helm chart
-# helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
-
-helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
-
+docker run -p 8089:8089 -p 8000:8000 -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
 
 # Install splunk-service integration for Keptn
 # kubectl apply -f ~/sandbox/splunk-service/deploy/service.yaml
-helm install splunk-service ../helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
+cd ..
+tar -czvf test/splunk/splunkChart.tgz helm/
+helm upgrade --install splunk-sli test/splunk/splunkChart.tgz --set splunkservice.spHost="localhost" --set splunkservice.spPort=8089 --set splunkservice.spUser="admin" --set splunkservice.spPassword="mypassword"
+cd ./examples
 
 # Add splunk sli and slo
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=splunk/sli.yaml

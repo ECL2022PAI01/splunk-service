@@ -37,6 +37,8 @@ type envConfig struct {
 	SplunkApiToken string `envconfig:"SP_API_TOKEN" default:""`
 	SplunkHost     string `envconfig:"SP_HOST" default:""`
 	SplunkPort     string `envconfig:"SP_PORT" default:"8089"`
+	SplunkUser     string `envconfig:"SP_USER" default:""`
+	SplunkPassword string `envconfig:"SP_PASSWORD" default:""`
 }
 
 var env envConfig
@@ -188,6 +190,8 @@ func _main(args []string) int {
 		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
 		env.SplunkHost = os.Getenv("SPLUNK_HOST")
 		env.SplunkPort = os.Getenv("SPLUNK_PORT")
+		env.SplunkUser = os.Getenv("SPLUNK_USER")
+		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
