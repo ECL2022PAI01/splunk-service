@@ -42,17 +42,12 @@ spec:
           envFrom:
           - secretRef:
               name: "{{ include "splunk-service.secret" . }}"
+              optional: true
           env:
           - name: env
             value: 'production'
-          - name: SLEEP_BEFORE_API_IN_SECONDS
-            value: "{{ .Values.splunkservice.sleepBeforeAPIInSeconds }}"
           - name: LOG_LEVEL
             value: "{{ .Values.splunkservice.logLevel }}"
-          - name: POD_NAMESPACE
-            value: "{{ .Values.namespace }}"
-          - name: SPLUNK_ENDPOINT
-            value: "{{ .Values.splunkservice.SplunkEndpoint }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: distributor
@@ -69,7 +64,7 @@ spec:
               cpu: "500m"
           env:
             - name: PUBSUB_TOPIC
-              value: 'sh.keptn.event.monitoring.configure,sh.keptn.event.configure-monitoring.triggered,sh.keptn.event.get-sli.triggered'
+              value: {{ .Values.subscription.pubsubTopic }}
             - name: PUBSUB_RECIPIENT
               value: '127.0.0.1'
             - name: STAGE_FILTER

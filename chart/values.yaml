@@ -1,7 +1,8 @@
 splunkservice:
   image:
     repository: kuro08/splunk-service # Container Image Name  logLevel: info
-    tag: latest                                # Container Tag
+    pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
+    tag: "" # Container Tag
   # Set to SP_API_TOKEN in the chart's Secret
   spApitoken: ""                        #don't specify it in here
   spHost: ""                            #don't specify it in here
@@ -13,47 +14,52 @@ splunkservice:
   sleepBeforeAPIInSeconds: "6"
   # Secret containing splunk's SP_API_TOKEN
   #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
-  existingSecret: "" # If you want to use existing Secret in the cluster
-  # KeptnEndpoint: "localhost:8080"
-    # pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
+  # If you want to use existing Secret in the cluster
+  # Secret containing splunk's SP_API_TOKEN, SP_HOST and SP_PORT (token names should be an exact match)
+  existingSecret: ""
   service:
-    enabled: true                              # Creates a Kubernetes Service for the splunk-service
+    enabled: true # Creates a Kubernetes Service for the splunk-service
 
 distributor:
-  stageFilter: ""                            # Sets the stage this helm service belongs to
-  serviceFilter: ""                          # Sets the service this helm service belongs to
-  projectFilter: ""                          # Sets the project this helm service belongs to
+  stageFilter: "" # Sets the stage this helm service belongs to
+  serviceFilter: "" # Sets the service this helm service belongs to
+  projectFilter: "" # Sets the project this helm service belongs to
   image:
-    repository: ghcr.io/keptn/distributor  # Container Image Name
-    pullPolicy: IfNotPresent                 # Kubernetes Image Pull Policy
-    tag: "1.0.0"                                  # Container Tag
+    repository: ghcr.io/keptn/distributor # Container Image Name
+    pullPolicy: IfNotPresent # Kubernetes Image Pull Policy
+    tag: "1.0.0" # Container Tag
+
+# Sets the events the service subscribes to
+subscription:
+  pubsubTopic: "sh.keptn.event.monitoring.configure,sh.keptn.event.configure-monitoring.triggered,sh.keptn.event.get-sli.triggered"
 
 remoteControlPlane:
-  enabled: false                             # Enables remote execution plane mode
+  enabled: false # Enables remote execution plane mode
   api:
-    protocol: "http"                        # Used Protocol (http, https)
-    hostname: ""                            # Hostname of the control plane cluster (and Port)
-    apiValidateTls: true                     # Defines if the control plane certificate should be validated
-    token: ""                                # Keptn API Token
+    protocol: "http" # Used Protocol (http, https)
+    hostname: "" # Hostname of the control plane cluster (and Port)
+    apiValidateTls: true # Defines if the control plane certificate should be validated
+    token: "" # Keptn API Token
 
-imagePullSecrets: []                         # Secrets to use for container registry credentials
+imagePullSecrets: [] # Secrets to use for container registry credentials
 
 serviceAccount:
-  create: true                               # Enables the service account creation
-  annotations: {}                            # Annotations to add to the service account
-  name: ""                                   # The name of the service account to use.
+  create: true # Enables the service account creation
+  annotations: {} # Annotations to add to the service account
+  name: "keptn-splunk-service" # The name of the service account to use.
 
-podAnnotations: {}                           # Annotations to add to the created pods
+podAnnotations: {} # Annotations to add to the created pods
 
-podSecurityContext: {}                       # Set the pod security context (e.g. fsGroups)
+podSecurityContext:
+  {} # Set the pod security context (e.g. fsGroups)
   # fsGroup: 2000
 
-securityContext: {}                          # Set the security context (e.g. runAsUser)
+securityContext: {} # Set the security context (e.g. runAsUser)
 #  readOnlyRootFilesystem: true
 #  runAsNonRoot: true
 #  runAsUser: 1000
 
-resources:                                 # Resource limits and requests
+resources: # Resource limits and requests
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -62,11 +68,11 @@ resources:                                 # Resource limits and requests
   #   cpu: 100m
   #   memory: 128Mi
   requests:
-     cpu: 100m
-     memory: 128Mi
+    cpu: 100m
+    memory: 128Mi
 
-nodeSelector: {}                                # Node selector configuration
+nodeSelector: {} # Node selector configuration
 
-tolerations: []                                 # Tolerations for the pods
+tolerations: [] # Tolerations for the pods
 
-affinity: {}                                    # Affinity rules
+affinity: {} # Affinity rules
