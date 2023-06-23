@@ -4,10 +4,16 @@ splunkservice:
     pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
     tag: "" # Container Tag
   # Set to SP_API_TOKEN in the chart's Secret
-  spApitoken: "" # Do not use it in production environment
-  spHost: "" # Do not use it in production environment
-  spPort: "" # Do not use it in production environment
-
+  spApitoken: ""                        #don't specify it in here
+  spHost: ""                            #don't specify it in here
+  spPort: ""                            
+  spUser: ""                            #don't specify it in here
+  spPassword: ""                        #don't specify it in here
+  # Make splunk-service wait for 120 seconds before querying the Splunk API
+  # so that the API reflects correct metric data
+  sleepBeforeAPIInSeconds: "6"
+  # Secret containing splunk's SP_API_TOKEN
+  #  SP_API_TOKEN and SP_HOST (token names should be an exact match)
   # If you want to use existing Secret in the cluster
   # Secret containing splunk's SP_API_TOKEN, SP_HOST and SP_PORT (token names should be an exact match)
   existingSecret: ""

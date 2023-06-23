@@ -296,7 +296,7 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 
 }
 
-//checks if we have the expected parameters in the final request seent to splunk
+//checks if we have the expected parameters in the final request sent to splunk
 func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
 
 	// reinit the params

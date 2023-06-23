@@ -1,5 +1,4 @@
 - [splunk-service](#splunk-service)
-  * [Quickstart](#quickstart)
   * [If you already have a Keptn cluster running](#if-you-already-have-a-keptn-cluster-running)
   * [Compatibility Matrix](#compatibility-matrix)
   * [Installation](#installation)
@@ -18,29 +17,14 @@
   * [Known problems](#known-problems)
   * [License](#license)
 # splunk-service
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/keptn-sandbox/splunk-service)
-[![Go Report Card](https://goreportcard.com/badge/github.com/keptn-sandbox/splunk-service)](https://goreportcard.com/report/github.com/keptn-sandbox/splunk-service)
+![GitHub release (latest by date)]()
+[![Go Report Card]()
 
-This implements the `splunk-service` that integrates the [splunk](https://en.wikipedia.org/wiki/splunk) observability platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
-If you want to learn more about Keptn visit us on [keptn.sh](https://keptn.sh)
-
-Check the issue on the main repo for more info: https://github.com/keptn/keptn/issues/2652
-
-
-## Quickstart
-If you are on Mac or Linux, you can use [examples/kup.sh](./examples/kup.sh) to set up a local Keptn installation that uses splunk. This script creates a local minikube cluster, installs Keptn, Istio, splunk and the splunk integration for Keptn (check the script for pre-requisites). 
-
-To use the script,
-```bash
-export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
-examples/kup.sh
-```
-Check [the official docs](https://docs.splunkhq.com/account_management/api-app-keys/) for how to create the splunk API key and Application key
-
-Note: Application keys get the same permissions as you. You might want to narrow down the permissions (splunk-service only reads metrics from the API. Check the official docs linked above for more information).
+This implements the `splunk-service` that integrates the [splunk](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
+If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
 ## If you already have a Keptn cluster running
-1. Install splunk
+1. Install splunk if you don't already have an instance of splunk running somewhere
 
 Add splunk helm repo:
 ```bash
@@ -48,15 +32,13 @@ helm repo add splunk https://helm.splunkhq.com
 ```
 Install splunk helm chart:
 ```bash
-export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
-helm install splunk --set splunk.apiKey=${DD_API_KEY} splunk/splunk --set splunk.appKey=${DD_APP_KEY} --set splunk.site=${DD_SITE} --set clusterAgent.enabled=true --set clusterAgent.metricsProvider.enabled=true --set clusterAgent.createPodDisruptionBudget=true --set clusterAgent.replicas=2
-
+docker run -p 8089:<specifiedSplunkdPort> -p 8000:<specifiedUIPort> -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
 ```
 2. Install Keptn splunk-service to integrate splunk with Keptn
 ```bash
-export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
 # cd splunk-service
-helm install splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
+tar -czvf test/splunk/splunkChart.tgz helm/
+helm upgrade --install splunk-service test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
 ```
 
 3. Add SLI and SLO
@@ -69,7 +51,6 @@ Example:
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/sli.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/slo.yaml --resourceUri=slo.yaml
 ```
-Check [./quickstart/sli.yaml](./examples/quickstart/sli.yaml) and [./quickstart/slo.yaml](./examples/quickstart/slo.yaml) for example SLI and SLO. 
 
 4. Configure Keptn to use splunk SLI provider
 Use keptn CLI version [0.15.0](https://github.com/keptn/keptn/releases/tag/0.15.0) or later.
@@ -79,7 +60,7 @@ keptn configure monitoring splunk --project <project-name>  --service <service-n
 
 5. Trigger delivery
 ```bash
-keptn trigger delivery --project=<project-name> --service=<service-name> --image=<image> --tag=<tag>
+keptn trigger delivery --project=<project-name> --service=<service-name> --image=<appRegistredToSplunk> --tag=<tag>
 ```
 Example:
 ```bash
@@ -92,23 +73,16 @@ Observe the results in the [Keptn Bridge](https://keptn.sh/docs/0.19.x/bridge/)
 
 | Keptn Version    | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 |:----------------:|:----------------------------------------:|
-|       0.11.4      | ghcr.io/keptn-sandbox/splunk-service:0.1.0 |
-|       0.11.4      | ghcr.io/keptn-sandbox/splunk-service:0.2.0 |
-|       0.15.0      | ghcr.io/keptn-sandbox/splunk-service:0.15.0 |  
-|       0.15.1      | ghcr.io/keptn-sandbox/splunk-service:0.15.1 |
-|       0.16.0      | ghcr.io/keptn-sandbox/splunk-service:0.16.0 |
-|       0.17.0      | ghcr.io/keptn-sandbox/splunk-service:0.17.0 | 
-|       0.18.1      | ghcr.io/keptn-sandbox/splunk-service:0.18.1 | 
-|       0.19.0      | ghcr.io/keptn-sandbox/splunk-service:0.19.0 | 
-
-splunk-service version will match Keptn version starting from 0.15.0 version of Keptn e.g., splunk-service 0.15.x is compatible with Keptn 0.15.x 
+|       x.y.z       | ghcr.io/keptn-sandbox/splunk-service:x.y.z |
+|       u.v.w      | ghcr.io/keptn-sandbox/splunk-service:u.v.w |
+ 
 
 ## Installation
 
 ```bash
-export DD_API_KEY="<your-splunk-api-key>" DD_APP_KEY="<your-splunk-app-key>" DD_SITE="splunkhq.com" 
 # cd splunk-service
-helm install splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
+tar -czvf test/splunk/splunkChart.tgz helm/
+helm upgrade --install splunk-service test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
 ```
 Tell Keptn to use splunk as SLI provider for your project/service
 ```bash
@@ -123,11 +97,6 @@ kubectl -n keptn get pods -l run=splunk-service
 ```
 ### Up- or Downgrading
 
-Adapt and use the following command in case you want to up- or downgrade your installed version (specified by the `$VERSION` placeholder):
-
-```bash
-helm upgrade splunk-service ./helm --set splunkservice.ddApikey=${DD_API_KEY} --set splunkservice.ddAppKey=${DD_APP_KEY} --set splunkservice.ddSite=${DD_SITE}
-```
 
 ### Uninstall
 
@@ -140,7 +109,7 @@ helm uninstall splunk-service
 port-forward Keptn API so that our tests can create/delete Keptn resources
 
 ``` bash
-kubectl port-forward svc/api-gateway-nginx 5000:80 -nkeptn # in a separate terminal window
+kubectl port-forward svc/api-gateway-nginx 5000:80 -n keptn # in a separate terminal window
 ``` 
 
 from splunk-service repo
@@ -159,6 +128,11 @@ export KEPTN_API_TOKEN=$(kubectl get secret keptn-api-token -n keptn -ojsonpath=
 
 
 # Run tests
+Unit tests
+```bash
+go test -v .
+```
+e2e test
 ```bash
 gotestsum --format standard-verbose -- -timeout=120m  ./test/e2e/...
 ```
@@ -208,15 +182,9 @@ We have dummy cloud-events in the form of [RFC 2616](https://ietf.org/rfc/rfc261
 
 ### GitHub Actions: Automated Pull Request Review
 
-This repo uses [reviewdog](https://github.com/reviewdog/reviewdog) for automated reviews of Pull Requests. 
-
-You can find the details in [.github/workflows/reviewdog.yml](.github/workflows/reviewdog.yml).
 
 ### GitHub Actions: Unit Tests
 
-This repo has automated unit tests for pull requests. 
-
-You can find the details in [.github/workflows/tests.yml](.github/workflows/tests.yml).
 
 ## How to release a new version of this service
 
@@ -238,9 +206,7 @@ Once you have confirmed that everything works and your version is ready to go, y
 * merge any changes from the release branch back to the master branch.
 
 ## Known problems
-1. If the evaluation window of the query is too short, the api might return an empty result which splunk-service treats as 0 and fails the evaluation. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/10)
-2. There is an on-purpose 60s delay before the splunk metrics API is called. This is because, calling the metrics API earlier leads to incorrect data. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/8)
-3. Does not support default queries for throughput, error rate, request latency etc., i.e., you have to enter the entire query. [Issue](https://github.com/keptn-sandbox/splunk-service/issues/9)
+1. Does not support default queries for throughput, error rate, request latency etc., i.e., you have to enter the entire query. 
 
 ## License
 
