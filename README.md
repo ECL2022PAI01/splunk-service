@@ -38,7 +38,7 @@ docker run -p 8089:<specifiedSplunkdPort> -p 8000:<specifiedUIPort> -e "SPLUNK_S
 ```bash
 # cd splunk-service
 tar -czvf test/splunk/splunkChart.tgz helm/
-helm upgrade --install splunk-sli test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
+helm upgrade --install splunk-service test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
 ```
 
 3. Add SLI and SLO
