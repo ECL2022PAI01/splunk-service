@@ -97,11 +97,6 @@ kubectl -n keptn get pods -l run=splunk-service
 ```
 ### Up- or Downgrading
 
-[comment]: # (Adapt and use the following command in case you want to up- or downgrade your installed version (specified by the `$VERSION` placeholder):)
-
-[comment]: # (```bash)
-[comment]: # (helm upgrade splunk-service ./helm)
-[comment]: # (```)
 
 ### Uninstall
 
@@ -182,15 +177,9 @@ We have dummy cloud-events in the form of [RFC 2616](https://ietf.org/rfc/rfc261
 
 ### GitHub Actions: Automated Pull Request Review
 
-[comment]: # (This repo uses [reviewdog](https://github.com/reviewdog/reviewdog) for automated reviews of Pull Requests.)
-
-[comment]: # (You can find the details in [.github/workflows/reviewdog.yml](.github/workflows/reviewdog.yml).)
 
 ### GitHub Actions: Unit Tests
 
-[comment]: # (This repo has automated unit tests for pull requests. )
-
-[comment]: # (You can find the details in [.github/workflows/tests.yml](.github/workflows/tests.yml).)
 
 ## How to release a new version of this service
 
