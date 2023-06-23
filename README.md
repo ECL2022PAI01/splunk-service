@@ -128,6 +128,11 @@ export KEPTN_API_TOKEN=$(kubectl get secret keptn-api-token -n keptn -ojsonpath=
 
 
 # Run tests
+Unit tests
+```bash
+go test -v .
+```
+e2e test
 ```bash
 gotestsum --format standard-verbose -- -timeout=120m  ./test/e2e/...
 ```
