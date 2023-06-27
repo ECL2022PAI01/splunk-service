@@ -35,10 +35,19 @@ Install splunk helm chart:
 docker run -p 8089:<specifiedSplunkdPort> -p 8000:<specifiedUIPort> -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
 ```
 2. Install Keptn splunk-service to integrate splunk with Keptn
+   Please replace the placeholders in the commands below. Examples are provided.
+* `<VERSION>`: splunk-service version, e.g., 0.1.0
+* `<SPLUNK_HOST>` : where the splunk enterprise is installed, e.g, http://localhost
+* `<SPLUNK_PORT>` : the port of the splunk enterprise instance, e.g 8089
+* `<SPLUNK_USERNAME>` :  the username of the splunk instance (**admin** by default)
+* `<SPLUNK_PASSWORD>` :  the password of the splunk instance 
 ```bash
 # cd splunk-service
-tar -czvf test/splunk/splunkChart.tgz helm/
-helm upgrade --install splunk-service test/splunk/splunkChart.tgz --set splunkservice.spHost="<splunkInstanceLocation>" --set splunkservice.spPort=<specifiedSplunkdPort> --set splunkservice.spUser="admin" --set splunkservice.spPassword="<mypassword>"
+helm upgrade --install -n keptn splunk-service https://github.com/ECL2022PAI01/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
+ --set splunkservice.spHost="<SPLUNK_HOST>" \
+ --set splunkservice.spPort=<SPLUNK_PORT>\
+ --set splunkservice.spUsername="<SPLUNK_USERNAME>" \
+ --set splunkservice.spPassword="<SPLUNK_PASSWORD>"
 ```
 
 3. Add SLI and SLO
