@@ -150,10 +150,10 @@ To delete a deployed *splunk-service* helm chart:
 helm uninstall splunk-service -n keptn
 ```
 ## Running tests on your local machine
-port-forward Keptn API so that our tests can create/delete Keptn resources
+Port-forward Keptn API so that our tests can create/delete Keptn resources
 
 ``` bash
-kubectl port-forward svc/api-gateway-nginx 5000:80 -n keptn # in a separate terminal window
+kubectl port-forward svc/api-gateway-nginx 8090:80 -n keptn # in a separate terminal window
 ``` 
 
 from splunk-service repo
@@ -163,7 +163,7 @@ export ENABLE_E2E_TEST=true
 ```
 
 ```bash
-export KEPTN_ENDPOINT=http://localhost:5000/api
+export KEPTN_ENDPOINT=http://localhost:8090/api
 ```
 
 ```bash 
@@ -202,7 +202,7 @@ If you don't care about the details, your first entrypoint is [eventhandlers.go]
 To better understand all variants of Keptn CloudEvents, please look at the [Keptn Spec](https://github.com/keptn/spec).
  
 If you want to get more insights into processing those CloudEvents or even defining your own CloudEvents in code, please 
- look into [main.go](main.go) (specifically `processKeptnCloudEvent`), [helm/templates](helm/templates),
+ look into [main.go](main.go) (specifically `processKeptnCloudEvent`), [chart/templates](chart/templates),
  consult the [Keptn docs](https://keptn.sh/docs/) as well as existing [Keptn Core](https://github.com/keptn/keptn) and
  [Keptn Contrib](https://github.com/keptn-contrib/) services.
 
@@ -221,14 +221,6 @@ If you want to get more insights into processing those CloudEvents or even defin
 ### Testing Cloud Events
 
 We have dummy cloud-events in the form of [RFC 2616](https://ietf.org/rfc/rfc2616.txt) requests in the [test-events/](test-events/) directory. These can be easily executed using third party plugins such as the [Huachao Mao REST Client in VS Code](https://marketplace.visualstudio.com/items?itemName=humao.rest-client).
-
-## Automation
-
-### GitHub Actions: Automated Pull Request Review
-
-
-### GitHub Actions: Unit Tests
-
 
 ## How to release a new version of this service
 
@@ -250,7 +242,6 @@ Once you have confirmed that everything works and your version is ready to go, y
 * merge any changes from the release branch back to the master branch.
 
 ## Known problems
-1. Does not support default queries for throughput, error rate, request latency etc., i.e., you have to enter the entire query. 
 
 ## License
 
