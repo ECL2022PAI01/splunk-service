@@ -1,26 +1,8 @@
-- [splunk-service](#splunk-service)
-  * [If you already have a Keptn cluster running](#if-you-already-have-a-keptn-cluster-running)
-  * [Compatibility Matrix](#compatibility-matrix)
-  * [Installation](#installation)
-    + [Up- or Downgrading](#up--or-downgrading)
-    + [Uninstall](#uninstall)
-  * [Running tests on your local machine](#running-tests-on-your-local-machine)
-    + [Run tests](#run-tests)
-  * [Development](#development)
-    + [Where to start](#where-to-start)
-    + [Common tasks](#common-tasks)
-    + [Testing Cloud Events](#testing-cloud-events)
-  * [Automation](#automation)
-    + [GitHub Actions: Automated Pull Request Review](#github-actions-automated-pull-request-review)
-    + [GitHub Actions: Unit Tests](#github-actions-unit-tests)
-  * [How to release a new version of this service](#how-to-release-a-new-version-of-this-service)
-  * [Known problems](#known-problems)
-  * [License](#license)
 # splunk-service
-![GitHub release (latest by date)]()
-[![Go Report Card]()
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ECL2022PAI01/splunk-service)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kuro-jojo/splunk-service)](https://goreportcard.com/report/github.com/kuro-jojo/splunk-service)
 
-This implements the `splunk-service` that integrates the [splunk](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
+This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
 If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
 ## If you already have a Keptn cluster running
