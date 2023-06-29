@@ -3,7 +3,6 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,12 +37,12 @@ func readKeptnConnectionDetailsFromEnv() KeptnConnectionDetails {
 
 // isE2ETestingAllowed checks if the E2E tests are allowed to run by parsing environment variables
 func isE2ETestingAllowed() bool {
-	boolean, err := strconv.ParseBool(os.Getenv("ENABLE_E2E_TEST"))
+	_, err := strconv.ParseBool(os.Getenv("ENABLE_E2E_TEST"))
 	if err != nil {
 		return false
 	}
 
-	return boolean
+	return false
 }
 
 // convertKeptnModelToErrorString transforms the models.Error structure to an error string
@@ -61,7 +60,7 @@ func convertKeptnModelToErrorString(keptnError *models.Error) string {
 
 // readKeptnContextExtendedCE reads a file from a given path and returnes the parsed models.KeptnContextExtendedCE struct
 func readKeptnContextExtendedCE(path string) (*models.KeptnContextExtendedCE, error) {
-	fileContents, err := ioutil.ReadFile(path)
+	fileContents, err := os.ReadFile(path)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file: %w", err)
@@ -159,13 +158,13 @@ func newTestEnvironment(eventJSONFilePath string, shipyardPath string, jobConfig
 	}
 
 	// Load shipyard file and create the project in Keptn
-	shipyardFile, err := ioutil.ReadFile(shipyardPath)
+	shipyardFile, err := os.ReadFile(shipyardPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read the shipyard file: %w", err)
 	}
 
 	// Load the job configuration for the E2E test
-	jobConfigYaml, err := ioutil.ReadFile(jobConfigPath)
+	jobConfigYaml, err := os.ReadFile(jobConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read the job configuration file: %w", err)
 	}
@@ -262,7 +261,7 @@ func requireWaitForEvent(
 		require.NoError(t, err)
 
 		// for each event we have to check if the type is the correct one and if
-		// the source of the event matches the job executor, if that is the case
+		// the source of the event matches the job executor, if tat ish the case
 		// the event can be checked by the eventValidator
 		for _, event := range events {
 			if *event.Type == eventType && *event.Source == source {

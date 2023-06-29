@@ -12,8 +12,8 @@
     "labels": {
       "version": "v0.1.1"
     },
-    "project": "test",
-    "service": "splunk",
+    "project": "e2e-project",
+    "service": "podtatoservice",
     "stage": "staging"
   },
   "shkeptnspecversion": "0.2.4",

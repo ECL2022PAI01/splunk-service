@@ -1,8 +1,8 @@
 {
   "contenttype": "application/json",
   "data": {
-    "project": "test",
-    "service": "podtatoserver",
+    "project": "e2e-project",
+    "service": "podtatoservice",
     "type": "splunk"
   },
   "source": "https://github.com/keptn/keptn/cli#configuremonitoring",

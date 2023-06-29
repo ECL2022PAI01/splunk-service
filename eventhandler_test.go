@@ -32,7 +32,7 @@ import (
 const (
 	getSliTriggeredEventFile              = "test/events/get-sli.triggered.json"
 	configureMonitoringTriggeredEventFile = "test/events/monitoring.configure.json"
-	sliFilePath                           = "./test/data/sli.yaml"
+	sliFilePath                           = "./test/data/podtatohead.sli.yaml"
 	defaultSplunkTestResult               = 1250
 )
 

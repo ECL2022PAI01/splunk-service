@@ -22,8 +22,6 @@ type KeptnAPI struct {
 
 // NewKeptnAPI creates a KeptnAPI structure from KeptnConnectionDetails
 func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
-	fmt.Printf("NEWWWW : %v", details)
-	fmt.Printf("NEWWWW : %s", details.APIToken)
 	apiSet, err := api.New(details.Endpoint, api.WithAuthToken(details.APIToken, authHeaderName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Keptn APISet: %w", err)
@@ -42,10 +40,18 @@ func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
 func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
 
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(shipyardYAML)
-
+	
 	_, err := k.APIHandler.CreateProject(models.CreateProject{
 		Name:     &projectName,
 		Shipyard: &shipyardFileBase64,
+		// It wasn't here before 
+		GitCredentials: &models.GitAuthCredentials{
+			RemoteURL: "http://gitea-http.gitea:3000/keptn/"+ projectName + ".git",
+			User: 	"kuro",
+			HttpsAuth: &models.HttpsGitAuth{
+				Token: "3bca9c48fcadffb79fd9650e3469dc9686bb61a8",
+			},
+		},
 	})
 
 	if err != nil {
