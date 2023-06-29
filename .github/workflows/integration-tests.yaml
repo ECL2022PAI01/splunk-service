@@ -53,16 +53,16 @@ jobs:
         shell: bash
         run: go install gotest.tools/gotestsum@latest
 
-      # Download artifacts from last CI run
-      - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v2.21.1
-        id: download_artifacts_push
-        with:
-          # Download last successful artifact from a CI build
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          workflow: ci.yml
-          branch: ${{ env.BRANCH }}
-          path: ./dist
+      # # Download artifacts from last CI run
+      # - name: Download artifacts
+      #   uses: dawidd6/action-download-artifact@v2.21.1
+      #   id: download_artifacts_push
+      #   with:
+      #     # Download last successful artifact from a CI build
+      #     github_token: ${{secrets.GITHUB_TOKEN}}
+      #     workflow: ci.yml
+      #     branch: ${{ env.BRANCH }}
+      #     path: ./dist
 
         # Prepare minikube + Keptn environment
       - name: Install and start minikube
