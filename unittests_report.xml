@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+	<testsuite tests="8" failures="0" time="2.080s" name="github.com/kuro-jojo/splunk-service">
+		<properties>
+			<property name="go.version" value="go1.10.3"></property>
+		</properties>
+		<testcase classname="splunk-service" name="TestHandleConfigureMonitoringTriggeredEvent" time="0.000s"></testcase>
+		<testcase classname="splunk-service" name="TestHandleSpecificSli" time="0.030s"></testcase>
+		<testcase classname="splunk-service" name="TestHandleGetSliTriggered" time="0.040s"></testcase>
+		<testcase classname="splunk-service" name="TestGetSplunkCredentials" time="0.000s"></testcase>
+		<testcase classname="splunk-service" name="TestParseKeptnCloudEventPayload" time="0.000s"></testcase>
+		<testcase classname="splunk-service" name="TestProcessKeptnCloudEvent" time="0.000s"></testcase>
+		<testcase classname="splunk-service" name="TestCloudEventListener" time="2.000s"></testcase>
+		<testcase classname="splunk-service" name="TestMain" time="0.010s"></testcase>
+	</testsuite>
+	<testsuite tests="1" failures="0" time="0.000s" name="github.com/kuro-jojo/splunk-service/pkg/utils">
+		<properties>
+			<property name="go.version" value="go1.10.3"></property>
+		</properties>
+		<testcase classname="utils" name="TestRetrieveSearchTimeRange" time="0.000s"></testcase>
+	</testsuite>
+	<testsuite tests="3" failures="0" time="124.020s" name="github.com/kuro-jojo/splunk-service/test/e2e">
+		<properties>
+			<property name="go.version" value="go1.10.3"></property>
+		</properties>
+		<testcase classname="e2e" name="TestPodtatoheadEvaluation/Configure_splunk" time="1.010s"></testcase>
+		<testcase classname="e2e" name="TestPodtatoheadEvaluation/Deploy_podtatohead_v0.1.1" time="59.030s"></testcase>
+		<testcase classname="e2e" name="TestPodtatoheadEvaluation" time="63.980s"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000s" name="github.com/kuro-jojo/splunk-service/test/local">
+		<properties>
+			<property name="go.version" value="go1.10.3"></property>
+		</properties>
+	</testsuite>
+</testsuites>

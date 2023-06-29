@@ -6,6 +6,7 @@
 This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
 If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
+
 ## Compatibility Matrix
 
 *Please fill in your versions accordingly*
@@ -23,15 +24,15 @@ Start an instance of a splunk enterprise ([see the docker page](https://hub.dock
 ```bash
 docker pull splunk/splunk:latest
 
-docker run -p 8089:<specifiedSplunkdPort> -p 8000:<specifiedUIPort> -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
+docker run -p 8089:<splunkdPort> -p 8000:<splunkInstancePort> -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=mypassword" --name splunk-entreprise splunk/splunk:latest
 ```
 ### Install splunk-service
    Please replace the placeholders in the commands below. Examples are provided.
 * `<VERSION>`: splunk-service version, e.g., 0.1.0
 * `<SPLUNK_HOST>` : where the splunk enterprise is installed, e.g, http://localhost
-* `<SPLUNK_PORT>` : the port of the splunk enterprise instance, e.g 8089
-* `<SPLUNK_USERNAME>` :  the username of the splunk instance (**admin** by default)
-* `<SPLUNK_PASSWORD>` :  the password of the splunk instance
+* `<SPLUNK_PORT>` : the port of the splunk enterprise server , e.g 8089
+* `<SPLUNK_USERNAME>` :  the username of the splunk server (**admin** by default)
+* `<SPLUNK_PASSWORD>` :  the password of the splunk server
 
 *Note*: Make sure to replace `<VERSION>` with the version you want to install.
 * Install Keptn splunk-service in Kubernetes using the following command. This will install the splunk-service into
