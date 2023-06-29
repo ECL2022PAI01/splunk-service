@@ -1,0 +1,203 @@
+# Based on integration tests in prometheus-service
+# https://github.com/keptn-contrib/prometheus-service/blob/master/.github/workflows/integration-tests.yaml
+
+name: Integration Tests
+on:
+  schedule:
+    # * is a special character in YAML, so you have to quote this string
+    - cron: "0 3 * * 1-5" # run integration tests at 3 AM, monday to friday (1-5)
+  push:
+    branches:
+      - "master"
+      - "end2end"
+  workflow_dispatch: # run integration tests only when triggered manually
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  fetch_latest_keptn_versions:
+    name: Fetch latest Keptn version for integration test run
+    runs-on: ubuntu-20.04
+    outputs:
+      LATEST_KEPTN_RELEASE: ${{ steps.prepare_keptn_version_matrix.outputs.LATEST_RELEASE }}
+      LATEST_KEPTN_PRERELEASE: ${{ steps.prepare_keptn_version_matrix.outputs.LATEST_PRERELEASE }}
+    steps:
+      - name: Check out code.
+        uses: actions/checkout@v3.0.2
+
+      - name: Prepare Keptn version matrix
+        id: prepare_keptn_version_matrix
+        run: |
+          ./.github/actions/github-script/fetch-keptn-versions.sh
+
+  integration_test:
+    name: "Integration Tests"
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        keptn-version: [
+            "0.18.1",
+            "${{ needs.fetch_latest_keptn_versions.outputs.LATEST_KEPTN_RELEASE }}",
+            "${{ needs.fetch_latest_keptn_versions.outputs.LATEST_KEPTN_PRERELEASE }}",
+          ] # https://github.com/keptn/keptn/releases
+        splunk-version: ["0.1.0"] # chart version
+    env:
+      GO_VERSION: 1.17
+      GOPROXY: "https://proxy.golang.org"
+      GO111MODULE: "on"
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      ENABLE_E2E_TEST: true
+      JES_VERSION: "0.3.0"
+      JES_NAMESPACE: keptn-jes
+      GITEA_PROVISIONER_VERSION: "0.1.1"
+      GITEA_ADMIN_USERNAME: GiteaAdmin
+      GITEA_NAMESPACE: gitea
+      KUBECONFIG: "${{ github.workspace }}/.kube/config"
+      TEST_REPORT_FILENAME: test-report-${{ github.run_id }}-keptn-${{ matrix.keptn-version }}-splunk-${{ matrix.prometheus-version }}.json
+
+    steps:
+      # Checkout code for the integrations tests in test/e2e
+      - name: Check out code.
+        uses: actions/checkout@v3.0.2
+
+      - name: Setup Go
+        uses: actions/setup-go@v3.2.0
+        with:
+          go-version-file: "go.mod"
+
+      - name: Install gotestsum
+        shell: bash
+        run: go install gotest.tools/gotestsum@latest
+
+      # Download artifacts from last CI run
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2.21.1
+        id: download_artifacts_push
+        with:
+          # Download last successful artifact from a CI build
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          workflow: ci.yml
+          branch: ${{ env.BRANCH }}
+          path: ./dist
+
+        # Prepare minikube + Keptn environment
+      - name: Install and start minikube
+        run: |
+          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+
+          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          /usr/local/bin/minikube start --cpus=2 --memory=5GB
+          minikube tunnel &> /dev/null &
+          echo "minikube ready!"
+
+      - name: Generate Gitea credentials
+        id: gitea_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "::set-output name=GITEA_ADMIN_PASSWORD::$password"
+
+      - name: Install Gitea
+        id: gitea
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
+        run: |
+          export GITEA_ENDPOINT="http://gitea-http.${GITEA_NAMESPACE}:3000"
+
+          helm repo add gitea-charts https://dl.gitea.io/charts/
+          helm repo update
+          helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
+            --create-namespace \
+            --set memcached.enabled=false \
+            --set postgresql.enabled=false \
+            --set gitea.config.database.DB_TYPE=sqlite3 \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+            --set gitea.config.server.OFFLINE_MODE=true \
+            --set gitea.config.server.ROOT_URL=${GITEA_ENDPOINT}/ \
+            --wait
+
+          # Export Gitea connection details
+          echo "::set-output name=GITEA_ENDPOINT::${GITEA_ENDPOINT}"
+
+      - name: Install gitea provisioner-service
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
+          GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
+        run: |
+          helm install keptn-gitea-provisioner-service \
+            https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${GITEA_PROVISIONER_VERSION}/keptn-gitea-provisioner-service-${GITEA_PROVISIONER_VERSION}.tgz \
+            --set gitea.endpoint=${GITEA_ENDPOINT} \
+            --set gitea.admin.create=true \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+            --wait
+
+      - name: Install Keptn
+        id: install_keptn
+        uses: keptn-sandbox/action-install-keptn@v3.0.0
+        timeout-minutes: 5
+        with:
+          KEPTN_VERSION: ${{ matrix.keptn-version }}
+          HELM_VALUES: |
+            # Keptn 0.17 and newer
+            apiGatewayNginx:
+              type: LoadBalancer
+            features:
+              automaticProvisioning:
+                serviceURL: http://keptn-gitea-provisioner-service.default
+            # Keptn 0.16 compatibility
+            control-plane:
+              apiGatewayNginx:
+                type: LoadBalancer
+              features:
+                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
+          KUBECONFIG: ${{ env.KUBECONFIG }}
+
+      - name: Test connection to keptn
+        run: |
+          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
+
+      # Install job executor from downloaded helm chart
+      - name: Install Job-executor-service
+        env:
+          KEPTN_API_PROTOCOL: http
+          KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
+          KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_HTTP_ENDPOINT }}
+          TASK_SUBSCRIPTION: "sh.keptn.event.deployment.triggered\\,sh.keptn.event.test.triggered"
+        run: |
+          helm upgrade --install \
+            --create-namespace -n ${JES_NAMESPACE} \
+            job-executor-service \
+            "https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz" \
+            --set remoteControlPlane.autoDetect.enabled="false" \
+            --set remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION} \
+            --set remoteControlPlane.api.token=${KEPTN_API_TOKEN} \
+            --set remoteControlPlane.api.hostname=${KEPTN_ENDPOINT} \
+            --set remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL} \
+            --wait
+
+          kubectl apply \
+            -f test/data/helm-serviceAccount.yaml \
+            -f test/data/helm-clusterRole.yaml \
+            -f test/data/helm-clusterRoleBinding.yaml
+
+        # If we failed any previous step we might have a problem and not reporting anything for the version
+      - name: Create pipeline failure report
+        if: failure()
+        run: |
+          echo "Failed to run integration tests!"
+          echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
+
+      - name: Run Integration tests
+        env:
+          KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_API_URL }}
+          KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
+        run: |
+          gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME ./test/e2e/...
