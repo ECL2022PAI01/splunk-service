@@ -2,16 +2,22 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
+	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
@@ -55,6 +61,66 @@ func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) erro
 		return err
 	}
 	return nil
+}
+
+// HealthHandler rerts a basic health check back
+func healthEndpointHandler(w http.ResponseWriter, r *http.Request) {
+	type StatusBody struct {
+		Status string `json:"status"`
+	}
+
+	status := StatusBody{Status: "OK"}
+
+	body, _ := json.Marshal(status)
+
+	w.Header().Set("content-type", "application/json")
+
+	_, err := w.Write(body)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+// endpointNotFoundHandler will return 404 for requests
+func endpointNotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	type StatusBody struct {
+		Status string `json:"status"`
+	}
+
+	status := StatusBody{Status: "NOT FOUND"}
+
+	body, _ := json.Marshal(status)
+
+	w.Header().Set("content-type", "application/json")
+
+	_, err := w.Write(body)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+// HTTPGetHandler will handle all requests for '/health' and '/ready'
+func HTTPGetHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.URL.Path {
+	case "/":
+		shkeptncontext := uuid.New().String()
+		logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
+
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to read body from requst: %s", err))
+			return
+		}
+
+		ProcessAndForwardAlertEvent(w, body, logger, shkeptncontext)
+	case "/health":
+		healthEndpointHandler(w, r)
+	case "/ready":
+		healthEndpointHandler(w, r)
+	default:
+		endpointNotFoundHandler(w, r)
+	}
 }
 
 /**
@@ -181,6 +247,7 @@ func main() {
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
 func _main(args []string) int {
+
 	if env.Env == "local" {
 		godotenv.Load(".env.local")
 		logger.Info("env=local: Running with local filesystem to fetch resources")
@@ -199,6 +266,16 @@ func _main(args []string) int {
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
+
+	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
+	http.HandleFunc("/", HTTPGetHandler)
+	go func() {
+		log.Println("Starting alert manager endpoint")
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			log.Fatalf("Error with HTTP server: %e", err)
+		}
+	}()
 
 	ctx := context.Background()
 	ctx = cloudevents.WithEncodingStructured(ctx)
