@@ -37,12 +37,12 @@ func readKeptnConnectionDetailsFromEnv() KeptnConnectionDetails {
 
 // isE2ETestingAllowed checks if the E2E tests are allowed to run by parsing environment variables
 func isE2ETestingAllowed() bool {
-	_, err := strconv.ParseBool(os.Getenv("ENABLE_E2E_TEST"))
+	boolean, err := strconv.ParseBool(os.Getenv("ENABLE_E2E_TEST"))
 	if err != nil {
 		return false
 	}
 
-	return false
+	return boolean
 }
 
 // convertKeptnModelToErrorString transforms the models.Error structure to an error string

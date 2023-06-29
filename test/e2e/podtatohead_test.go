@@ -24,9 +24,9 @@ const (
 )
 
 func TestPodtatoheadEvaluation(t *testing.T) {
-	// if !isE2ETestingAllowed() {
-	// 	t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
-	// }
+	if !isE2ETestingAllowed() {
+		t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
+	}
 
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
@@ -57,7 +57,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)
-	
+
 	// Make sure project is delete after the tests are completed
 	defer testEnv.Cleanup()
 
