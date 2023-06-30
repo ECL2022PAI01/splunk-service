@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/base64"
 	"os"
 	"testing"
 	"time"
@@ -46,13 +47,21 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		{FilePath: podtatoSliFile, ResourceName: "splunk/sli.yaml"},
 		{FilePath: podtatoSloFile, ResourceName: "slo.yaml"},
 	}
-	// shipyardFileBase64 := base64.StdEncoding.EncodeToString(testEnv.shipyard)
+	shipyardFileBase64 := base64.StdEncoding.EncodeToString(testEnv.shipyard)
 
-	// _, _ = testEnv.API.APIHandler.CreateProject(models.CreateProject{
-	// 	Name:     &testEnv.EventData.Project,
-	// 	Shipyard: &shipyardFileBase64,
-	// })
+	_, _ = testEnv.API.APIHandler.CreateProject(models.CreateProject{
+		Name:     &testEnv.EventData.Project,
+		Shipyard: &shipyardFileBase64,
+	})
+	t.Log("GITEA_URL: " + os.Getenv("GITEA_ENDPOINT"))
+	t.Log("GITEA_USER: " + os.Getenv("GITEA_ADMIN_USERNAME"))
+	t.Log("GITEA_PASSWORD: " + os.Getenv("GITEA_ADMIN_PASSWORD"))
+	token, errToken := GetGiteaToken()
+	t.Error(errToken)
+	require.NoError(t, errToken)
 
+	os.Setenv("GITEA_TOKEN", "fff7f602725ec8f8b1022f3fc67f8366233942b5")
+	t.Log("GITEA_TOKEN: " + token)
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)
 

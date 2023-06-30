@@ -1,8 +1,11 @@
 package e2e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -302,4 +305,60 @@ func NewK8sClient() (*kubernetes.Clientset, error) {
 	}
 
 	return kubernetes.NewForConfig(config)
+}
+
+func GetGiteaToken() (string, error) {
+	type TokenRequest struct {
+		Name   string   `json:"name"`
+		Scopes []string `json:"scopes"`
+	}
+	tokenName := "yd"
+	scopes := []string{"repo"}
+
+	tokenReq := TokenRequest{
+		Name:   tokenName,
+		Scopes: scopes,
+	}
+
+	body, err := json.Marshal(tokenReq)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	req, errReq := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
+	if errReq != nil {
+		return "", fmt.Errorf("error creating request: %v", errReq)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(os.Getenv("GITEA_ADMIN_USERNAME"), os.Getenv("GITEA_ADMIN_PASSWORD"))
+
+	resp, errResp := http.DefaultClient.Do(req)
+
+	if errResp != nil {
+		return "", fmt.Errorf("error creating token: %v", errResp)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("error creating token: %v", resp.Status)
+	}
+	bodyBytes, errRead := io.ReadAll(resp.Body)
+	if errRead != nil {
+		return "", fmt.Errorf("error reading response: %v", errRead)
+	}
+	type Gitea struct {
+		ID             int      `json:"id"`
+		Name           string   `json:"name"`
+		Sha1           string   `json:"sha1"`
+		TokenLastEight string   `json:"token_last_eight"`
+		Scopes         []string `json:"scopes"`
+	}
+	var token Gitea
+	unmarshalErr := json.Unmarshal(bodyBytes, &token)
+	if unmarshalErr != nil {
+		return "", fmt.Errorf("error unmarshalling response: %v", unmarshalErr)
+	}
+
+	return token.Sha1, nil
 }
