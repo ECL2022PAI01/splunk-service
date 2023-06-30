@@ -65,6 +65,30 @@ jobs:
           /usr/local/bin/minikube start --cpus=2 --memory=5GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
+      - name: Install Keptn
+        id: install_keptn
+        uses: keptn-sandbox/action-install-keptn@v3.0.0
+        timeout-minutes: 5
+        with:
+          KEPTN_VERSION: ${{ matrix.keptn-version }}
+          HELM_VALUES: |
+            # Keptn 0.17 and newer
+            apiGatewayNginx:
+              type: LoadBalancer
+            features:
+              automaticProvisioning:
+                serviceURL: http://keptn-gitea-provisioner-service.default
+            # Keptn 0.16 compatibility
+            control-plane:
+              apiGatewayNginx:
+                type: LoadBalancer
+              features:
+                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
+          KUBECONFIG: ${{ env.KUBECONFIG }}
+
+      - name: Test connection to keptn
+        run: |
+          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service
         env:
@@ -87,7 +111,7 @@ jobs:
           kubectl apply \
             -f test/data/helm-serviceAccount.yaml \
             -f test/data/helm-clusterRole.yaml \
-            -f test/data/helm-clusterRoleBinding.yaml
+            -f test/data/helm-clusterRoleBinding.yaml      
       - name: Install splunk-service
         env:
           SPLUNK_HOST: "localhost"
@@ -167,31 +191,7 @@ jobs:
           docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
 
-      - name: Install Keptn
-        id: install_keptn
-        uses: keptn-sandbox/action-install-keptn@v3.0.0
-        timeout-minutes: 5
-        with:
-          KEPTN_VERSION: ${{ matrix.keptn-version }}
-          HELM_VALUES: |
-            # Keptn 0.17 and newer
-            apiGatewayNginx:
-              type: LoadBalancer
-            features:
-              automaticProvisioning:
-                serviceURL: http://keptn-gitea-provisioner-service.default
-            # Keptn 0.16 compatibility
-            control-plane:
-              apiGatewayNginx:
-                type: LoadBalancer
-              features:
-                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
-          KUBECONFIG: ${{ env.KUBECONFIG }}
-
-      - name: Test connection to keptn
-        run: |
-          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
-
+     
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
       - name: Create pipeline failure report
