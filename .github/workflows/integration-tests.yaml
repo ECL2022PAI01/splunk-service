@@ -86,7 +86,7 @@ jobs:
       - name: Install splunk-service
         env:
           SPLUNK_HOST: "localhost"
-          SPLUNK_PORT: "8089"
+          SPLUNK_PORT: 8089
           SPLUNK_USERNAME: admin
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
           SPLUNK_VERSION: "0.1.0"
