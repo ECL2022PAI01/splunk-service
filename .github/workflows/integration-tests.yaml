@@ -43,29 +43,6 @@ jobs:
       # Checkout code for the integrations tests in test/e2e
       - name: Check out code.
         uses: actions/checkout@v3.0.2
-
-      - name: Setup Go
-        uses: actions/setup-go@v3.2.0
-        with:
-          go-version-file: "go.mod"
-
-      - name: Install gotestsum
-        shell: bash
-        run: go install gotest.tools/gotestsum@latest
-      
-      # Prepare minikube + Keptn environment
-      - name: Install and start minikube
-        run: |
-          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
-          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
-          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
-
-          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
-          /usr/local/bin/minikube start --cpus=2 --memory=5GB
-          minikube tunnel &> /dev/null &
-          echo "minikube ready!"
-          
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
@@ -108,6 +85,29 @@ jobs:
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
+      - name: Setup Go
+        uses: actions/setup-go@v3.2.0
+        with:
+          go-version-file: "go.mod"
+
+      - name: Install gotestsum
+        shell: bash
+        run: go install gotest.tools/gotestsum@latest
+      
+      # Prepare minikube + Keptn environment
+      - name: Install and start minikube
+        run: |
+          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+
+          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          /usr/local/bin/minikube start --cpus=2 --memory=5GB
+          minikube tunnel &> /dev/null &
+          echo "minikube ready!"
+          
+      
       - name: Install Keptn
         id: install_keptn
         uses: keptn-sandbox/action-install-keptn@v3.0.0
