@@ -72,7 +72,30 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-          
+           
+            
+      - name: Install Gitea
+        id: gitea
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
+        run: |
+          export GITEA_ENDPOINT="http://gitea-http.${GITEA_NAMESPACE}:3000"
+
+          helm repo add gitea-charts https://dl.gitea.io/charts/
+          helm repo update
+          helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
+            --create-namespace \
+            --set memcached.enabled=false \
+            --set postgresql.enabled=false \
+            --set gitea.config.database.DB_TYPE=sqlite3 \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+            --set gitea.config.server.OFFLINE_MODE=true \
+            --set gitea.config.server.ROOT_URL=${GITEA_ENDPOINT}/ \
+            --wait
+
+          # Export Gitea connection details
+          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> "$GITHUB_OUTPUT"     
       - name: Install gitea provisioner-service
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
@@ -151,30 +174,7 @@ jobs:
 
           kubectl -n keptn get deployment splunk-service -o wide
 
-      
-            
-      - name: Install Gitea
-        id: gitea
-        env:
-          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
-        run: |
-          export GITEA_ENDPOINT="http://gitea-http.${GITEA_NAMESPACE}:3000"
 
-          helm repo add gitea-charts https://dl.gitea.io/charts/
-          helm repo update
-          helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
-            --create-namespace \
-            --set memcached.enabled=false \
-            --set postgresql.enabled=false \
-            --set gitea.config.database.DB_TYPE=sqlite3 \
-            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
-            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
-            --set gitea.config.server.OFFLINE_MODE=true \
-            --set gitea.config.server.ROOT_URL=${GITEA_ENDPOINT}/ \
-            --wait
-
-          # Export Gitea connection details
-          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> "$GITHUB_OUTPUT"
 
       
 
