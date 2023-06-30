@@ -23,11 +23,12 @@ import (
 const sliFileUri = "splunk/sli.yaml"
 
 type splunkCredentials struct {
-	Host  		string `json:"host" yaml:"spHost"`
-	Token 		string `json:"token" yaml:"spToken"`
-	Port  		string `json:"port" yaml:"spPort"`
-	User  		string `json:"user" yaml:"spUser"`
-	Password  	string `json:"password" yaml:"spPassword"`
+	Host       string `json:"host" yaml:"spHost"`
+	Port       string `json:"port" yaml:"spPort"`
+	Username   string `json:"username" yaml:"spUsername"`
+	Password   string `json:"password" yaml:"spPassword"`
+	Token      string `json:"token" yaml:"spApiToken"`
+	SessionKey string `json:"sessionKey" yaml:"spSessionKey"`
 }
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
@@ -104,7 +105,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	var sliResult *keptnv2.SLIResult
 
 	var client *splunk.SplunkClient
-	if(splunkCreds.Token!=""){
+	if splunkCreds.Token != "" {
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -114,19 +115,28 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			splunkCreds.Token,
 			true,
 		)
-	}else{
+	} else if splunkCreds.SessionKey != "" {
+		client = splunk.NewClientAuthenticatedBySessionKey(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.SessionKey,
+			true,
+		)
+	} else {
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
 			},
 			splunkCreds.Host,
 			splunkCreds.Port,
-			splunkCreds.User,
+			splunkCreds.Username,
 			splunkCreds.Password,
 			true,
 		)
 	}
-
 	for _, indicatorName := range indicators {
 		sliResult, errSLI = handleSpecificSLI(client, indicatorName, data, sliConfig)
 		if errSLI != nil {
@@ -252,18 +262,19 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 	logger.Info("Trying to retrieve splunk credentials ...")
 
 	splunkCreds := splunkCredentials{}
-
-	if env.SplunkHost != "" && env.SplunkPort != "" && ( env.SplunkApiToken != "" || (env.SplunkUser!="" && env.SplunkPassword!="") ) {
-		splunkCreds.Host = strings.Replace(env.SplunkHost, " ", "", -1)
+	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
+		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
 		splunkCreds.Token = env.SplunkApiToken
 		splunkCreds.Port = env.SplunkPort
-		splunkCreds.User = env.SplunkUser
+		splunkCreds.Username = env.SplunkUsername
 		splunkCreds.Password = env.SplunkPassword
+		splunkCreds.SessionKey = env.SplunkSessionKey
+
 		logger.Info("Successfully retrieved splunk credentials")
 
 	} else {
-		logger.Info("SP_HOST, SP_PORT, SP_API_TOKEN, SP_HOST and/or SP_PASSWORD have not correctly been set")
-		return nil, errors.New("Invalid credentials found in SP_HOST, SP_PORT, SP_API_TOKEN, SP_HOST and/or SP_PASSWORD")
+		logger.Info("SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY have not correctly been set")
+		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
 	}
 
 	return &splunkCreds, nil
@@ -305,7 +316,7 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 		Success: true,
 	}
 	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
-	
+
 	return sliResult, nil
 }
 

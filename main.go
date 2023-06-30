@@ -40,11 +40,12 @@ type envConfig struct {
 
 	ConfigurationServiceUrl string `envconfig:"CONFIGURATION_SERVICE" default:""`
 
-	SplunkApiToken string `envconfig:"SP_API_TOKEN" default:""`
-	SplunkHost     string `envconfig:"SP_HOST" default:""`
-	SplunkPort     string `envconfig:"SP_PORT" default:"8089"`
-	SplunkUser     string `envconfig:"SP_USER" default:""`
-	SplunkPassword string `envconfig:"SP_PASSWORD" default:""`
+	SplunkApiToken   string `envconfig:"SP_API_TOKEN" default:""`
+	SplunkHost       string `envconfig:"SP_HOST" default:""`
+	SplunkPort       string `envconfig:"SP_PORT" default:"8089"`
+	SplunkUsername   string `envconfig:"SP_USERNAME" default:""`
+	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
+	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
 }
 
 var env envConfig
@@ -186,7 +187,7 @@ func processKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* parseKeptnCloudEventPayload(event, eventData)
 	*
 	* See https://github.com/keptn/spec/blob/0.2.0-alpha/cloudevents.md for more details of Keptn Cloud Events and their payload
-	* Also, see https://github.com/kuro-jojo/echo-service/blob/a90207bc119c0aca18368985c7bb80dea47309e9/pkg/events.go as an example how to create your own CloudEvents
+	* Also, see https://github.com/kuro-jojo/ echo-service/blob/a90207bc119c0aca18368985c7bb80dea47309e9/pkg/events.go as an example how to create your own CloudEvents
 	**/
 
 	/**
@@ -238,7 +239,6 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
-	logger.Infof("ENV VARS : %v", env)
 
 	os.Exit(call_main(os.Args[1:]))
 }
@@ -257,8 +257,9 @@ func _main(args []string) int {
 		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
 		env.SplunkHost = os.Getenv("SPLUNK_HOST")
 		env.SplunkPort = os.Getenv("SPLUNK_PORT")
-		env.SplunkUser = os.Getenv("SPLUNK_USER")
+		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
+		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
 
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
