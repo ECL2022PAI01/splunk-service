@@ -52,7 +52,15 @@ jobs:
       - name: Install gotestsum
         shell: bash
         run: go install gotest.tools/gotestsum@latest
-
+      
+      - name: Cache dependencies
+        uses: actions/cache@v2.1.6
+        with:
+          path: |
+            /usr/local/bin/minikube
+          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube') }} 
+          restore-keys: |
+            ${{ runner.os }}-go-
       # # Download artifacts from last CI run
       # - name: Download artifacts
       #   uses: dawidd6/action-download-artifact@v2.21.1
@@ -169,9 +177,16 @@ jobs:
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml
 
+      - name: Generate splunk credentials
+        id: splunk_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+
       - name: Install splunk enterprise with docker
         env:
-          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_PASSWORD }}
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
           SPLUNK_USERNAME: admin
           SPLUNK_PORT: "8089"
         run: |
@@ -183,7 +198,7 @@ jobs:
           SPLUNK_HOST: "localhost"
           SPLUNK_PORT: "8089"
           SPLUNK_USERNAME: admin
-          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_PASSWORD }}
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
           SPLUNK_VERSION: "0.1.0"
         run: |
           helm upgrade --install -n keptn splunk-service \
@@ -193,7 +208,7 @@ jobs:
             --set splunkservice.spUsername=$SPLUNK_USERNAME \
             --set splunkservice.spPassword=$SPLUNK_PASSWORD \
             --wait
-          
+
           kubectl -n keptn get deployment splunk-service -o wide
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
