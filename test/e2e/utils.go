@@ -312,7 +312,7 @@ func GetGiteaToken() (string, error) {
 		Name   string   `json:"name"`
 		Scopes []string `json:"scopes"`
 	}
-	tokenName := "yd"
+	tokenName := "keptn-token"
 	scopes := []string{"repo"}
 
 	tokenReq := TokenRequest{
@@ -340,10 +340,10 @@ func GetGiteaToken() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("error creating token: %v", resp.Status)
-	}
 	bodyBytes, errRead := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("error creating token: %s", bodyBytes)
+	}
 	if errRead != nil {
 		return "", fmt.Errorf("error reading response: %v", errRead)
 	}

@@ -53,15 +53,10 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		Name:     &testEnv.EventData.Project,
 		Shipyard: &shipyardFileBase64,
 	})
-	t.Log("GITEA_URL: " + os.Getenv("GITEA_ENDPOINT"))
-	t.Log("GITEA_USER: " + os.Getenv("GITEA_ADMIN_USERNAME"))
-	t.Log("GITEA_PASSWORD: " + os.Getenv("GITEA_ADMIN_PASSWORD"))
 	token, errToken := GetGiteaToken()
-	t.Error(errToken)
 	require.NoError(t, errToken)
 
-	os.Setenv("GITEA_TOKEN", "fff7f602725ec8f8b1022f3fc67f8366233942b5")
-	t.Log("GITEA_TOKEN: " + token)
+	os.Setenv("GITEA_TOKEN", token)
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)
 
