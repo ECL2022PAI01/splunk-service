@@ -92,7 +92,7 @@ jobs:
           SPLUNK_VERSION: "0.1.0"
         run: |
           tar -czvf splunk-service.tgz chart/
-          helm upgrade --install -n keptn splunk-service \
+          helm upgrade --install -n keptn --create-namespace splunk-service \
             splunk-service.tgz \
             --set splunkservice.spHost=$SPLUNK_HOST \
             --set splunkservice.spPort=$SPLUNK_PORT\
@@ -101,7 +101,7 @@ jobs:
             --wait
 
           kubectl -n keptn get deployment splunk-service -o wide
-          
+
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
