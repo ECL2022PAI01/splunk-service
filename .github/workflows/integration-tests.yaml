@@ -125,7 +125,7 @@ jobs:
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
-            
+
       - name: Generate splunk credentials
         id: splunk_credentials
         run: |
