@@ -150,8 +150,9 @@ jobs:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
           SPLUNK_VERSION: "0.1.0"
         run: |
+          tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn splunk-service \
-            https://github.com/ECL2022PAI01/splunk-service/releases/download/$SPLUNK_VERSION/splunk-service-$SPLUNK_VERSION.tgz \
+            splunk-service.tgz \
             --set splunkservice.spHost=$SPLUNK_HOST \
             --set splunkservice.spPort=$SPLUNK_PORT\
             --set splunkservice.spUsername=$SPLUNK_USERNAME \
