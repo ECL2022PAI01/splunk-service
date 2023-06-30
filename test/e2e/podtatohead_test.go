@@ -55,7 +55,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	})
 	token, errToken := GetGiteaToken()
 	require.NoError(t, errToken)
-
+	
 	os.Setenv("GITEA_TOKEN", token)
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)

@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/keptn/go-utils/pkg/api/models"
@@ -39,6 +40,9 @@ func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
 
 // CreateProject creates a keptn project from the contents of a shipyard yaml file
 func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
+	log.Printf("GITEA_TOKEN: %s", os.Getenv("GITEA_TOKEN"))
+	log.Printf("GITEA_ENDPOINT: %s", os.Getenv("GITEA_ENDPOINT"))
+	log.Printf("GITEA_ADMIN_USERNAME: %s", os.Getenv("GITEA_ADMIN_USERNAME"))
 
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(shipyardYAML)
 	_, err := k.APIHandler.CreateProject(models.CreateProject{
@@ -46,7 +50,7 @@ func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
 		Shipyard: &shipyardFileBase64,
 		// It wasn't here before
 		GitCredentials: &models.GitAuthCredentials{
-			RemoteURL: os.Getenv("GITEA_ENDPOINT") + projectName + ".git",
+			RemoteURL: os.Getenv("GITEA_ENDPOINT") + "/keptn/" + projectName + ".git",
 			User:      os.Getenv("GITEA_ADMIN_USERNAME"),
 			HttpsAuth: &models.HttpsGitAuth{
 				Token: os.Getenv("GITEA_TOKEN"),
