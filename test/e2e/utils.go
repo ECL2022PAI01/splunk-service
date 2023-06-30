@@ -324,8 +324,8 @@ func GetGiteaToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error marshaling JSON: %v", err)
 	}
-
-	req, errReq := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
+	fmt.Printf("Endpoint %s", os.Getenv("GITEA_ENDPOINT_TOKEN"))
+	req, errReq := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT_TOKEN")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
 	if errReq != nil {
 		return "", fmt.Errorf("error creating request: %v", errReq)
 	}
