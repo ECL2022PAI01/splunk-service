@@ -58,9 +58,7 @@ jobs:
         with:
           path: |
             /usr/local/bin/minikube
-          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube') }} 
-          restore-keys: |
-            ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube.txt') }} 
       # # Download artifacts from last CI run
       # - name: Download artifacts
       #   uses: dawidd6/action-download-artifact@v2.21.1
@@ -191,7 +189,7 @@ jobs:
           SPLUNK_PORT: "8089"
         run: |
           docker pull splunk/splunk:latest
-          docker run -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+          docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
       - name: Install splunk-service
         env:
