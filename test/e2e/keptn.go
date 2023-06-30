@@ -40,18 +40,18 @@ func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
 func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
 
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(shipyardYAML)
-	
+
 	_, err := k.APIHandler.CreateProject(models.CreateProject{
 		Name:     &projectName,
 		Shipyard: &shipyardFileBase64,
-		// It wasn't here before 
-		GitCredentials: &models.GitAuthCredentials{
-			RemoteURL: "http://gitea-http.gitea:3000/keptn/"+ projectName + ".git",
-			User: 	"kuro",
-			HttpsAuth: &models.HttpsGitAuth{
-				Token: "3bca9c48fcadffb79fd9650e3469dc9686bb61a8",
-			},
-		},
+		// It wasn't here before
+		// GitCredentials: &models.GitAuthCredentials{
+		// 	RemoteURL: os.Getenv("GITEA_ENDPOINT")+ projectName + ".git",
+		// 	User: 	os.Getenv("GITEA_ADMIN_USERNAME"),
+		// 	HttpsAuth: &models.HttpsGitAuth{
+		// 		Token: "3bca9c48fcadffb79fd9650e3469dc9686bb61a8",
+		// 	},
+		// },
 	})
 
 	if err != nil {

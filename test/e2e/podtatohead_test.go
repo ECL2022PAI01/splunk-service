@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"encoding/base64"
 	"os"
 	"testing"
 	"time"
@@ -24,9 +23,9 @@ const (
 )
 
 func TestPodtatoheadEvaluation(t *testing.T) {
-	if !isE2ETestingAllowed() {
-		t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
-	}
+	// if !isE2ETestingAllowed() {
+	// 	t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
+	// }
 
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
@@ -47,14 +46,13 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		{FilePath: podtatoSliFile, ResourceName: "splunk/sli.yaml"},
 		{FilePath: podtatoSloFile, ResourceName: "slo.yaml"},
 	}
-	shipyardFileBase64 := base64.StdEncoding.EncodeToString(testEnv.shipyard)
+	// shipyardFileBase64 := base64.StdEncoding.EncodeToString(testEnv.shipyard)
 
-	_, _ = testEnv.API.APIHandler.CreateProject(models.CreateProject{
-		Name:     &testEnv.EventData.Project,
-		Shipyard: &shipyardFileBase64,
-	})
+	// _, _ = testEnv.API.APIHandler.CreateProject(models.CreateProject{
+	// 	Name:     &testEnv.EventData.Project,
+	// 	Shipyard: &shipyardFileBase64,
+	// })
 
-	
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)
 
