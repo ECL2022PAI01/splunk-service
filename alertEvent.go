@@ -94,7 +94,7 @@ func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, log
 	problemData := keptncommons.ProblemEventData{
 		State:          "OPEN",
 		ProblemID:      "",
-		ProblemTitle:   event.SearchName,
+		ProblemTitle:   alertDetails[3],    //name of sli
 		ProblemDetails: json.RawMessage(`{}`),
 		ProblemURL:     event.ResultsLink,
 		ImpactedEntity: fmt.Sprintf("%s-%s", alertDetails[2], deploymentType),
