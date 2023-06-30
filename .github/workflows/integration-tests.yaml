@@ -83,6 +83,25 @@ jobs:
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
 
+      - name: Install splunk-service
+        env:
+          SPLUNK_HOST: "localhost"
+          SPLUNK_PORT: "8089"
+          SPLUNK_USERNAME: admin
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+          SPLUNK_VERSION: "0.1.0"
+        run: |
+          tar -czvf splunk-service.tgz chart/
+          helm upgrade --install -n keptn splunk-service \
+            splunk-service.tgz \
+            --set splunkservice.spHost=$SPLUNK_HOST \
+            --set splunkservice.spPort=$SPLUNK_PORT\
+            --set splunkservice.spUsername=$SPLUNK_USERNAME \
+            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
+            --wait
+
+          kubectl -n keptn get deployment splunk-service -o wide
+          
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
@@ -142,24 +161,6 @@ jobs:
           docker pull splunk/splunk:latest
           docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
-      - name: Install splunk-service
-        env:
-          SPLUNK_HOST: "localhost"
-          SPLUNK_PORT: "8089"
-          SPLUNK_USERNAME: admin
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_VERSION: "0.1.0"
-        run: |
-          tar -czvf splunk-service.tgz chart/
-          helm upgrade --install -n keptn splunk-service \
-            splunk-service.tgz \
-            --set splunkservice.spHost=$SPLUNK_HOST \
-            --set splunkservice.spPort=$SPLUNK_PORT\
-            --set splunkservice.spUsername=$SPLUNK_USERNAME \
-            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
-            --wait
-
-          kubectl -n keptn get deployment splunk-service -o wide
 
       - name: Install Keptn
         id: install_keptn
