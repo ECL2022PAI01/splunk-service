@@ -82,8 +82,8 @@ jobs:
         run: |
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
-          echo "GITEA_ADMIN_PASSWORD=$password" >> $GITHUB_ENV
-
+          echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+          
       - name: Install Gitea
         id: gitea
         env:
@@ -105,14 +105,13 @@ jobs:
             --wait
 
           # Export Gitea connection details
-          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> $GITHUB_ENV
+          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> "$GITHUB_OUTPUT"
 
       - name: Install gitea provisioner-service
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
           GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
         run: |
-          kubectl get pods -n gitea
           helm install keptn-gitea-provisioner-service \
             https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${GITEA_PROVISIONER_VERSION}/keptn-gitea-provisioner-service-${GITEA_PROVISIONER_VERSION}.tgz \
             --set gitea.endpoint=${GITEA_ENDPOINT} \
