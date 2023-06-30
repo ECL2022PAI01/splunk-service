@@ -49,7 +49,18 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-           
+       # Prepare minikube + Keptn environment
+      - name: Install and start minikube
+        run: |
+          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+
+          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          /usr/local/bin/minikube start --cpus=2 --memory=5GB
+          minikube tunnel &> /dev/null &
+          echo "minikube ready!"  
             
       - name: Install Gitea
         id: gitea
@@ -72,7 +83,8 @@ jobs:
             --wait
 
           # Export Gitea connection details
-          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> "$GITHUB_OUTPUT"     
+          echo "GITEA_ENDPOINT=${GITEA_ENDPOINT}" >> "$GITHUB_OUTPUT"   
+          
       - name: Install gitea provisioner-service
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
@@ -94,18 +106,7 @@ jobs:
         shell: bash
         run: go install gotest.tools/gotestsum@latest
       
-      # Prepare minikube + Keptn environment
-      - name: Install and start minikube
-        run: |
-          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
-          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
-          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
-
-          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
-          /usr/local/bin/minikube start --cpus=2 --memory=5GB
-          minikube tunnel &> /dev/null &
-          echo "minikube ready!"
+      
           
       
       - name: Install Keptn
