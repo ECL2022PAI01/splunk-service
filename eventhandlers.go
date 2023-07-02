@@ -81,7 +81,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 		return err
 	}
-	logger.Infof("ResourceHandler : %v", ddKeptn.ResourceHandler)
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results

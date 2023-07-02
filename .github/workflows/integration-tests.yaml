@@ -153,13 +153,11 @@ jobs:
             splunk-service.tgz \
             --set splunkservice.spHost=${{ env.SPLUNK_HOST }} \
             --set splunkservice.spPort=${{ env.SPLUNK_PORT }}\
-            --set splunkservice.spUsername=$SPLUNK_USERNAME \
+            --set splunkservice.spUsername=${{ env.SPLUNK_USERNAME }} \
             --set splunkservice.spPassword=$SPLUNK_PASSWORD \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
           kubectl get pods -n keptn
-
-          
 
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service
@@ -183,7 +181,7 @@ jobs:
             -f test/data/helm-serviceAccount.yaml \
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml
-      
+
       - name: Create splunk secret
         env:
           SPLUNK_HEC_PORT: 8088
@@ -213,7 +211,7 @@ jobs:
         run: |
           echo "Failed to run integration tests!"
           echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
-          
+
       - name: Run Integration tests
         continue-on-error: true
         env:
@@ -233,13 +231,13 @@ jobs:
         run: |
           kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
           kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
-      
+
       - name: Save pod logs - resource-service
         continue-on-error: true
         run: |
           kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1) > resource-service_logs.txt & export LOG_PID=$!
           kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1)
-      
+
       - name: Save pod logs - lightouse-service
         continue-on-error: true
         run: |
