@@ -68,7 +68,7 @@ jobs:
         uses: keptn-sandbox/action-install-keptn@main
         with:
           KEPTN_VERSION: "0.13.1"
-          KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+          KUBECONFIG: ${{env.KUBE_CONFIG}}
 
       - name: Connect to keptn
         run: echo "connect to ${{ steps.install_keptn.KEPTN_ENDPOINT }} - ${{ steps.install_keptn.KEPTN_API_TOKEN }}"    
