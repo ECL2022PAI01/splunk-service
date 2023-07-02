@@ -347,7 +347,7 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
-		return nil		//SHOULD BE NIL
+		return err		//SHOULD BE NIL
 	}
 
 	const remediationFileDefaultName = "remediation.yaml"
@@ -363,7 +363,7 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 	if errors.Is(err, api.ResourceNotFoundError) {
 		logger.Infof("No remediation defined for project %s stage %s, skipping setup of prometheus alerts",
 			eventData.Project, stage.Name)
-		return nil		//SHOULD BE NIL
+		return err		//SHOULD BE NIL
 	}
 
 	if err != nil {
