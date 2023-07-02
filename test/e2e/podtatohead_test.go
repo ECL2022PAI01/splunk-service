@@ -27,7 +27,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	if !isE2ETestingAllowed() {
 		t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
 	}
-	
+
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
 		podtatoDeployV1Event,
@@ -105,7 +105,6 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		t.Log("Deploy podtatohead v0.1.1")
 		// Send the event to keptn to deploy, test and evaluate the service
 		keptnContext, err := testEnv.API.SendEvent(testEnv.Event)
-
 		require.NoError(t, err)
 
 		// Checking a .started event is received from the evaluation process
@@ -121,6 +120,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 			"splunk-service",
 		)
 
+		t.Fatal()
 		requireWaitForEvent(t,
 			testEnv.API,
 			15*time.Minute,

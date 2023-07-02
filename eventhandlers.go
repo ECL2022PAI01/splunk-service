@@ -213,7 +213,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
-
+	logger.Infof("Splunk credentials: %v", &splunkCredentials{})
 	splunkCreds := splunkCredentials{}
 	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
 		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
@@ -226,7 +226,21 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 		logger.Info("Successfully retrieved splunk credentials")
 
 	} else {
-		logger.Info("SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY have not correctly been set")
+		if env.SplunkHost == "" {
+			logger.Error("SP_HOST not set")
+		}
+		if env.SplunkPort == "" {
+			logger.Error("SP_PORT not set")
+		}
+		if env.SplunkApiToken == ""  {
+			logger.Error("SP_API_TOKEN not set")
+		}
+		if env.SplunkUsername == "" ||  env.SplunkPassword == "" {
+			logger.Error("SP_USERNAME and SP_PASSWORD not set")
+		}
+		if env.SplunkSessionKey == "" {
+			logger.Error("SP_SESSION_KEY not set")
+		}
 		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
 	}
 
