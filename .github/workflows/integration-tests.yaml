@@ -240,8 +240,8 @@ jobs:
       - name: Save pod logs - lightouse-service
         continue-on-error: true
         run: |
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lightouse-service | awk '{print $1}' | head -1) > lightouse-service_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lightouse-service | awk '{print $1}' | head -1)
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1) > lightouse-service_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1)
 
       - name: Save pod logs - job
         continue-on-error: true
