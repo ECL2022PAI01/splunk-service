@@ -27,7 +27,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	// if !isE2ETestingAllowed() {
 	// 	t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
 	// }
-
+	t.Fatal()
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
 		podtatoDeployV1Event,
@@ -55,7 +55,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	})
 	token, errToken := GetGiteaToken()
 	require.NoError(t, errToken)
-	
+
 	os.Setenv("GITEA_TOKEN", token)
 	err = testEnv.SetupTestEnvironment()
 	require.NoError(t, err)
