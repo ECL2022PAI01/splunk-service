@@ -343,7 +343,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 }
 
 func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
-
+	logger.Info("We entered here")
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
