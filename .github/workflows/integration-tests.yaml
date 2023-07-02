@@ -156,6 +156,8 @@ jobs:
             --set splunkservice.spPassword=$SPLUNK_PASSWORD \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
+          kubectl get pods -n keptn
+
           
 
       # Install job executor from downloaded helm chart

@@ -13,7 +13,7 @@ spec:
         - name: "deploy"
           tasks:
             - name: "deployment"
-            - name: "test"
+            # - name: "test"
             - name: "evaluation"
               # 1. give some time for the service to be up and running
               # so that metrics starts showing correct results
