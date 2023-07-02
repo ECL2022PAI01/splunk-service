@@ -158,6 +158,11 @@ jobs:
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
           kubectl get pods -n keptn
+          echo "SPKUNK_HOST=${{ env.SPLUNK_HOST }}"
+          echo "SPKUNK_PORT=${{ env.SPLUNK_PORT }}"
+          echo "SPKUNK_USERNAME=${{ env.SPLUNK_USERNAME }}"
+          echo "SPKUNK_PASSWORD=$SPLUNK_PASSWORD"
+          
 
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service

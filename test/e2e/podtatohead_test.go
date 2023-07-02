@@ -120,7 +120,6 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 			"splunk-service",
 		)
 
-		t.Fatal()
 		requireWaitForEvent(t,
 			testEnv.API,
 			15*time.Minute,
