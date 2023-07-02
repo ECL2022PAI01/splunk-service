@@ -115,6 +115,7 @@ jobs:
         with:
           KEPTN_VERSION: ${{ matrix.keptn-version }}
           HELM_VALUES: |
+            wait: true
             # Keptn 0.17 and newer
             apiGatewayNginx:
               type: LoadBalancer
