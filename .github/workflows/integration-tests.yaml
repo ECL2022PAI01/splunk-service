@@ -214,7 +214,7 @@ jobs:
           kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
           echo "GITEA_ENDPOINT_TOKEN=${GITEA_ENDPOINT_TOKEN}" >> "$GITHUB_OUTPUT"
-          gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -timeout=120m ./test/e2e/...
+          gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
 
       - name: Save pod logs - splunk
         run: |
