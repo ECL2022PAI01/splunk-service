@@ -219,11 +219,25 @@ jobs:
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
 
       - name: Save pod logs - splunk
+        continue-on-error: true
         run: |
           kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
           kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
+      
+      - name: Save pod logs - resource-service
+        continue-on-error: true
+        run: |
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1) > resource-service_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1)
+      
+      - name: Save pod logs - lightouse-service
+        continue-on-error: true
+        run: |
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lightouse-service | awk '{print $1}' | head -1) > lightouse-service_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lightouse-service | awk '{print $1}' | head -1)
 
       - name: Save pod logs - job
+        continue-on-error: true
         run: |
-          kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
+          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
