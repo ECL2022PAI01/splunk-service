@@ -271,8 +271,8 @@ func _main(args []string) int {
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
 	http.HandleFunc("/", HTTPGetHandler)
 	go func() {
-		log.Println("Starting alert manager endpoint")
-		err := http.ListenAndServe(":8080", nil)
+		log.Println("Starting alert listener endpoint")
+		err := http.ListenAndServe(":8087", nil)
 		if err != nil {
 			log.Fatalf("Error with HTTP server: %e", err)
 		}
