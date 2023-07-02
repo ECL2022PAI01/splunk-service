@@ -126,14 +126,14 @@ jobs:
 
       
 
-      - name: Install splunk enterprise with docker
-        env:
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_USERNAME: admin
-          SPLUNK_PORT: "8089"
-        run: |
-          docker pull splunk/splunk:latest
-          docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+      # - name: Install splunk enterprise with docker
+      #   env:
+      #     SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+      #     SPLUNK_USERNAME: admin
+      #     SPLUNK_PORT: "8089"
+      #   run: |
+      #     docker pull splunk/splunk:latest
+      #     docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
 
      
