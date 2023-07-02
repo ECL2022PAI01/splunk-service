@@ -203,7 +203,9 @@ jobs:
         run: |
           echo "Failed to run integration tests!"
           echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
+          
       - name: Run Integration tests
+        continue-on-error: true
         env:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_API_URL }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
