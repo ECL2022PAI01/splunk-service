@@ -63,7 +63,15 @@ jobs:
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
           
-          
+      - name: Install Keptn
+        id: install_keptn
+        uses: keptn-sandbox/action-install-keptn@main
+        with:
+          KEPTN_VERSION: "0.13.1"
+          KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+      - name: Connect to keptn
+        run: echo "connect to ${{ steps.install_keptn.KEPTN_ENDPOINT }} - ${{ steps.install_keptn KEPTN_API_TOKEN }}"    
       - name: Generate splunk credentials
         id: splunk_credentials
         run: |
@@ -109,7 +117,7 @@ jobs:
           
       
       - name: Install Keptn
-        id: install_keptn
+#         id: install_keptn
         env:
           KEPTN_VERSION: ${{ matrix.keptn-version }}
         run: |
