@@ -158,7 +158,8 @@ jobs:
       - name: Save pod logs - splunk
         run: |
           kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
+          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
+          
       - name: Install Job-executor-service
         env:
           KEPTN_API_PROTOCOL: http
