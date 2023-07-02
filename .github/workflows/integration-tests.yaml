@@ -49,44 +49,31 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-       # Prepare minikube + Keptn environment
-      - name: Install and start minikube
+        # Prepare K3d + Keptn environment
+      - name: Install and start K3s
         run: |
-          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
-          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
-          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+          curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.21.12+k3s1" INSTALL_K3S_EXEC="--no-deploy traefik" K3S_KUBECONFIG_MODE="644" sh -
 
-          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
-          /usr/local/bin/minikube start --cpus=2 --memory=5GB
-          minikube tunnel &> /dev/null &
-          echo "minikube ready!"  
+
+      - name: Wait for K3s to become ready
+        timeout-minutes: 1
+        run: |
+          # uncomment the line below for debugging
+          # set -x
+          k3sReady=$(kubectl get node $(hostname) -ogo-template --template="{{ range .status.conditions }} {{- if eq .type \"Ready\" }}{{ .status }} {{- end }} {{- end }}" || echo "")
+          while [ "$k3sReady" != "True" ]; do
+          echo "K3s is not ready yet, sleep awhile to let things settle"
+          sleep 5
+          k3sReady=$(kubectl get node $(hostname) -ogo-template --template="{{ range .status.conditions }} {{- if eq .type \"Ready\" }}{{ .status }} {{- end }} {{- end }}" || echo "")
+          done;
+          echo "K3s ready!!!"
       - name: Generate splunk credentials
         id: splunk_credentials
         run: |
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-          
-      - name: Install splunk-service
-        env:
-          SPLUNK_HOST: "localhost"
-          SPLUNK_PORT: 8089
-          SPLUNK_USERNAME: admin
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_VERSION: "0.1.0"
-        run: |
-          tar -czvf splunk-service.tgz chart/
-          helm upgrade --install -n keptn --create-namespace splunk-service \
-            splunk-service.tgz \
-            --set splunkservice.spHost=$SPLUNK_HOST \
-            --set splunkservice.spPort=$SPLUNK_PORT\
-            --set splunkservice.spUsername=$SPLUNK_USERNAME \
-            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
-            --wait
-
-          kubectl -n keptn get deployment splunk-service -o wide 
-      - name: Install Gitea
+           - name: Install Gitea
         id: gitea
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
@@ -147,7 +134,26 @@ jobs:
       - name: Test connection to keptn
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
-      
+           
+      - name: Install splunk-service
+        env:
+          SPLUNK_HOST: "localhost"
+          SPLUNK_PORT: 8089
+          SPLUNK_USERNAME: admin
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+          SPLUNK_VERSION: "0.1.0"
+        run: |
+          tar -czvf splunk-service.tgz chart/
+          helm upgrade --install -n keptn --create-namespace splunk-service \
+            splunk-service.tgz \
+            --set splunkservice.spHost=$SPLUNK_HOST \
+            --set splunkservice.spPort=$SPLUNK_PORT\
+            --set splunkservice.spUsername=$SPLUNK_USERNAME \
+            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
+            --wait
+
+          kubectl -n keptn get deployment splunk-service -o wide 
+
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service
         env:
