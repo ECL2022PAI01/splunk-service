@@ -73,7 +73,8 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-           - name: Install Gitea
+           
+      - name: Install Gitea
         id: gitea
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
