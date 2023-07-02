@@ -156,6 +156,14 @@ jobs:
             -f test/data/helm-serviceAccount.yaml \
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml      
+
+      - name: Generate splunk credentials
+        id: splunk_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+          
       - name: Install splunk-service
         env:
           SPLUNK_HOST: "localhost"
@@ -174,17 +182,6 @@ jobs:
             --wait
 
           kubectl -n keptn get deployment splunk-service -o wide
-
-
-
-      
-
-      - name: Generate splunk credentials
-        id: splunk_credentials
-        run: |
-          password=$(date +%s | sha256sum | base64 | head -c 32)
-          echo "::add-mask::$password"
-          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
 
       - name: Install splunk enterprise with docker
         env:
