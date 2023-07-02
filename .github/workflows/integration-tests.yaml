@@ -59,7 +59,7 @@ jobs:
           # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
           curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
           sudo install minikube-linux-amd64 /usr/local/bin/minikube
-          /usr/local/bin/minikube start --cpus=8 --memory=14GB
+          /usr/local/bin/minikube start --cpus=2 --memory=14GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
       - name: Generate splunk credentials
