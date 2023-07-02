@@ -71,7 +71,7 @@ jobs:
           KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
       - name: Connect to keptn
-        run: echo "connect to ${{ steps.install_keptn.KEPTN_ENDPOINT }} - ${{ steps.install_keptn KEPTN_API_TOKEN }}"    
+        run: echo "connect to ${{ steps.install_keptn.KEPTN_ENDPOINT }} - ${{ steps.install_keptn.KEPTN_API_TOKEN }}"    
       - name: Generate splunk credentials
         id: splunk_credentials
         run: |
