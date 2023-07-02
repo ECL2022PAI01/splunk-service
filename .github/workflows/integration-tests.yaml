@@ -38,6 +38,9 @@ jobs:
       GITEA_NAMESPACE: gitea
       KUBECONFIG: "${{ github.workspace }}/.kube/config"
       TEST_REPORT_FILENAME: test-report-${{ github.run_id }}-keptn-${{ matrix.keptn-version }}-splunk-${{ matrix.prometheus-version }}.json
+      SPLUNK_HOST: "localhost"
+      SPLUNK_PORT: 8089
+      SPLUNK_USERNAME: admin
 
     steps:
       # Checkout code for the integrations tests in test/e2e
@@ -141,21 +144,20 @@ jobs:
 
       - name: Install splunk-service
         env:
-          SPLUNK_HOST: "localhost"
-          SPLUNK_PORT: 8089
-          SPLUNK_USERNAME: admin
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
           SPLUNK_VERSION: "0.1.0"
         run: |
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
             splunk-service.tgz \
-            --set splunkservice.spHost=$SPLUNK_HOST \
-            --set splunkservice.spPort=$SPLUNK_PORT\
+            --set splunkservice.spHost=${{ env.SPLUNK_HOST }} \
+            --set splunkservice.spPort=${{ env.SPLUNK_PORT }}\
             --set splunkservice.spUsername=$SPLUNK_USERNAME \
             --set splunkservice.spPassword=$SPLUNK_PASSWORD \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
+          
+
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service
         env:
@@ -178,6 +180,13 @@ jobs:
             -f test/data/helm-serviceAccount.yaml \
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml
+      
+      - name: Create splunk secret
+        env:
+          SPLUNK_HEC_PORT: 8088
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+        run: |
+          kubectl -n keptn-jes create secret generic splunk-secret --from-literal=SPLUNK_HOST=${{ env.SPLUNK_HOST }} --from-literal=SPLUNK_HEC_PORT=$SPLUNK_HEC_PORT --from-literal=SPLUNK_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SPLUNK_PASSWORD=$SPLUNK_PASSWORD -o yaml
 
       - name: Setup Go
         uses: actions/setup-go@v3.2.0
@@ -191,11 +200,9 @@ jobs:
       - name: Install splunk enterprise with docker
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_USERNAME: admin
-          SPLUNK_PORT: "8089"
         run: |
           docker pull splunk/splunk:latest
-          docker run -d -p 8089:$SPLUNK_PORT -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+          docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
       - name: Create pipeline failure report

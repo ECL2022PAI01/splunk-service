@@ -3,16 +3,23 @@ from datetime import datetime
 from random import randint
 from dotenv import load_dotenv
 from logging import log
-import logging
+import logging, base64
 
 
 class Splunksender(object):
-    def __init__(self, instance, token):
+    def __init__(self, instance, token, username="admin", password=""):
         self.instance = instance
         self.token = token
+        self.username = username
+        self.password = password
 
     def send(self, doc, source):
-        headers = {"Authorization": f"Splunk {self.token}"}
+        if self.token != "":
+            headers = {"Authorization": f"Splunk {self.token}"}
+        else:
+            headers = {
+                "Authorization": f"Basic {base64.b64encode(self.username + ':' + self.password)}"
+            }
         body = {"event": doc}
         body["index"] = "keptn-splunk-dev"
         body["sourcetype"] = "httpevent"
@@ -38,15 +45,26 @@ if __name__ == "__main__":
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
-    host = os.getenv("SPLUNK_HEC_HOST")
+    host = os.getenv("SPLUNK_HOST")
     port = os.getenv("SPLUNK_HEC_PORT")
     token = os.getenv("SPLUNK_HEC_TOKEN")
+    usrname = os.getenv("SPLUNK_USERNAME")
+    password = os.getenv("SPLUNK_PASSWORD")
     fileName = os.getenv("SPLUNK_LOG_FILE_NAME")
 
-    if not host or not port or not token or not fileName:
+    if not host:
+        raise EnvironmentError("Please set the environment variable SPLUNK_HEC_HOST")
+    if not port:
+        port = 8088
+    if not token and not password:
         raise EnvironmentError(
-            "Please set the environment variables SPLUNK_HEC_HOST, SPLUNK_HEC_PORT and SPLUNK_HEC_TOKEN and SPLUNK_LOG_FILE_NAME"
+            "Please set the environment variables SPLUNK_HEC_TOKEN or SPLUNK_HEC_USERNAME and SPLUNK_HEC_PASSWORD"
         )
+    if not fileName:
+        raise EnvironmentError(
+            "Please set the environment variable SPLUNK_LOG_FILE_NAME"
+        )
+
     instance = f"{host}:{port}/services/collector"
 
     log(level=logging.INFO, msg=f"Sending to {instance}")
@@ -62,7 +80,7 @@ if __name__ == "__main__":
             resp = sp.send(updateDate(d), "http:podtato-error")
             log(level=logging.INFO, msg=d)
             log(level=logging.INFO, msg=f"Response: {resp.content}")
-            time.sleep(randint(1, 2))
+            time.sleep(randint(1, 3))
     # write the updated log lines to the file
     # with open(fileName, "w") as file:
     #     file.writelines(tmpFile)
