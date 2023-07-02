@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.18.1", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["1.0.0"] # https://github.com/keptn/keptn/releases
         splunk-version: ["0.1.0"] # chart version
     env:
       GO_VERSION: 1.17
@@ -61,7 +61,31 @@ jobs:
           /usr/local/bin/minikube start --cpus=2 --memory=5GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"  
-            
+      - name: Generate splunk credentials
+        id: splunk_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+          
+      - name: Install splunk-service
+        env:
+          SPLUNK_HOST: "localhost"
+          SPLUNK_PORT: 8089
+          SPLUNK_USERNAME: admin
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+          SPLUNK_VERSION: "0.1.0"
+        run: |
+          tar -czvf splunk-service.tgz chart/
+          helm upgrade --install -n keptn --create-namespace splunk-service \
+            splunk-service.tgz \
+            --set splunkservice.spHost=$SPLUNK_HOST \
+            --set splunkservice.spPort=$SPLUNK_PORT\
+            --set splunkservice.spUsername=$SPLUNK_USERNAME \
+            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
+            --wait
+
+          kubectl -n keptn get deployment splunk-service -o wide      
       - name: Install Gitea
         id: gitea
         env:
@@ -157,31 +181,7 @@ jobs:
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml      
 
-      - name: Generate splunk credentials
-        id: splunk_credentials
-        run: |
-          password=$(date +%s | sha256sum | base64 | head -c 32)
-          echo "::add-mask::$password"
-          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-          
-      - name: Install splunk-service
-        env:
-          SPLUNK_HOST: "localhost"
-          SPLUNK_PORT: 8089
-          SPLUNK_USERNAME: admin
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_VERSION: "0.1.0"
-        run: |
-          tar -czvf splunk-service.tgz chart/
-          helm upgrade --install -n keptn --create-namespace splunk-service \
-            splunk-service.tgz \
-            --set splunkservice.spHost=$SPLUNK_HOST \
-            --set splunkservice.spPort=$SPLUNK_PORT\
-            --set splunkservice.spUsername=$SPLUNK_USERNAME \
-            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
-            --wait
-
-          kubectl -n keptn get deployment splunk-service -o wide
+      
 
       - name: Install splunk enterprise with docker
         env:
