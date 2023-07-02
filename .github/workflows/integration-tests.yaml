@@ -157,8 +157,29 @@ jobs:
   
       - name: Save pod logs - splunk
         run: |
-          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep job-executor | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
           kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
+      - name: Install Job-executor-service
+        env:
+          KEPTN_API_PROTOCOL: http
+          KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
+          KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_HTTP_ENDPOINT }}
+          TASK_SUBSCRIPTION: "sh.keptn.event.deployment.triggered\\,sh.keptn.event.test.triggered"
+        run: |
+          helm upgrade --install \
+            --create-namespace -n ${JES_NAMESPACE} \
+            job-executor-service \
+            "https://github.com/keptn-contrib/job-executor-service/releases/download/${JES_VERSION}/job-executor-service-${JES_VERSION}.tgz" \
+            --set remoteControlPlane.autoDetect.enabled="false" \
+            --set remoteControlPlane.topicSubscription=${TASK_SUBSCRIPTION} \
+            --set remoteControlPlane.api.token=${KEPTN_API_TOKEN} \
+            --set remoteControlPlane.api.hostname=${KEPTN_ENDPOINT} \
+            --set remoteControlPlane.api.protocol=${KEPTN_API_PROTOCOL} \
+            --wait
+          kubectl apply \
+            -f test/data/helm-serviceAccount.yaml \
+            -f test/data/helm-clusterRole.yaml \
+            -f test/data/helm-clusterRoleBinding.yaml   
       - name: Save pod logs - job
         run: |
           kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
