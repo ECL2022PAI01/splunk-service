@@ -116,7 +116,6 @@ jobs:
           helm repo add keptn https://charts.keptn.sh
           helm install -n keptn --create-namespace keptn keptn/keptn \
           --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.default" \
-          --set=apiGatewayNginx.type=LoadBalancer\
           --version=$KEPTN_VERSION
     
       - name: Test connection to keptn
