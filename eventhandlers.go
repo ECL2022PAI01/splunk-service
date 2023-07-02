@@ -348,7 +348,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
-		return err //SHOULD BE NIL
+		return nil //SHOULD BE NIL
 	}
 
 	const remediationFileDefaultName = "remediation.yaml"
@@ -364,7 +364,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	if errors.Is(err, api.ResourceNotFoundError) {
 		logger.Infof("No remediation defined for project %s stage %s, skipping setup of prometheus alerts",
 			eventData.Project, stage.Name)
-		return err //SHOULD BE NIL
+		return nil //SHOULD BE NIL
 	}
 
 	if err != nil {
@@ -456,7 +456,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					if err != nil {
 						//DONT FORGET TO TAKE INTO ACCOUNT THE FACT THAT THE ERROR COULD BE CAUSED BY THE FACT
 						//THAT TH ALERT ALREADY EXIST. IN THAT CASE WE SHOULD UPDATE THE ALERT
-						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
+						logger.Errorf("Error calling CreateAlert(): %v : %v :\n %v", spAlert.Params.SearchQuery, err, client)
 					}
 
 				}
@@ -500,12 +500,12 @@ func getCustomQueries(k *keptnv2.Keptn, project string, stage string, service st
 }
 
 func getResultFieldName(searchQuery string) (string, error) {
-	if strings.Contains(searchQuery, "|") {
-		startIndex := strings.Index(searchQuery, "|")
+	if strings.Contains(searchQuery, "stats") {
+		startIndex := strings.Index(searchQuery, "stats")+4
 		i := 1
 		for {
-			if searchQuery[startIndex+i] == " "[0] && searchQuery[startIndex+i-1] != "|"[0] {
-				return searchQuery[startIndex+1 : startIndex+i-1], nil
+			if searchQuery[startIndex+i] == " "[0] && searchQuery[startIndex+i-1] != "s"[0] {
+				return searchQuery[startIndex+2 : startIndex+i], nil
 			}
 			i = i + 1
 			if i == len(searchQuery) {
