@@ -49,24 +49,21 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-        # Prepare K3d + Keptn environment
-      - name: Install and start K3s
+          
+          
+        # Prepare minikube + Keptn environment
+      - name: Install and start minikube
         run: |
-          curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.21.12+k3s1" INSTALL_K3S_EXEC="--no-deploy traefik" K3S_KUBECONFIG_MODE="644" sh -
-
-
-      - name: Wait for K3s to become ready
-        timeout-minutes: 1
-        run: |
-          # uncomment the line below for debugging
-          # set -x
-          k3sReady=$(kubectl get node $(hostname) -ogo-template --template="{{ range .status.conditions }} {{- if eq .type \"Ready\" }}{{ .status }} {{- end }} {{- end }}" || echo "")
-          while [ "$k3sReady" != "True" ]; do
-          echo "K3s is not ready yet, sleep awhile to let things settle"
-          sleep 5
-          k3sReady=$(kubectl get node $(hostname) -ogo-template --template="{{ range .status.conditions }} {{- if eq .type \"Ready\" }}{{ .status }} {{- end }} {{- end }}" || echo "")
-          done;
-          echo "K3s ready!!!"
+          # wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+          # wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+          # echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+          curl -LO https://storage.googleapis.com/minikube/releases/v1.24.0/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          /usr/local/bin/minikube start --cpus=2 --memory=5GB
+          minikube tunnel &> /dev/null &
+          echo "minikube ready!"
+          
+          
       - name: Generate splunk credentials
         id: splunk_credentials
         run: |
