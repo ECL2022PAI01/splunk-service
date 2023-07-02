@@ -107,8 +107,11 @@ jobs:
           
       - name: Install Keptn
         id: install_keptn
-        uses: keptn-sandbox/action-install-keptn@v3.0.0
-        timeout-minutes: 5
+        # This action is a patched version of github.com/keptn-sandbox/action-install-keptn
+        # which is being used here in the interest of time
+        # TODO: this change should go into github.com/keptn-sandbox/action-install-keptn
+        uses: vadasambar/action-install-keptn@v4.0.0-patch-vadasambar3
+        timeout-minutes: 10
         with:
           KEPTN_VERSION: ${{ matrix.keptn-version }}
           HELM_VALUES: |
@@ -124,7 +127,16 @@ jobs:
                 type: LoadBalancer
               features:
                 automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
+            # For Keptn 0.18 (to make room for more CPU)
+            statisticsService:
+              enabled: false
+            webhookService:
+              enabled: false
+            # For Keptn 1.0.0 (to make room for more resources and reduce helm installationj time)
+            approvalService:
+              enabled: false
           KUBECONFIG: ${{ env.KUBECONFIG }}
+          HELM_TIMEOUT: "10m"
     
       - name: Test connection to keptn
         run: |
