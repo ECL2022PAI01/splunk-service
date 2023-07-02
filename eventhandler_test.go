@@ -17,12 +17,12 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 )
 
 // You can configure your tests by specifying the path to get-sli triggered event file in json,
@@ -131,7 +131,6 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	}
 
 }
-
 
 // Tests the HandleSpecificSli function
 func TestHandleSpecificSli(t *testing.T) {
@@ -253,7 +252,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 			if sliResult.Value != float64(defaultSplunkTestResult) {
 				t.Errorf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
 				t.Fail()
-			}else{
+			} else {
 				t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
 			}
 		}
@@ -314,7 +313,7 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 
 }
 
-//checks if we have the expected parameters in the final request sent to splunk
+// checks if we have the expected parameters in the final request sent to splunk
 func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
 
 	// reinit the params

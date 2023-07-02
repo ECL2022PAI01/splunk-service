@@ -11,12 +11,12 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"gopkg.in/yaml.v2"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
 	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
 	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -180,7 +180,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	return nil
 }
 
-//Handles configure monitoring event
+// Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
 	var shkeptncontext string
 	logger.Info("We entered here")
@@ -204,7 +204,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	}
 
 	var client *splunk.SplunkClient
-	if(splunkCreds.Token!=""){
+	if splunkCreds.Token != "" {
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -214,7 +214,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			splunkCreds.Token,
 			true,
 		)
-	}else{
+	} else {
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -321,7 +321,7 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 	return sliResult, nil
 }
 
-func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData) error{
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData) error {
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
 	scope.Resource("shipyard.yaml")
@@ -343,12 +343,12 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 
 }
 
-func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
+func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
 	logger.Info("We entered here")
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
-		return err		//SHOULD BE NIL
+		return err //SHOULD BE NIL
 	}
 
 	const remediationFileDefaultName = "remediation.yaml"
@@ -364,12 +364,12 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 	if errors.Is(err, api.ResourceNotFoundError) {
 		logger.Infof("No remediation defined for project %s stage %s, skipping setup of prometheus alerts",
 			eventData.Project, stage.Name)
-		return err		//SHOULD BE NIL
+		return err //SHOULD BE NIL
 	}
 
 	if err != nil {
 		return fmt.Errorf("error retrieving remediation definition %s for project %s and stage %s: %w",
-				remediationFileDefaultName, eventData.Project, stage.Name, err)
+			remediationFileDefaultName, eventData.Project, stage.Name, err)
 	}
 
 	// get SLI queries
@@ -384,12 +384,11 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 
 	for _, objective := range slos.Objectives {
 		logger.Info("SLO:" + objective.DisplayName + ", " + objective.SLI)
-		
+
 		end := "now"
 		start := "-3m"
 
 		query := projectCustomQueries[objective.SLI]
-		
 
 		if err != nil || query == "" {
 			logger.Error("No query defined for SLI " + objective.SLI + " in project " + eventData.Project)
@@ -422,31 +421,30 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 						criteria = strings.Replace(criteria, "<", ">=", -1)
 					} else if strings.Contains(criteria, ">=") {
 						criteria = strings.Replace(criteria, ">=", "<", -1)
-					} else{
+					} else {
 						criteria = strings.Replace(criteria, ">", "<=", -1)
 					}
 
 					// sanitize criteria : remove whitespaces
 					criteria = strings.Replace(criteria, " ", "", -1)
 
-					alertCondition 	:= buildAlertCondition(resultField, criteria)
-					alertName 		:= buildAlertName(eventData, stage.Name, objective.SLI, criteria)
-					cronSchedule 	:= "*/1 * * * *"
-					actions 		:= "logevent,webhook"
-					webhookUrl 		:= "localhost:8080" //WARNING CHANGE THIS
+					alertCondition := buildAlertCondition(resultField, criteria)
+					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
+					cronSchedule := "*/1 * * * *"
+					actions := "logevent,webhook"
+					webhookUrl := "localhost:8080" //WARNING CHANGE THIS
 
 					params := splunk.AlertParams{
-						Name: alertName,
-						CronSchedule: cronSchedule,
-						SearchQuery:  query,
-						EarliestTime: start,
-						LatestTime:   end,
+						Name:           alertName,
+						CronSchedule:   cronSchedule,
+						SearchQuery:    query,
+						EarliestTime:   start,
+						LatestTime:     end,
 						AlertCondition: alertCondition,
-						Actions: actions,
-						WebhookUrl: webhookUrl,
+						Actions:        actions,
+						WebhookUrl:     webhookUrl,
 					}
 					utils.RetrieveAlertTimeRange(&params)
-
 
 					spAlert := splunk.SplunkAlert{
 						Params:  params,
@@ -460,14 +458,13 @@ func  CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient,
 						//THAT TH ALERT ALREADY EXIST. IN THAT CASE WE SHOULD UPDATE THE ALERT
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
 					}
-					
+
 				}
 			}
 		}
 	}
 	return nil
 }
-
 
 func retrieveSLOs(resourceHandler *api.ResourceHandler, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string) (*keptnevents.ServiceLevelObjectives, error) {
 	resourceScope := api.NewResourceScope()
@@ -502,16 +499,16 @@ func getCustomQueries(k *keptnv2.Keptn, project string, stage string, service st
 	return customQueries, nil
 }
 
-func getResultFieldName(searchQuery string) (string, error){
+func getResultFieldName(searchQuery string) (string, error) {
 	if strings.Contains(searchQuery, "|") {
 		startIndex := strings.Index(searchQuery, "|")
-		i:= 1
+		i := 1
 		for {
-			if(searchQuery[startIndex+i]==" "[0] && searchQuery[startIndex+i-1]!="|"[0]){
-				return searchQuery[startIndex+1:startIndex+i-1], nil
+			if searchQuery[startIndex+i] == " "[0] && searchQuery[startIndex+i-1] != "|"[0] {
+				return searchQuery[startIndex+1 : startIndex+i-1], nil
 			}
-			i = i+1
-			if i==len(searchQuery){
+			i = i + 1
+			if i == len(searchQuery) {
 				break
 			}
 		}
@@ -519,10 +516,10 @@ func getResultFieldName(searchQuery string) (string, error){
 	return "", errors.New("No aggragation function found in the search query.")
 }
 
-func buildAlertCondition(resultField string, criteria string) string{
-	return "search "+resultField+" "+criteria
+func buildAlertCondition(resultField string, criteria string) string {
+	return "search " + resultField + " " + criteria
 }
 
-func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string{
-	return eventData.Project+"_"+stage+"_"+eventData.Service+"_"+sli+"_"+criteria
+func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
+	return eventData.Project + "_" + stage + "_" + eventData.Service + "_" + sli + "_" + criteria
 }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -19,7 +20,6 @@ import (
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
