@@ -110,25 +110,15 @@ jobs:
       
       - name: Install Keptn
         id: install_keptn
-        uses: keptn-sandbox/action-install-keptn@v3.0.0
-        timeout-minutes: 30
-        with:
+        env:
           KEPTN_VERSION: ${{ matrix.keptn-version }}
-          HELM_VALUES: |
-            # Keptn 0.17 and newer
-            apiGatewayNginx:
-              type: LoadBalancer
-            features:
-              automaticProvisioning:
-                serviceURL: http://keptn-gitea-provisioner-service.default
-            # Keptn 0.16 compatibility
-            control-plane:
-              apiGatewayNginx:
-                type: LoadBalancer
-              features:
-                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
-          KUBECONFIG: ${{ env.KUBECONFIG }}
-
+        run: |
+          helm repo add keptn https://charts.keptn.sh
+          helm install -n keptn --create-namespace keptn keptn/keptn \
+          --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.default" \
+          --set=apiGatewayNginx.type=LoadBalancer\
+          --version=$KEPTN_VERSION
+    
       - name: Test connection to keptn
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
