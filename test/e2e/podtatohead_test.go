@@ -24,10 +24,10 @@ const (
 )
 
 func TestPodtatoheadEvaluation(t *testing.T) {
-	// if !isE2ETestingAllowed() {
-	// 	t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
-	// }
-	t.Fatal()
+	if !isE2ETestingAllowed() {
+		t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
+	}
+	
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
 		podtatoDeployV1Event,
