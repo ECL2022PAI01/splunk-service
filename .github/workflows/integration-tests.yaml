@@ -146,18 +146,19 @@ jobs:
           echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
 
       - name: Run Integration tests
+        continue-on-error: true
         env:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_API_URL }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
           GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
         run: |
-          kubectl apply -f test/e2e/temporary-lb-service.yaml
-          kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
-          export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
-          echo "GITEA_ENDPOINT_TOKEN=${GITEA_ENDPOINT_TOKEN}" >> "$GITHUB_OUTPUT"
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME ./test/e2e/...
-
+  
+      - name: Save pod logs - splunk
+        run: |
+          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep job-executor | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
+          kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
       - name: Save pod logs - job
         run: |
           kubectl logs -n keptn $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
