@@ -143,26 +143,25 @@ jobs:
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
-      - name: Install splunk-service
+      - name: Create splunk secret
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+        run: |
+          kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }}--from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
+
+      - name: Install splunk-service
+        env:
           SPLUNK_VERSION: "0.1.0"
         run: |
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
             splunk-service.tgz \
-            --set splunkservice.spHost=${{ env.SPLUNK_HOST }} \
-            --set splunkservice.spPort=${{ env.SPLUNK_PORT }}\
-            --set splunkservice.spUsername=${{ env.SPLUNK_USERNAME }} \
-            --set splunkservice.spPassword=$SPLUNK_PASSWORD \
+            --set splunkservice.existingSecret=splunk-service-secret \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
           kubectl get pods -n keptn
-          echo "SPKUNK_HOST=${{ env.SPLUNK_HOST }}"
-          echo "SPKUNK_PORT=${{ env.SPLUNK_PORT }}"
-          echo "SPKUNK_USERNAME=${{ env.SPLUNK_USERNAME }}"
-          echo "SPKUNK_PASSWORD=$SPLUNK_PASSWORD"
-          
+          kubectl -n keptn describe pod/$(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
+
 
       # Install job executor from downloaded helm chart
       - name: Install Job-executor-service
@@ -187,7 +186,7 @@ jobs:
             -f test/data/helm-clusterRole.yaml \
             -f test/data/helm-clusterRoleBinding.yaml
 
-      - name: Create splunk secret
+      - name: Create splunk-hec secret
         env:
           SPLUNK_HEC_PORT: 8088
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
