@@ -76,8 +76,8 @@ jobs:
         run: |
           docker pull splunk/splunk:latest
           docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          curl https://localhost:8089 -u admin:$SPLUNK_PASSWORD --insecure
-      - name: Install Gitea
+
+- name: Install Gitea
         id: gitea
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
