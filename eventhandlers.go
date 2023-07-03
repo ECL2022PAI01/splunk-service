@@ -63,9 +63,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
-	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.BaseURL)
-	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.AuthHeader)
-	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.AuthToken)
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 	logger.Infof("SLI Config: %s", sliConfig)
@@ -79,22 +76,26 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			Status: keptnv2.StatusErrored,
 			Result: keptnv2.ResultFailed,
 			Labels: labels,
-		}, ServiceName)
-
-		return err
+			}, ServiceName)
+			
+			return err
 	}
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
-
+	
 	// get splunk API URL, PORT and TOKEN or USERNAME/PASSWORD or SESSION_KEY
 	splunkCreds, err := getSplunkCredentials()
 	if err != nil {
 		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		return err
 	}
+	logger.Infof("Credentials: %s", splunkCreds.Host)
+	logger.Infof("Credentials: %s", splunkCreds.Port)
+	logger.Infof("Credentials: %s", splunkCreds.Username)
+	logger.Infof("Credentials: %s", splunkCreds.Password)
 
 	logger.Info("indicators:", indicators)
 	var errSLI error
@@ -122,6 +123,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			true,
 		)
 	} else {
+		logger.Info("Using username and password")
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
