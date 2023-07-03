@@ -44,6 +44,21 @@ jobs:
 
     steps:
       # Checkout code for the integrations tests in test/e2e
+      - name: Generate splunk credentials
+        id: splunk_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+      - name: Install splunk enterprise with docker
+        env:
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+        run: |
+          docker pull splunk/splunk:latest
+          docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+          netstat -lptn | grep 8089
+          docker ps -a
+          curl https://localhost:8089 -u admin:$SPLUNK_PASSWORD --insecure
       - name: Check out code.
         uses: actions/checkout@v3.0.2
       - name: Generate Gitea credentials
@@ -64,20 +79,7 @@ jobs:
           /usr/local/bin/minikube start --cpus=2 --memory=5GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
-      - name: Generate splunk credentials
-        id: splunk_credentials
-        run: |
-          password=$(date +%s | sha256sum | base64 | head -c 32)
-          echo "::add-mask::$password"
-          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-      - name: Install splunk enterprise with docker
-        env:
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-        run: |
-          docker pull splunk/splunk:latest
-          docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          netstat -lptn | grep 8089
-          docker ps -a
+      
           
       - name: Install Gitea
         id: gitea
