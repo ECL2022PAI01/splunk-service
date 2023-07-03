@@ -56,7 +56,7 @@ jobs:
         run: |
           docker pull splunk/splunk:latest
           docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          wget https://admin:$SPLUNK_PASSWORD@localhost:8089/services/search/v2/jobs
+          wget https://admin:$SPLUNK_PASSWORD@localhost:8089/services/search/v2/jobs --no-check-certificate
           
       - name: Check out code.
         uses: actions/checkout@v3.0.2
