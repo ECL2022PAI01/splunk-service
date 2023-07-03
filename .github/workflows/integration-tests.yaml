@@ -38,7 +38,7 @@ jobs:
       GITEA_NAMESPACE: gitea
       KUBECONFIG: "${{ github.workspace }}/.kube/config"
       TEST_REPORT_FILENAME: test-report-${{ github.run_id }}-keptn-${{ matrix.keptn-version }}-splunk-${{ matrix.prometheus-version }}.json
-      SPLUNK_HOST: "localhost"
+      SPLUNK_HOST: "172.18.0.0"
       SPLUNK_PORT: 8089
       SPLUNK_USERNAME: admin
 
@@ -55,8 +55,9 @@ jobs:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
           docker pull splunk/splunk:latest
-          docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          wget https://admin:$SPLUNK_PASSWORD@localhost:8089/services/search/v2/jobs --no-check-certificate
+          docker network create --subnet=172.18.0.0/16 splunk-net
+          docker run -d --net splunk-net --ip 172.18.0.22 -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+          wget https://admin:$SPLUNK_PASSWORD@172.18.0.0:8089/services/search/v2/jobs --no-check-certificate
           
       - name: Check out code.
         uses: actions/checkout@v3.0.2
