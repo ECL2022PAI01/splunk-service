@@ -209,6 +209,7 @@ jobs:
         run: |
           docker pull splunk/splunk:latest
           docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+          curl https://localhost:8089 -u admin:$SPLUNK_PASSWORD --insecure
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
       - name: Create pipeline failure report
@@ -225,7 +226,6 @@ jobs:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
           GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
         run: |
-          curl https://localhost:8089 -u admin:${{ env.SPLUNK_PASSWORD }} --insecure
           kubectl apply -f test/e2e/temporary-lb-service.yaml
           kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
