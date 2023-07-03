@@ -54,10 +54,8 @@ jobs:
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
-          echo "HOST : ${{ env.SPLUNK_HOST }}"
           docker pull splunk/splunk:latest
           docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          wget https://admin:$SPLUNK_PASSWORD@$(hostname -I | awk '{print $1}'):8089/services/search/v2/jobs --no-check-certificate
           
       - name: Check out code.
         uses: actions/checkout@v3.0.2
