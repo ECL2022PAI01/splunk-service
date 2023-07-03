@@ -56,9 +56,8 @@ jobs:
         run: |
           docker pull splunk/splunk:latest
           docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
-          netstat -lptn | grep 8089
-          docker ps -a
-          telnet localhost 8089
+          wget https://admin:$SPLUNK_PASSWORD@localhost:8089/services/search/v2/jobs
+          
       - name: Check out code.
         uses: actions/checkout@v3.0.2
       - name: Generate Gitea credentials
