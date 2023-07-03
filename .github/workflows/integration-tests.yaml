@@ -203,12 +203,12 @@ jobs:
         shell: bash
         run: go install gotest.tools/gotestsum@latest
 
-      # - name: Install splunk enterprise with docker
-      #   env:
-      #     SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-      #   run: |
-      #     docker pull splunk/splunk:latest
-      #     docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
+      - name: Install splunk enterprise with docker
+        env:
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+        run: |
+          docker pull splunk/splunk:latest
+          docker run -d -p 8089:${{ env.SPLUNK_PORT }} -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=$SPLUNK_PASSWORD" --name splunk-entreprise splunk/splunk:latest
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
       - name: Create pipeline failure report

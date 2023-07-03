@@ -27,7 +27,7 @@ type splunkCredentials struct {
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
 func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
-	const sliFileUri = "sli.yaml"
+	const sliFileUri = "splunk/sli.yaml"
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
@@ -63,7 +63,9 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
-
+	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.BaseURL)
+	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.AuthHeader)
+	logger.Infof("Credentials: %s", ddKeptn.ResourceHandler.AuthToken)
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 	logger.Infof("SLI Config: %s", sliConfig)
