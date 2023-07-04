@@ -155,10 +155,10 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 	}
 	// Unknown Event -> Throw Error!
-	errorMsg := fmt.Sprintf("%s %s", UnhandleKeptnCloudEvent, event.Type())
-
+	errorMsg := fmt.Errorf("%s %s", UnhandleKeptnCloudEvent, event.Type())
 	logger.Error(errorMsg)
-	return errors.New(errorMsg)
+
+	return errorMsg
 }
 
 /**

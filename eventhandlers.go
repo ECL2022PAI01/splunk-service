@@ -45,7 +45,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// The get-sli.started cloud-event is new since Keptn 0.8.0 and is required to be send when the task is started
 	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task started CloudEvent (%s), aborting...", err.Error())
+		errMsg := fmt.Errorf("failed to send task started CloudEvent (%s), aborting... ", err.Error())
 		logger.Error(errMsg)
 		return err
 	}
@@ -68,7 +68,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	logger.Infof("SLI Config: %s", sliConfig)
 	if err != nil {
 		// failed to fetch sli config file
-		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFileUri, err.Error())
+		errMsg := fmt.Errorf("failed to fetch SLI file %s from config repo : %s", sliFileUri, err.Error())
 		logger.Error(errMsg)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
@@ -167,7 +167,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	_, err = ddKeptn.SendTaskFinishedEvent(getSliFinishedEventData, ServiceName)
 
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task finished CloudEvent (%s), aborting...", err.Error())
+		errMsg := fmt.Errorf("failed to send task finished CloudEvent (%s), aborting... ", err.Error())
 		logger.Error(errMsg)
 		return err
 	}
@@ -202,7 +202,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 
 	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, ServiceName)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task finished CloudEvent (%s), aborting...", err.Error())
+		errMsg := fmt.Errorf("failed to send task finished CloudEvent (%s), aborting... ", err.Error())
 		logger.Error(errMsg)
 		return err
 	}
