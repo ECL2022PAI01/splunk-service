@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -50,6 +49,7 @@ func TestProcessKeptnCloudEvent(t *testing.T) {
 
 	*calledSLI = false
 	*calledConfig = false
+	
 	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
 		*calledConfig = true
 		return nil
@@ -111,7 +111,7 @@ func TestMain(t *testing.T) {
 		main()
 		return
 	}
-	
+
 	cmd := exec.Command(os.Args[0], "-test.run=TestMain")
 	cmd.Env = append(os.Environ(), "BE_MAIN=1")
 	err := cmd.Run()
@@ -124,7 +124,7 @@ func TestMain(t *testing.T) {
 // reads the json event file and convert its content into an event
 func extractEvent(eventFileName string) (*event.Event, error) {
 
-	eventFile, err := ioutil.ReadFile(eventFileName)
+	eventFile, err := os.ReadFile(eventFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 
 // Sends a cloud event
 func sendTestCloudEvent(eventFileName string) error {
-	body, err := ioutil.ReadFile(eventFileName)
+	body, err := os.ReadFile(eventFileName)
 	if err != nil {
 		fmt.Printf("Cant load %s: %s", eventFileName, err.Error())
 		return err
