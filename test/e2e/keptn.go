@@ -3,7 +3,6 @@ package e2e
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/keptn/go-utils/pkg/api/models"

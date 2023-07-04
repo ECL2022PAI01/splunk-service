@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - "master"
-      - "end2end"
   workflow_dispatch: # run integration tests only when triggered manually
 
 defaults:
@@ -175,8 +174,7 @@ jobs:
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
             splunk-service.tgz \
-            --set splunkservice.existingSecret=splunk-service-secret \
-            --wait
+            --set splunkservice.existingSecret=splunk-service-secret 
           kubectl -n keptn get deployment splunk-service -o wide
 
       - name: Install splunk enterprise with docker
