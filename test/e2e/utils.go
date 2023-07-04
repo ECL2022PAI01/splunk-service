@@ -264,7 +264,7 @@ func requireWaitForEvent(
 		require.NoError(t, err)
 
 		// for each event we have to check if the type is the correct one and if
-		// the source of the event matches the job executor, if tat ish the case
+		// the source of the event matches the job executor, if that is the case
 		// the event can be checked by the eventValidator
 		for _, event := range events {
 			if *event.Type == eventType && *event.Source == source {
