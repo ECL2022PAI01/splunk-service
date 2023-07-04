@@ -76,16 +76,16 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			Status: keptnv2.StatusErrored,
 			Result: keptnv2.ResultFailed,
 			Labels: labels,
-			}, ServiceName)
-			
-			return err
+		}, ServiceName)
+
+		return err
 	}
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
-	
+
 	// get splunk API URL, PORT and TOKEN or USERNAME/PASSWORD or SESSION_KEY
 	splunkCreds, err := getSplunkCredentials()
 	if err != nil {
@@ -98,6 +98,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 	var client *splunk.SplunkClient
 	if splunkCreds.Token != "" {
+		logger.Info("Using token")
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -108,6 +109,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			true,
 		)
 	} else if splunkCreds.SessionKey != "" {
+		logger.Info("Using session key")
 		client = splunk.NewClientAuthenticatedBySessionKey(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -212,7 +214,6 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
-	logger.Infof("Splunk credentials: %v", &splunkCredentials{})
 	splunkCreds := splunkCredentials{}
 	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
 		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
@@ -231,10 +232,10 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 		if env.SplunkPort == "" {
 			logger.Error("SP_PORT not set")
 		}
-		if env.SplunkApiToken == ""  {
+		if env.SplunkApiToken == "" {
 			logger.Error("SP_API_TOKEN not set")
 		}
-		if env.SplunkUsername == "" ||  env.SplunkPassword == "" {
+		if env.SplunkUsername == "" || env.SplunkPassword == "" {
 			logger.Error("SP_USERNAME and SP_PASSWORD not set")
 		}
 		if env.SplunkSessionKey == "" {
