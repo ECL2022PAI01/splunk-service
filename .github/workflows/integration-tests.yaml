@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.18.1", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.16.0", "0.17.0", "0.18.0", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
         splunk-version: ["0.1.0"] # chart version
     env:
       GO_VERSION: 1.17
@@ -69,7 +69,7 @@ jobs:
           password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
-          
+
       # Prepare minikube + Keptn environment
       - name: Install and start minikube
         run: |
@@ -87,7 +87,7 @@ jobs:
         with:
           path: |
             /usr/local/bin/minikube
-          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube.txt') }} 
+          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube.txt') }}
 
       - name: Install Gitea
         id: gitea
@@ -160,13 +160,13 @@ jobs:
       - name: Test connection to keptn
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
-          
+
       - name: Create splunk secret
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
           kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }} --from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
-          
+
       - name: Install splunk-service
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
@@ -178,7 +178,7 @@ jobs:
             --set splunkservice.existingSecret=splunk-service-secret \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
-          
+
       - name: Install splunk enterprise with docker
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
@@ -224,7 +224,6 @@ jobs:
           echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
 
       - name: Run Integration tests
-        continue-on-error: true
         env:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_API_URL }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
@@ -234,27 +233,3 @@ jobs:
           kubectl apply -f test/e2e/temporary-lb-service.yaml
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
-
-      - name: Save pod logs - splunk
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
-
-      - name: Save pod logs - resource-service
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1) > resource-service_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1)
-
-      - name: Save pod logs - lightouse-service
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1) > lightouse-service_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1)
-
-      - name: Save pod logs - job
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
