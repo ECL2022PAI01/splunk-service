@@ -82,22 +82,6 @@ jobs:
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
 
-      - name: Create splunk secret
-        env:
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-        run: |
-          kubectl create namespace keptn
-          kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }} --from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
-
-      - name: Install splunk-service
-        env:
-          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-        run: |
-          helm upgrade --install -n keptn --create-namespace splunk-service \
-            https://github.com/ECL2022PAI01/splunk-service/releases/download/${{ matrix.splunk-version }}/splunk-service-${{ matrix.splunk-version }}.tgz \
-            --set splunkservice.existingSecret=splunk-service-secret \
-            --wait
-          kubectl -n keptn get deployment splunk-service -o wide
       - name: Cache dependencies
         uses: actions/cache@v2.1.6
         with:
@@ -177,6 +161,23 @@ jobs:
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
+      - name: Create splunk secret
+        env:
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+        run: |
+          kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }} --from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
+
+      - name: Install splunk-service
+        env:
+          SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
+          SPLUNK_VERSION: "0.1.0"
+        run: |
+          tar -czvf splunk-service.tgz chart/
+          helm upgrade --install -n keptn --create-namespace splunk-service \
+            splunk-service.tgz \
+            --set splunkservice.existingSecret=splunk-service-secret \
+            --wait
+          kubectl -n keptn get deployment splunk-service -o wide
 
       - name: Install splunk enterprise with docker
         env:
@@ -232,3 +233,11 @@ jobs:
           kubectl apply -f test/e2e/temporary-lb-service.yaml
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
+
+      # Upload the report files, so we can use them in later jobs
+      - name: Upload test report as an artifact
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-report
+          path: test-report-*.json
