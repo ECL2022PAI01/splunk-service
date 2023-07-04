@@ -9,12 +9,13 @@ If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
 ## Compatibility Matrix
 
-*Please fill in your versions accordingly*
+Please always double-check the version of Keptn you are using compared to the version of this service, and follow the compatibility matrix below.
 
 | Keptn Version    | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 |:----------------:|:----------------------------------------:|
-|       x.y.z       | ghcr.io/keptn-sandbox/splunk-service:x.y.z |
-|       u.v.w      | ghcr.io/keptn-sandbox/splunk-service:u.v.w |
+|       0.17.x       | ECL2022PAI01/splunk-service:0.1.0 |
+|       0.18.x      | ECL2022PAI01/splunk-service:0.1.0 |
+|       1.x.y      | ECL2022PAI01/splunk-service:0.1.0 |
  
 ## Installation instructions
 ### Install splunk
