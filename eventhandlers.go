@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -214,6 +215,16 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			splunkCreds.Token,
 			true,
 		)
+	} else if splunkCreds.SessionKey != "" {
+		client = splunk.NewClientAuthenticatedBySessionKey(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.SessionKey,
+			true,
+		)
 	} else {
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
@@ -239,7 +250,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			Status:  keptnv2.StatusSucceeded,
 			Result:  keptnv2.ResultPass,
 			Project: data.Project,
-			Stage:   data.Service,
+			Stage:   "",
 			Service: data.Service,
 			Message: "Finished configuring monitoring",
 		},
@@ -432,7 +443,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
 					cronSchedule := "*/1 * * * *"
 					actions := "logevent,webhook"
-					webhookUrl := "localhost:8080" //WARNING CHANGE THIS
+					webhookUrl := "https://" + net.JoinHostPort(webhookUrlConst, webhookPortConst) //WARNING CHANGE THIS
 
 					params := splunk.AlertParams{
 						Name:           alertName,
@@ -502,13 +513,13 @@ func getCustomQueries(k *keptnv2.Keptn, project string, stage string, service st
 func getResultFieldName(searchQuery string) (string, error) {
 	if strings.Contains(searchQuery, "stats") {
 		startIndex := strings.Index(searchQuery, "stats")+4
-		i := 1
+		i := 0
 		for {
-			if searchQuery[startIndex+i] == " "[0] && searchQuery[startIndex+i-1] != "s"[0] {
+			i = i + 1
+			if (startIndex+i == len(searchQuery) || searchQuery[startIndex+i] == " "[0]) && searchQuery[startIndex+i-1] != "s"[0] {
 				return searchQuery[startIndex+2 : startIndex+i], nil
 			}
-			i = i + 1
-			if i == len(searchQuery) {
+			if startIndex+i == len(searchQuery) {
 				break
 			}
 		}

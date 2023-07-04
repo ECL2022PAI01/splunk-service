@@ -27,6 +27,8 @@ var keptnOptions = keptn.KeptnOpts{}
 
 const (
 	envVarLogLevel = "LOG_LEVEL"
+	webhookUrlConst = "localhost" //ATTENTION ICI
+	webhookPortConst = "8087"
 )
 
 type envConfig struct {
@@ -272,7 +274,8 @@ func _main(args []string) int {
 	http.HandleFunc("/", HTTPGetHandler)
 	go func() {
 		log.Println("Starting alert listener endpoint")
-		err := http.ListenAndServe(":8087", nil)
+		err := http.ListenAndServe(":"+webhookPortConst, nil)
+		
 		if err != nil {
 			log.Fatalf("Error with HTTP server: %e", err)
 		}
