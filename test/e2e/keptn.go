@@ -40,10 +40,6 @@ func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
 
 // CreateProject creates a keptn project from the contents of a shipyard yaml file
 func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
-	log.Printf("GITEA_TOKEN: %s", os.Getenv("GITEA_TOKEN"))
-	log.Printf("GITEA_ENDPOINT: %s", os.Getenv("GITEA_ENDPOINT"))
-	log.Printf("GITEA_ADMIN_USERNAME: %s", os.Getenv("GITEA_ADMIN_USERNAME"))
-
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(shipyardYAML)
 	_, err := k.APIHandler.CreateProject(models.CreateProject{
 		Name:     &projectName,
