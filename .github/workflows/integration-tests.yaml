@@ -55,6 +55,7 @@ jobs:
       - name: Install gotestsum
         shell: bash
         run: go install gotest.tools/gotestsum@latest
+
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
@@ -62,6 +63,13 @@ jobs:
           echo "::add-mask::$password"
           echo "GITEA_ADMIN_PASSWORD=$password" >> "$GITHUB_OUTPUT"
 
+      - name: Generate splunk credentials
+        id: splunk_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32)
+          echo "::add-mask::$password"
+          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
+          
       # Prepare minikube + Keptn environment
       - name: Install and start minikube
         run: |
@@ -152,19 +160,12 @@ jobs:
       - name: Test connection to keptn
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
-
+          
       - name: Create splunk secret
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
           kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }} --from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
-
-      - name: Generate splunk credentials
-        id: splunk_credentials
-        run: |
-          password=$(date +%s | sha256sum | base64 | head -c 32)
-          echo "::add-mask::$password"
-          echo "SPLUNK_PASSWORD=$password" >> "$GITHUB_OUTPUT"
           
       - name: Install splunk-service
         env:
