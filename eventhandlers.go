@@ -92,11 +92,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		return err
 	}
-	logger.Infof("Credentials: %s", splunkCreds.Host)
-	logger.Infof("Credentials: %s", splunkCreds.Port)
-	logger.Infof("Credentials: %s", splunkCreds.Username)
-	logger.Infof("Credentials: %s", splunkCreds.Password)
-
 	logger.Info("indicators:", indicators)
 	var errSLI error
 	var sliResult *keptnv2.SLIResult
