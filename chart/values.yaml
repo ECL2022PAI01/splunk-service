@@ -24,7 +24,7 @@ distributor:
   image:
     repository: ghcr.io/keptn/distributor # Container Image Name
     pullPolicy: IfNotPresent # Kubernetes Image Pull Policy
-    tag: "1.0.0" # Container Tag
+    tag: "" # Container Tag
 
 # Sets the events the service subscribes to
 subscription:
