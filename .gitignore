@@ -2,3 +2,4 @@
 .vscode
 splunk-service-*.tgz
 gitea*
+test/e2e/.env
