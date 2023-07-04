@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - "master"
+      - "end2end"
 
 defaults:
   run:
