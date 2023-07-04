@@ -81,10 +81,12 @@ jobs:
           /usr/local/bin/minikube start --cpus=2 --memory=5GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
+
       - name: Create splunk secret
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
+          kubectl create namespace keptn
           kubectl -n keptn create secret generic splunk-service-secret --from-literal=SP_HOST=${{ env.SPLUNK_HOST }} --from-literal=SP_PORT=${{ ENV.SPLUNK_PORT }} --from-literal=SP_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SP_PASSWORD=$SPLUNK_PASSWORD -o yaml
 
       - name: Install splunk-service
