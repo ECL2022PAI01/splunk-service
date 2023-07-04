@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["1.0.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.18.1", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
         splunk-version: ["0.1.0"] # chart version
     env:
       GO_VERSION: 1.17
@@ -174,8 +174,6 @@ jobs:
             --set splunkservice.existingSecret=splunk-service-secret \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
-          kubectl get pods -n keptn
-          kubectl -n keptn describe pod/$(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
           
       - name: Install splunk enterprise with docker
         env:
@@ -240,4 +238,3 @@ jobs:
           kubectl apply -f test/e2e/temporary-lb-service.yaml
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
-     
