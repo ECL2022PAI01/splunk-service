@@ -37,7 +37,7 @@ jobs:
       GITEA_ADMIN_USERNAME: GiteaAdmin
       GITEA_NAMESPACE: gitea
       KUBECONFIG: "${{ github.workspace }}/.kube/config"
-      TEST_REPORT_FILENAME: test-report-${{ github.run_id }}-keptn-${{ matrix.keptn-version }}-splunk-${{ matrix.prometheus-version }}.json
+      TEST_REPORT_FILENAME: test-report-${{ github.run_id }}-keptn-${{ matrix.keptn-version }}-splunk-${{ matrix.splunk-version }}.json
       SPLUNK_HOST: $(hostname -I | awk '{print $1}')
       SPLUNK_PORT: 8089
       SPLUNK_USERNAME: admin
@@ -173,7 +173,7 @@ jobs:
         run: |
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
-            https://github.com/ECL2022PAI01/splunk-service/releases/download/${{ env.SPLUNK_VERSION }}/splunk-service-${{ env.SPLUNK_VERSION }}.tgz \
+            https://github.com/ECL2022PAI01/splunk-service/releases/download/${{ matrix.splunk-version }}/splunk-service-${{ matrix.splunk-version }}.tgz \
             --set splunkservice.existingSecret=splunk-service-secret \
             --wait
           kubectl -n keptn get deployment splunk-service -o wide
