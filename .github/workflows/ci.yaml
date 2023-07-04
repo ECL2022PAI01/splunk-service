@@ -10,7 +10,7 @@ on:
       - "master"
       - "release-*"
       - "feature/*"
-      - "end2end"
+
   # in addition, execute for pull requests to those branches
   pull_request:
     branches:
