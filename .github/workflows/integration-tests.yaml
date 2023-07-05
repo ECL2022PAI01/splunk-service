@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.18.0", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.16.0", "0.17.0", "0.18.0", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
         splunk-version: ["0.2.0"] # chart version
     env:
       GO_VERSION: 1.17
@@ -170,7 +170,6 @@ jobs:
       - name: Install splunk-service
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_VERSION: "0.2.0"
         run: |
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
