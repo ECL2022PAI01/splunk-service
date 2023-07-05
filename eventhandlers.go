@@ -105,39 +105,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	var errSLI error
 	var sliResult *keptnv2.SLIResult
 
-	var client *splunk.SplunkClient
-	if splunkCreds.Token != "" {
-		client = splunk.NewClientAuthenticatedByToken(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Token,
-			true,
-		)
-	} else if splunkCreds.SessionKey != "" {
-		client = splunk.NewClientAuthenticatedBySessionKey(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.SessionKey,
-			true,
-		)
-	} else {
-		client = splunk.NewBasicAuthenticatedClient(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Username,
-			splunkCreds.Password,
-			true,
-		)
-	}
+	client := connectToSplunk(*splunkCreds, true)
+
 	for _, indicatorName := range indicators {
 		sliResult, errSLI = handleSpecificSLI(client, indicatorName, data, sliConfig)
 		if errSLI != nil {
@@ -204,39 +173,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		return err
 	}
 
-	var client *splunk.SplunkClient
-	if splunkCreds.Token != "" {
-		client = splunk.NewClientAuthenticatedByToken(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Token,
-			true,
-		)
-	} else if splunkCreds.SessionKey != "" {
-		client = splunk.NewClientAuthenticatedBySessionKey(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.SessionKey,
-			true,
-		)
-	} else {
-		client = splunk.NewBasicAuthenticatedClient(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Username,
-			splunkCreds.Password,
-			true,
-		)
-	}
+	client := connectToSplunk(*splunkCreds, true)
 
 	err = CreateSplunkAlertsForEachStage(client, ddKeptn, *data)
 	if err != nil {
@@ -290,6 +227,46 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 	}
 
 	return &splunkCreds, nil
+}
+
+func connectToSplunk(splunkCreds splunkCredentials, skipSSL bool) *splunk.SplunkClient{
+
+	var client *splunk.SplunkClient
+	if splunkCreds.Token != "" {
+		client = splunk.NewClientAuthenticatedByToken(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.Token,
+			skipSSL,
+		)
+	} else if splunkCreds.SessionKey != "" {
+		client = splunk.NewClientAuthenticatedBySessionKey(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.SessionKey,
+			skipSSL,
+		)
+	} else {
+		client = splunk.NewBasicAuthenticatedClient(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.Username,
+			splunkCreds.Password,
+			skipSSL,
+		)
+	}
+
+	return client
+
 }
 
 func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string) (*keptnv2.SLIResult, error) {
@@ -359,7 +336,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
-		return nil //SHOULD BE NIL
+		return nil
 	}
 
 	const remediationFileDefaultName = "remediation.yaml"
@@ -373,9 +350,9 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	_, err = k.ResourceHandler.GetResource(*resourceScope)
 
 	if errors.Is(err, api.ResourceNotFoundError) {
-		logger.Infof("No remediation defined for project %s stage %s, skipping setup of prometheus alerts",
+		logger.Infof("No remediation defined for project %s stage %s, skipping setup of splunk alerts",
 			eventData.Project, stage.Name)
-		return nil //SHOULD BE NIL
+		return nil
 	}
 
 	if err != nil {
@@ -432,8 +409,12 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 						criteria = strings.Replace(criteria, "<", ">=", -1)
 					} else if strings.Contains(criteria, ">=") {
 						criteria = strings.Replace(criteria, ">=", "<", -1)
-					} else {
+					} else if strings.Contains(criteria, ">") {
 						criteria = strings.Replace(criteria, ">", "<=", -1)
+					} else if strings.Contains(criteria, "=") {
+						criteria = strings.Replace(criteria, "=", "!=", -1)
+					} else{
+						criteria = strings.Replace(criteria, "!=", "=", -1)
 					}
 
 					// sanitize criteria : remove whitespaces
@@ -442,8 +423,9 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					alertCondition := buildAlertCondition(resultField, criteria)
 					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
 					cronSchedule := "*/1 * * * *"
-					actions := "logevent,webhook"
-					webhookUrl := "https://" + net.JoinHostPort(webhookUrlConst, webhookPortConst) //WARNING CHANGE THIS
+					actions := "webhook"
+					var webhookUrl string
+					webhookUrl = "http://" + net.JoinHostPort(webhookUrlConst, webhookPortConst) //WARNING CHANGE THIS
 
 					params := splunk.AlertParams{
 						Name:           alertName,
@@ -466,7 +448,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					err := splunkjob.CreateAlert(client, &spAlert)
 					if err != nil {
 						//DONT FORGET TO TAKE INTO ACCOUNT THE FACT THAT THE ERROR COULD BE CAUSED BY THE FACT
-						//THAT TH ALERT ALREADY EXIST. IN THAT CASE WE SHOULD UPDATE THE ALERT
+						//THAT THE ALERT ALREADY EXISTS. IN THAT CASE WE SHOULD UPDATE THE ALERT (OR DELETE AND RECREATE)
 						logger.Errorf("Error calling CreateAlert(): %v : %v :\n %v", spAlert.Params.SearchQuery, err, client)
 					}
 

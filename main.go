@@ -27,8 +27,8 @@ var keptnOptions = keptn.KeptnOpts{}
 
 const (
 	envVarLogLevel = "LOG_LEVEL"
-	webhookUrlConst = "localhost" //ATTENTION ICI
-	webhookPortConst = "8087"
+	webhookUrlConst = "192.168.49.2" //ATTENTION ICI
+	webhookPortConst = "30037"
 )
 
 type envConfig struct {
@@ -109,7 +109,7 @@ func HTTPGetHandler(w http.ResponseWriter, r *http.Request) {
 	case "/":
 		shkeptncontext := uuid.New().String()
 		logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
-
+		logger.Infof("Event received /")
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			logger.Error(fmt.Sprintf("Failed to read body from requst: %s", err))
@@ -118,10 +118,13 @@ func HTTPGetHandler(w http.ResponseWriter, r *http.Request) {
 
 		ProcessAndForwardAlertEvent(w, body, logger, shkeptncontext)
 	case "/health":
+		logger.Infof("Event received /health")
 		healthEndpointHandler(w, r)
 	case "/ready":
+		logger.Infof("Event received /ready")
 		healthEndpointHandler(w, r)
 	default:
+		logger.Infof("Event received /default")
 		endpointNotFoundHandler(w, r)
 	}
 }
@@ -274,7 +277,7 @@ func _main(args []string) int {
 	http.HandleFunc("/", HTTPGetHandler)
 	go func() {
 		log.Println("Starting alert listener endpoint")
-		err := http.ListenAndServe(":"+webhookPortConst, nil)
+		err := http.ListenAndServe(":8087", nil)
 		
 		if err != nil {
 			log.Fatalf("Error with HTTP server: %e", err)

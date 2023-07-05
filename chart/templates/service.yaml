@@ -7,10 +7,18 @@ metadata:
   labels:
     {{- include "splunk-service.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
-    - port: 8080
+    - name: default
       protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30036
+    - name: webhook
+      protocol: TCP
+      port: 8087
+      targetPort: 8087
+      nodePort: 30037
   selector:
     {{- include "splunk-service.selectorLabels" . | nindent 4 }}
   {{- end }}
