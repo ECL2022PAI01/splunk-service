@@ -1,3 +1,5 @@
 .env.local
 .vscode
-splunk-service-*.tgz
+splunk-service*.tgz
+gitea*
+test/e2e/.env

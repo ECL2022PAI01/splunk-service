@@ -1,9 +1,11 @@
 package e2e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -61,7 +63,7 @@ func convertKeptnModelToErrorString(keptnError *models.Error) string {
 
 // readKeptnContextExtendedCE reads a file from a given path and returnes the parsed models.KeptnContextExtendedCE struct
 func readKeptnContextExtendedCE(path string) (*models.KeptnContextExtendedCE, error) {
-	fileContents, err := ioutil.ReadFile(path)
+	fileContents, err := os.ReadFile(path)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file: %w", err)
@@ -159,13 +161,13 @@ func newTestEnvironment(eventJSONFilePath string, shipyardPath string, jobConfig
 	}
 
 	// Load shipyard file and create the project in Keptn
-	shipyardFile, err := ioutil.ReadFile(shipyardPath)
+	shipyardFile, err := os.ReadFile(shipyardPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read the shipyard file: %w", err)
 	}
 
 	// Load the job configuration for the E2E test
-	jobConfigYaml, err := ioutil.ReadFile(jobConfigPath)
+	jobConfigYaml, err := os.ReadFile(jobConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read the job configuration file: %w", err)
 	}
@@ -303,4 +305,59 @@ func NewK8sClient() (*kubernetes.Clientset, error) {
 	}
 
 	return kubernetes.NewForConfig(config)
+}
+
+func GetGiteaToken() (string, error) {
+	type TokenRequest struct {
+		Name   string   `json:"name"`
+		Scopes []string `json:"scopes"`
+	}
+	tokenName := "keptn-token"
+	scopes := []string{"repo"}
+
+	tokenReq := TokenRequest{
+		Name:   tokenName,
+		Scopes: scopes,
+	}
+
+	body, err := json.Marshal(tokenReq)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling JSON: %v", err)
+	}
+	req, errReq := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT_TOKEN")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
+	if errReq != nil {
+		return "", fmt.Errorf("error creating request: %v", errReq)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(os.Getenv("GITEA_ADMIN_USERNAME"), os.Getenv("GITEA_ADMIN_PASSWORD"))
+
+	resp, errResp := http.DefaultClient.Do(req)
+
+	if errResp != nil {
+		return "", fmt.Errorf("error creating token: %v", errResp)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, errRead := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("error creating token: %s", bodyBytes)
+	}
+	if errRead != nil {
+		return "", fmt.Errorf("error reading response: %v", errRead)
+	}
+	type Gitea struct {
+		ID             int      `json:"id"`
+		Name           string   `json:"name"`
+		Sha1           string   `json:"sha1"`
+		TokenLastEight string   `json:"token_last_eight"`
+		Scopes         []string `json:"scopes"`
+	}
+	var token Gitea
+	unmarshalErr := json.Unmarshal(bodyBytes, &token)
+	if unmarshalErr != nil {
+		return "", fmt.Errorf("error unmarshalling response: %v", unmarshalErr)
+	}
+
+	return token.Sha1, nil
 }

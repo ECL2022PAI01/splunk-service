@@ -27,7 +27,7 @@ type splunkCredentials struct {
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
 func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
-	const sliFileUri = "sli.yaml"
+	const sliFileUri = "splunk/sli.yaml"
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
@@ -63,7 +63,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
-
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
 	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
 	logger.Infof("SLI Config: %s", sliConfig)
@@ -81,7 +80,6 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 
 		return err
 	}
-	logger.Infof("ResourceHandler : %v", ddKeptn.ResourceHandler)
 	// Step 6 - do your work - iterate through the list of requested indicators and return their values
 	// Indicators: this is the list of indicators as requested in the SLO.yaml
 	// SLIResult: this is the array that will receive the results
@@ -94,13 +92,13 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		return err
 	}
-
 	logger.Info("indicators:", indicators)
 	var errSLI error
 	var sliResult *keptnv2.SLIResult
 
 	var client *splunk.SplunkClient
 	if splunkCreds.Token != "" {
+		logger.Info("Using token")
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -111,6 +109,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			true,
 		)
 	} else if splunkCreds.SessionKey != "" {
+		logger.Info("Using session key")
 		client = splunk.NewClientAuthenticatedBySessionKey(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -121,6 +120,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 			true,
 		)
 	} else {
+		logger.Info("Using username and password")
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -214,7 +214,6 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 func getSplunkCredentials() (*splunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
-
 	splunkCreds := splunkCredentials{}
 	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
 		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
@@ -227,7 +226,21 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 		logger.Info("Successfully retrieved splunk credentials")
 
 	} else {
-		logger.Info("SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY have not correctly been set")
+		if env.SplunkHost == "" {
+			logger.Error("SP_HOST not set")
+		}
+		if env.SplunkPort == "" {
+			logger.Error("SP_PORT not set")
+		}
+		if env.SplunkApiToken == "" {
+			logger.Error("SP_API_TOKEN not set")
+		}
+		if env.SplunkUsername == "" || env.SplunkPassword == "" {
+			logger.Error("SP_USERNAME and SP_PASSWORD not set")
+		}
+		if env.SplunkSessionKey == "" {
+			logger.Error("SP_SESSION_KEY not set")
+		}
 		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
 	}
 

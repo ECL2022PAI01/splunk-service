@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 
 	"github.com/keptn/go-utils/pkg/api/models"
 	api "github.com/keptn/go-utils/pkg/api/utils"
@@ -22,8 +23,6 @@ type KeptnAPI struct {
 
 // NewKeptnAPI creates a KeptnAPI structure from KeptnConnectionDetails
 func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
-	fmt.Printf("NEWWWW : %v", details)
-	fmt.Printf("NEWWWW : %s", details.APIToken)
 	apiSet, err := api.New(details.Endpoint, api.WithAuthToken(details.APIToken, authHeaderName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Keptn APISet: %w", err)
@@ -40,12 +39,18 @@ func NewKeptnAPI(details KeptnConnectionDetails) (*KeptnAPI, error) {
 
 // CreateProject creates a keptn project from the contents of a shipyard yaml file
 func (k KeptnAPI) CreateProject(projectName string, shipyardYAML []byte) error {
-
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(shipyardYAML)
-
 	_, err := k.APIHandler.CreateProject(models.CreateProject{
 		Name:     &projectName,
 		Shipyard: &shipyardFileBase64,
+		// It wasn't here before
+		GitCredentials: &models.GitAuthCredentials{
+			RemoteURL: os.Getenv("GITEA_ENDPOINT") + "/keptn/" + projectName + ".git",
+			User:      os.Getenv("GITEA_ADMIN_USERNAME"),
+			HttpsAuth: &models.HttpsGitAuth{
+				Token: os.Getenv("GITEA_TOKEN"),
+			},
+		},
 	})
 
 	if err != nil {
