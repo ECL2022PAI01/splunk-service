@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["1.0.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.18.0", "0.19.0", "1.0.0"] # https://github.com/keptn/keptn/releases
         splunk-version: ["0.2.0"] # chart version
     env:
       GO_VERSION: 1.17
@@ -170,7 +170,7 @@ jobs:
       - name: Install splunk-service
         env:
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
-          SPLUNK_VERSION: "0.1.0"
+          SPLUNK_VERSION: "0.2.0"
         run: |
           tar -czvf splunk-service.tgz chart/
           helm upgrade --install -n keptn --create-namespace splunk-service \
@@ -213,7 +213,6 @@ jobs:
           SPLUNK_HEC_PORT: 8088
           SPLUNK_PASSWORD: ${{ steps.splunk_credentials.outputs.SPLUNK_PASSWORD }}
         run: |
-          kubectl -n keptn get pods 
           kubectl -n keptn-jes create secret generic splunk-secret --from-literal=SPLUNK_HOST=${{ env.SPLUNK_HOST }} --from-literal=SPLUNK_HEC_PORT=$SPLUNK_HEC_PORT --from-literal=SPLUNK_USERNAME=${{ env.SPLUNK_USERNAME }} --from-literal=SPLUNK_PASSWORD=$SPLUNK_PASSWORD -o yaml
 
         # If we failed any previous step we might have a problem and not reporting anything for the version
@@ -224,7 +223,6 @@ jobs:
           echo '{"Test": "TestGitHub Pipeline", "Action": "fail"}' >> $TEST_REPORT_FILENAME
 
       - name: Run Integration tests
-        continue-on-error: true
         env:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_API_URL }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
@@ -234,26 +232,7 @@ jobs:
           kubectl apply -f test/e2e/temporary-lb-service.yaml
           export GITEA_ENDPOINT_TOKEN="http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):$(kubectl get svc temporary-lb-service-gitea -n $GITEA_NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')"
           gotestsum --format testname --jsonfile $TEST_REPORT_FILENAME -- -timeout=120m ./test/e2e/...
-      - name: Save pod logs - splunk
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1) > splunk_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn -c splunk-service $(kubectl -n keptn get pods | grep splunk | awk '{print $1}' | head -1)
-      - name: Save pod logs - resource-service
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1) > resource-service_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep resource-service | awk '{print $1}' | head -1)
-      - name: Save pod logs - lightouse-service
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1) > lightouse-service_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn $(kubectl -n keptn get pods | grep lighthouse-service | awk '{print $1}' | head -1)
-      - name: Save pod logs - job
-        continue-on-error: true
-        run: |
-          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1) > jes_logs.txt & export LOG_PID=$!
-          kubectl logs -n keptn-jes $(kubectl -n keptn-jes get pods | grep job-executor | awk '{print $1}' | head -1)
+
       # Upload the report files, so we can use them in later jobs
       - name: Upload test report as an artifact
         if: always()

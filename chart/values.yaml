@@ -1,7 +1,7 @@
 splunkservice:
   image:
     repository: kuro08/splunk-service # Container Image Name  logLevel: info
-    pullPolicy: IfNotPresent # Kubernetes Image Pull Policy
+    pullPolicy: Always # Kubernetes Image Pull Policy
     tag: "" # Container Tag
   # Set to SP_HOST in the chart's Secret
   spHost: "" # Note: Don't use it in production environment (prefer using k8s secrets - SP_HOST)
@@ -24,7 +24,7 @@ distributor:
   image:
     repository: ghcr.io/keptn/distributor # Container Image Name
     pullPolicy: IfNotPresent # Kubernetes Image Pull Policy
-    tag: "" # Container Tag
+    tag: "1.0.0" # Container Tag
 
 # Sets the events the service subscribes to
 subscription:
