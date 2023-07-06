@@ -42,7 +42,7 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 	// load sample event
 	eventFile, err := os.ReadFile(eventFileName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Cant load %s: %w", eventFileName, err)
+		return nil, nil, fmt.Errorf("Can't load %s: %w", eventFileName, err)
 	}
 
 	incomingEvent := &cloudevents.Event{}
