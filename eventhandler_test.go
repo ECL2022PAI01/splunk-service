@@ -42,13 +42,13 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 	// load sample event
 	eventFile, err := os.ReadFile(eventFileName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Cant load %s: %s", eventFileName, err.Error())
+		return nil, nil, fmt.Errorf("Cant load %s: %w", eventFileName, err)
 	}
 
 	incomingEvent := &cloudevents.Event{}
 	err = json.Unmarshal(eventFile, incomingEvent)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error parsing: %s", err.Error())
+		return nil, nil, fmt.Errorf("Error parsing: %w", err)
 	}
 
 	// Add a Fake EventSender to KeptnOptions
@@ -87,7 +87,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data)
 
 	if err != nil {
-		t.Errorf("Error: " + err.Error())
+		t.Errorf("Error: %s", err.Error())
 		t.Fail()
 	}
 
@@ -295,7 +295,7 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 		"resourceURI": "sli.yaml",
 		"metadata": {
 		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "somethingugly"
+		  "version": "1.0.0"
 		}
 	  }`
 
