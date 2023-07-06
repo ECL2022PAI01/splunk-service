@@ -124,7 +124,6 @@ func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, log
 	}
 
 	if event.Sid != "" {
-		// Note: fingerprint is always the same, we will append the startdate to create a unique keptn context
 		shkeptncontext = createOrApplyKeptnContext(event.Sid + time.Now().Format(time.UnixDate))
 		logger.Debug("shkeptncontext=" + shkeptncontext)
 	} else {
