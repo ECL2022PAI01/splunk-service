@@ -22,6 +22,7 @@ import (
 )
 
 const sliFileUri = "splunk/sli.yaml"
+const keptnSuffix = "keptn"
 
 type splunkCredentials struct {
 	Host       string `json:"host" yaml:"spHost"`
@@ -368,6 +369,24 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 		return err
 	}
 
+	logger.Infof("Removing anciant alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
+
+	//listing all alerts
+	alertsList, err := splunkjob.ListAlertsNames(client)
+	if err != nil {
+		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+	}
+
+	//removing all preexisting alerts concerning the project and the service
+	for _, alert := range alertsList.Item{
+		if( strings.HasSuffix(alert.Name, keptnSuffix) &&  strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service)){
+			err := splunkjob.RemoveAlert(client, alert.Name)
+			if err != nil {
+				logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+			}
+		}
+	}
+
 	logger.Info("Going over SLO.objectives")
 
 	for _, objective := range slos.Objectives {
@@ -445,10 +464,8 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					}
 
 					// get the metric we want
-					err := splunkjob.CreateAlert(client, &spAlert)
+					err = splunkjob.CreateAlert(client, &spAlert)
 					if err != nil {
-						//DONT FORGET TO TAKE INTO ACCOUNT THE FACT THAT THE ERROR COULD BE CAUSED BY THE FACT
-						//THAT THE ALERT ALREADY EXISTS. IN THAT CASE WE SHOULD UPDATE THE ALERT (OR DELETE AND RECREATE)
 						logger.Errorf("Error calling CreateAlert(): %v : %v :\n %v", spAlert.Params.SearchQuery, err, client)
 					}
 
@@ -514,5 +531,5 @@ func buildAlertCondition(resultField string, criteria string) string {
 }
 
 func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
-	return eventData.Project + "_" + stage + "_" + eventData.Service + "_" + sli + "_" + criteria
+	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + keptnSuffix
 }

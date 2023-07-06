@@ -89,7 +89,7 @@ func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, log
 	}
 
 	const deploymentType = "primary"
-	alertDetails := strings.Split(event.SearchName, "_")
+	alertDetails := strings.Split(event.SearchName, ",")
 
 	problemData := keptncommons.ProblemEventData{
 		State:          "OPEN",
