@@ -27,15 +27,14 @@ var testPortforMain = 38888
 func TestParseKeptnCloudEventPayload(t *testing.T) {
 	incomingEvent, err := extractEvent("test/events/get-sli.triggered.json")
 	if err != nil {
-		t.Errorf("Error getting keptn event : %s", err.Error())
+		t.Fatalf("Error getting keptn event : %s", err.Error())
 	}
 	eventData := &keptnv2.GetSLITriggeredEventData{}
 	err = parseKeptnCloudEventPayload(*incomingEvent, eventData)
 
 	//fails if eventData has not been modified
 	if err != nil || eventData.Project == "" {
-		t.Errorf("Failed to parse keptn cloud event payload")
-		t.Fail()
+		t.Fatalf("Failed to parse keptn cloud event payload")
 	}
 	t.Logf("%v", eventData)
 }
@@ -49,7 +48,7 @@ func TestProcessKeptnCloudEvent(t *testing.T) {
 
 	*calledSLI = false
 	*calledConfig = false
-	
+
 	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
 		*calledConfig = true
 		return nil
@@ -67,7 +66,6 @@ func TestProcessKeptnCloudEvent(t *testing.T) {
 
 	//Test for a random event
 	checkProcessKeptnCloudEvent(t, "test/events/release.triggered.json", calledSLI, calledConfig)
-
 }
 
 // Tests the _main function by ensuring that it listens to cloudevents and trigger the procKeptnCE function
@@ -94,10 +92,8 @@ func TestCloudEventListener(t *testing.T) {
 	}
 
 	if handled == false {
-		t.Error("The function didn't handle the event.")
-		t.Fail()
+		t.Fatal("The function didn't handle the event.")
 	}
-
 }
 
 // Tests the main function by verifying if the exit code corresponds to the one returned by cloudEventListener function
@@ -136,7 +132,6 @@ func extractEvent(eventFileName string) (*event.Event, error) {
 	}
 
 	return incomingEvent, err
-
 }
 
 // Check if events are handled (not handled) when they should be (shouldn't be)
@@ -146,7 +141,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 
 	incomingEvent, err := extractEvent(fileName)
 	if err != nil {
-		t.Errorf("Error getting keptn event : %s", err.Error())
+		t.Fatalf("Error getting keptn event : %s", err.Error())
 	}
 	err = processKeptnCloudEvent(context.Background(), *incomingEvent)
 
@@ -157,8 +152,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 				incomingEvent.Type() == keptnv2.GetTriggeredEventType(keptnv2.GetSLITaskName) ||
 				incomingEvent.Type() == configureMonitoringTriggeredEventv1 ||
 				incomingEvent.Type() == keptnv1.ConfigureMonitoringEventType) {
-			t.Errorf("The function didn't handle an event that should have been handled.")
-			t.Fail()
+			t.Fatal("The function didn't handle an event that should have been handled.")
 		}
 		return
 	}
@@ -166,17 +160,16 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 	switch incomingEvent.Type() {
 	case configureMonitoringTriggeredEvent, keptnv2.ConfigureMonitoringTaskName:
 		if *calledConfig == false {
-			t.Errorf("The configure monitoring event has not been handled.")
-			t.Fail()
+			t.Fatal("The configure monitoring event has not been handled.")
+
 		}
 	case keptnv2.GetTriggeredEventType(keptnv2.GetSLITaskName):
 		if *calledSLI == false {
-			t.Errorf("The get-sli triggered event has not been handled.")
-			t.Fail()
+			t.Fatal("The get-sli triggered event has not been handled.")
+
 		}
 	case keptnv1.ConfigureMonitoringEventType:
-		t.Errorf("keptnv1 configure monitoring event must be converted into keptnv2 configure monitoring event.")
-		t.Fail()
+		t.Fatal("keptnv1 configure monitoring event must be converted into keptnv2 configure monitoring event.")
 	}
 }
 
@@ -184,28 +177,27 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 func sendTestCloudEvent(eventFileName string) error {
 	body, err := os.ReadFile(eventFileName)
 	if err != nil {
-		fmt.Printf("Cant load %s: %s", eventFileName, err.Error())
-		return err
+		return fmt.Errorf("Can't load %s: %w", eventFileName, err)
 	}
+
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", "http://localhost:"+fmt.Sprint(testPortforMain), bytes.NewBuffer(body))
 	if err != nil {
-		fmt.Printf("Error : %s\n", err)
-		return err
+		return fmt.Errorf("Error : %w\n", err)
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Cache-Control", "no-cache")
 	req.Header.Add("Content-Type", "application/cloudevents+json")
+
 	res, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
 	defer res.Body.Close()
-	bo, err := io.ReadAll(res.Body)
+	_, err = io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Response : %s", bo)
 	return nil
 }

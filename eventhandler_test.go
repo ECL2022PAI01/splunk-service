@@ -68,8 +68,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	ddKeptn, incomingEvent, err := initializeTestObjects(configureMonitoringTriggeredEventFile, "")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	if incomingEvent.Type() == keptnv1.ConfigureMonitoringEventType {
@@ -80,37 +79,31 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	err = incomingEvent.DataAs(data)
 
 	if err != nil {
-		t.Errorf("Error getting keptn event data")
-		t.Fail()
+		t.Fatal("Error getting keptn event data")
 	}
 
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data)
 
 	if err != nil {
-		t.Errorf("Error: %s", err.Error())
-		t.Fail()
+		t.Fatalf("Error: %s", err.Error())
 	}
 
 	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
 
 	// Verify that HandleGetSliTriggeredEvent has sent 2 cloudevents
 	if gotEvents != 2 {
-		t.Errorf("Expected two events to be sent, but got %v", gotEvents)
-		t.Fail()
+		t.Fatalf("Expected two events to be sent, but got %v", gotEvents)
 	}
 
 	// Verify that the first CE sent is a .started event
 	if keptnv2.GetStartedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Errorf("Expected a configure-monitoring.started event type")
-		t.Fail()
+		t.Fatal("Expected a configure-monitoring.started event type")
 	}
 
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
-		t.Errorf("Expected a configure-monitoring.finished event type")
-		t.Fail()
+		t.Fatal("Expected a configure-monitoring.finished event type")
 	}
-
 }
 
 // Tests the HandleSpecificSli function
@@ -144,13 +137,12 @@ func TestHandleSpecificSli(t *testing.T) {
 	sliResult, errored := handleSpecificSLI(client, indicatorName, data, sliConfig)
 
 	if errored != nil {
-		t.Errorf(errored.Error())
+		t.Fatal(errored.Error())
 	}
 	t.Logf("SLI Result : %v", sliResult.Value)
 	if sliResult.Value != float64(defaultSplunkTestResult) {
-		t.Errorf("Wrong value for the metric %s : expected %v, got %v", indicatorName, defaultSplunkTestResult, sliResult.Value)
+		t.Fatalf("Wrong value for the metric %s : expected %v, got %v", indicatorName, defaultSplunkTestResult, sliResult.Value)
 	}
-
 }
 
 // Tests the handleGetSliTriggered function
@@ -159,8 +151,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	//Building a mock resource service server
 	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
 	if err != nil {
-		t.Errorf("Error reading sli file : %s", err.Error())
-		t.Fail()
+		t.Fatalf("Error reading sli file : %s", err.Error())
 	}
 	defer resourceServiceServer.Close()
 
@@ -176,43 +167,37 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	//Initializing test objects
 	ddKeptn, incomingEvent, err := initializeTestObjects(getSliTriggeredEventFile, resourceServiceServer.URL+"/api/resource-service")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	data := &keptnv2.GetSLITriggeredEventData{}
 	err = incomingEvent.DataAs(data)
 
 	if err != nil {
-		t.Errorf("Error getting keptn event data")
-		t.Fail()
+		t.Fatalf("Error while getting keptn event data : %s", err.Error())
 	}
 
 	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data)
 
 	if err != nil {
-		t.Errorf("Error: " + err.Error())
-		t.Fail()
+		t.Fatalf("Error : %s", err.Error())
 	}
 
 	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
 
 	// Verify that HandleGetSliTriggeredEvent has sent 2 cloudevents
 	if gotEvents != 2 {
-		t.Errorf("Expected two events to be sent, but got %v", gotEvents)
-		t.Fail()
+		t.Fatalf("Expected two events to be sent, but got %v", gotEvents)
 	}
 
 	// Verify that the first CE sent is a .started event
 	if keptnv2.GetStartedEventType(keptnv2.GetSLITaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Errorf("Expected a get-sli.started event type")
-		t.Fail()
+		t.Fatal("Expected a get-sli.started event type")
 	}
 
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.GetSLITaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
-		t.Errorf("Expected a get-sli.finished event type")
-		t.Fail()
+		t.Fatal("Expected a get-sli.finished event type")
 	}
 
 	// Verify thet the .finished event contains the sli results
@@ -220,19 +205,17 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	var respData keptnv2.GetSLIFinishedEventData
 	err = datacodec.Decode(context.Background(), finishedEvent.DataMediaType(), finishedEvent.Data(), &respData)
 	if err != nil {
-		t.Errorf("Unable to decode data from the event : %v", err.Error())
-		t.Fail()
+		t.Fatalf("Unable to decode data from the event : %v", err.Error())
 	}
 	// print respData
 	if respData.GetSLI.IndicatorValues == nil {
-		t.Errorf("No results added into the response event for the indicators.")
-		t.Fail()
+		t.Fatal("No results added into the response event for the indicators.")
 	} else {
 		//printing SLI results if no error has occured
 		for _, sliResult := range respData.GetSLI.IndicatorValues {
 			if sliResult.Value != float64(defaultSplunkTestResult) {
-				t.Errorf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
-				t.Fail()
+				t.Fatalf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
+
 			} else {
 				t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
 			}
@@ -253,13 +236,11 @@ func TestGetSplunkCredentials(t *testing.T) {
 	if err == nil {
 		t.Logf("Splunk credentials : %v", sp)
 		if sp.Host == "" || sp.Port == "" || sp.Token == "" {
-			t.Errorf("If Host, Port or token are empty. An error should be returned")
-			t.Fail()
+			t.Fatal("If Host, Port or token are empty. An error should be returned")
 		}
 	} else {
 		t.Logf("Received expected error : %s", err.Error())
 	}
-
 }
 
 // Build a mock splunk server returning default responses when getting  get and post requests
@@ -279,8 +260,8 @@ func builMockSplunkServer() *httptest.Server {
 		"GET": jsonResponseGET,
 	}
 	splunkServer := splunktest.MutitpleMockRequest(splunkResponses, true)
-	return splunkServer
 
+	return splunkServer
 }
 
 // Build a mock resource service server returning a response with the content of the sli file
@@ -302,5 +283,4 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp, false)
 
 	return resourceServiceServer, nil
-
 }
