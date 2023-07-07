@@ -322,29 +322,31 @@ func GetGiteaToken() (string, error) {
 
 	body, err := json.Marshal(tokenReq)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling JSON: %v", err)
+		return "", fmt.Errorf("GITEA - error marshaling JSON: %w", err)
 	}
-	req, errReq := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT_TOKEN")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
-	if errReq != nil {
-		return "", fmt.Errorf("error creating request: %v", errReq)
+	
+	req, err := http.NewRequest("POST", os.Getenv("GITEA_ENDPOINT_TOKEN")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
+	if err != nil {
+		return "", fmt.Errorf("GITEA - error while creating request : %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.SetBasicAuth(os.Getenv("GITEA_ADMIN_USERNAME"), os.Getenv("GITEA_ADMIN_PASSWORD"))
 
-	resp, errResp := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 
-	if errResp != nil {
-		return "", fmt.Errorf("error creating token: %v", errResp)
+	if err != nil {
+		return "", fmt.Errorf("GITEA - error creating token: %w", err)
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, errRead := io.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("error creating token: %s", bodyBytes)
+		return "", fmt.Errorf("GITEA - error creating token: %s", bodyBytes)
 	}
-	if errRead != nil {
-		return "", fmt.Errorf("error reading response: %v", errRead)
+	if err != nil {
+		return "", fmt.Errorf("GITEA - error reading response: %w", err)
 	}
 	type Gitea struct {
 		ID             int      `json:"id"`
@@ -353,10 +355,11 @@ func GetGiteaToken() (string, error) {
 		TokenLastEight string   `json:"token_last_eight"`
 		Scopes         []string `json:"scopes"`
 	}
+
 	var token Gitea
-	unmarshalErr := json.Unmarshal(bodyBytes, &token)
-	if unmarshalErr != nil {
-		return "", fmt.Errorf("error unmarshalling response: %v", unmarshalErr)
+	err = json.Unmarshal(bodyBytes, &token)
+	if err != nil {
+		return "", fmt.Errorf("GITEA - error unmarshalling response: %w", err)
 	}
 
 	return token.Sha1, nil

@@ -7,22 +7,15 @@ import logging, base64
 
 
 class Splunksender(object):
-    def __init__(self, instance, token, username="admin", password=""):
+    def __init__(self, instance, token):
         self.instance = instance
         self.token = token
-        self.username = username
-        self.password = password
 
-    def send(self, doc, source):
-        if self.token != "":
-            headers = {"Authorization": f"Splunk {self.token}"}
-        else:
-            headers = {
-                "Authorization": f"Basic {base64.b64encode(self.username + ':' + self.password)}"
-            }
+    def send(self, doc, source, index="keptn-splunk-dev", sourcetype="httpevent"):
+        headers = {"Authorization": f"Splunk {self.token}"}
         body = {"event": doc}
-        body["index"] = "keptn-splunk-dev"
-        body["sourcetype"] = "httpevent"
+        body["index"] = index
+        body["sourcetype"] = sourcetype
         body["source"] = source
         response = requests.request(
             "POST",
@@ -48,18 +41,14 @@ if __name__ == "__main__":
     host = os.getenv("SPLUNK_HOST")
     port = os.getenv("SPLUNK_HEC_PORT")
     token = os.getenv("SPLUNK_HEC_TOKEN")
-    usrname = os.getenv("SPLUNK_USERNAME")
-    password = os.getenv("SPLUNK_PASSWORD")
     fileName = os.getenv("SPLUNK_LOG_FILE_NAME")
 
     if not host:
         raise EnvironmentError("Please set the environment variable SPLUNK_HEC_HOST")
     if not port:
         port = 8088
-    if not token and not password:
-        raise EnvironmentError(
-            "Please set the environment variables SPLUNK_HEC_TOKEN or SPLUNK_HEC_USERNAME and SPLUNK_HEC_PASSWORD"
-        )
+    if not token:
+        raise EnvironmentError("Please set the environment variables SPLUNK_HEC_TOKEN")
     if not fileName:
         raise EnvironmentError(
             "Please set the environment variable SPLUNK_LOG_FILE_NAME"
@@ -71,7 +60,6 @@ if __name__ == "__main__":
     sp = Splunksender(instance, token)
 
     # read the log files first and update the date to the current date
-
     with open(fileName, "r") as file:
         log(level=logging.INFO, msg="Reading file")
         data = file.readlines()
@@ -81,8 +69,5 @@ if __name__ == "__main__":
             log(level=logging.INFO, msg=d)
             log(level=logging.INFO, msg=f"Response: {resp.content}")
             time.sleep(randint(1, 3))
-    # write the updated log lines to the file
-    # with open(fileName, "w") as file:
-    #     file.writelines(tmpFile)
 
     resp.close()

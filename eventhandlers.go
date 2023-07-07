@@ -45,8 +45,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// The get-sli.started cloud-event is new since Keptn 0.8.0 and is required to be send when the task is started
 	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task started CloudEvent (%s), aborting...", err.Error())
-		logger.Error(errMsg)
+		err := fmt.Errorf("failed to send task started CloudEvent (%w), aborting... ", err)
+		logger.Error(err)
 		return err
 	}
 
@@ -68,8 +68,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	logger.Infof("SLI Config: %s", sliConfig)
 	if err != nil {
 		// failed to fetch sli config file
-		errMsg := fmt.Sprintf("Failed to fetch SLI file %s from config repo: %s", sliFileUri, err.Error())
-		logger.Error(errMsg)
+		err := fmt.Errorf("failed to fetch SLI file %s from config repo: %w", sliFileUri, err)
+		logger.Error(err)
 		// send a get-sli.finished event with status=error and result=failed back to Keptn
 
 		_, _ = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
@@ -89,11 +89,11 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	// get splunk API URL, PORT and TOKEN or USERNAME/PASSWORD or SESSION_KEY
 	splunkCreds, err := getSplunkCredentials()
 	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		logger.Errorf("failed to get Splunk Credentials: %s", err.Error())
 		return err
 	}
+
 	logger.Info("indicators:", indicators)
-	var errSLI error
 	var sliResult *keptnv2.SLIResult
 
 	var client *splunk.SplunkClient
@@ -133,8 +133,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		)
 	}
 	for _, indicatorName := range indicators {
-		sliResult, errSLI = handleSpecificSLI(client, indicatorName, data, sliConfig)
-		if errSLI != nil {
+		sliResult, err = handleSpecificSLI(client, indicatorName, data, sliConfig)
+		if err != nil {
 			break
 		}
 
@@ -156,10 +156,10 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 		},
 	}
 
-	if errSLI != nil {
+	if err != nil {
 		getSliFinishedEventData.EventData.Status = keptnv2.StatusErrored
 		getSliFinishedEventData.EventData.Result = keptnv2.ResultFailed
-		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %s", ServiceName, errSLI.Error())
+		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %s", ServiceName, err.Error())
 	}
 
 	logger.Infof("SLI finished event: %v", *getSliFinishedEventData)
@@ -167,8 +167,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	_, err = ddKeptn.SendTaskFinishedEvent(getSliFinishedEventData, ServiceName)
 
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task finished CloudEvent (%s), aborting...", err.Error())
-		logger.Error(errMsg)
+		err := fmt.Errorf("failed to send task finished CloudEvent (%w), aborting... ", err)
+		logger.Error(err)
 		return err
 	}
 
@@ -202,8 +202,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 
 	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, ServiceName)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to send task finished CloudEvent (%s), aborting...", err.Error())
-		logger.Error(errMsg)
+		err := fmt.Errorf("failed to send task finished CloudEvent (%w), aborting... ", err)
+		logger.Error(err)
 		return err
 	}
 
@@ -272,7 +272,7 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 	// get the metric we want
 	sliValue, err := splunkjob.GetMetricFromNewJob(client, &spReq)
 	if err != nil {
-		return nil, fmt.Errorf("error getting value for the query: %v : %v", spReq.Params.SearchQuery, err)
+		return nil, fmt.Errorf("error getting value for the query: %v : %w", spReq.Params.SearchQuery, err)
 	}
 
 	logger.Infof("response from the metrics api: %v", sliValue)
