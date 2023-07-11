@@ -167,6 +167,16 @@ github.com/kuro-jojo/splunk-sdk-go v1.3.93 h1:OHPEECaWGsDzJX0whKWulwocgsoYDrYEzB
 github.com/kuro-jojo/splunk-sdk-go v1.3.93/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
 github.com/kuro-jojo/splunk-sdk-go v1.4.0 h1:WomlrTfO/SZtGIVek854OwWmZG7pLe2IYlrGcFB81mY=
 github.com/kuro-jojo/splunk-sdk-go v1.4.0/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
+github.com/kuro-jojo/splunk-sdk-go v1.4.1 h1:QJvBAka4O66lp/JCBD4JvZoaFBhAxejhy7V+uHJsgDs=
+github.com/kuro-jojo/splunk-sdk-go v1.4.1/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
+github.com/kuro-jojo/splunk-sdk-go v1.4.2 h1:ocx3PDNKGCrgI6Rxb4Bbg8ko74mOoZy1d0eFpVqH6jo=
+github.com/kuro-jojo/splunk-sdk-go v1.4.2/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
+github.com/kuro-jojo/splunk-sdk-go v1.4.21 h1:Qhg+A1QPrVUwedJ3ZMsKsAHp2WTliupLiG7mw+xbe3k=
+github.com/kuro-jojo/splunk-sdk-go v1.4.21/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
+github.com/kuro-jojo/splunk-sdk-go v1.4.22 h1:K4liUwbJNj7c7kjX/XC2pYR3cIXPmDIMT2NEifh7aB8=
+github.com/kuro-jojo/splunk-sdk-go v1.4.22/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
+github.com/kuro-jojo/splunk-sdk-go v1.4.23 h1:vXHMBBwgsKU93h9gYjoJixzo9GTZdq0jjEBqKBTO1/A=
+github.com/kuro-jojo/splunk-sdk-go v1.4.23/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
 github.com/kuro-jojo/splunk-sdk-go v1.5.0 h1:JJb2cSZTaNu/1yGvybGkEK6UoL5mRd7GBhZuPvTlCGA=
 github.com/kuro-jojo/splunk-sdk-go v1.5.0/go.mod h1:kMISyVgOTdS2kXWMlsEahXhmETFSjCGiJtqzs3Q8Ptk=
 github.com/kuro-jojo/splunk-sdk-go v1.5.1 h1:K7RPD1l8A3DivgUvKVMvmvqBOsFPXNSDwj1hHx0NHKk=

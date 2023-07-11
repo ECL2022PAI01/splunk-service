@@ -342,7 +342,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
 			err := splunkjob.RemoveAlert(client, alert.Name)
 			if err != nil {
-				logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
 			}
 		}
 	}

@@ -5,20 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
-	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
 )
@@ -81,51 +78,6 @@ func healthEndpointHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write(body)
 	if err != nil {
 		log.Println(err)
-	}
-}
-
-// endpointNotFoundHandler will return 404 for requests
-func endpointNotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	type StatusBody struct {
-		Status string `json:"status"`
-	}
-
-	status := StatusBody{Status: "NOT FOUND"}
-
-	body, _ := json.Marshal(status)
-
-	w.Header().Set("content-type", "application/json")
-
-	_, err := w.Write(body)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-// HTTPGetHandler will handle all requests for '/health' and '/ready'
-func HTTPGetHandler(w http.ResponseWriter, r *http.Request) {
-
-	switch r.URL.Path {
-	case "/":
-		shkeptncontext := uuid.New().String()
-		logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
-		logger.Infof("Event received /")
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to read body from requst: %s", err))
-			return
-		}
-
-		ProcessAndForwardAlertEvent(w, body, logger, shkeptncontext)
-	case "/health":
-		logger.Infof("Event received /health")
-		healthEndpointHandler(w, r)
-	case "/ready":
-		logger.Infof("Event received /ready")
-		healthEndpointHandler(w, r)
-	default:
-		logger.Infof("Event received /default")
-		endpointNotFoundHandler(w, r)
 	}
 }
 
@@ -274,14 +226,9 @@ func _main(args []string) int {
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
 
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
-	http.HandleFunc("/", HTTPGetHandler)
 	go func() {
-		log.Println("Starting alert listener endpoint")
-		err := http.ListenAndServe(":8087", nil)
-		
-		if err != nil {
-			log.Fatalf("Error with HTTP server: %e", err)
-		}
+		log.Println("Start polling for triggered alerts ...")
+		FiringAlertsPoll()		
 	}()
 
 	ctx := context.Background()
