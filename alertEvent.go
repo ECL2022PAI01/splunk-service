@@ -180,7 +180,7 @@ func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext s
 	return nil
 }
 
-// createOrApplyKeptnContext re-uses the existing Keptn Context or creates a new one based on splunk fingerprint
+// createOrApplyKeptnContext re-uses the existing Keptn Context or creates a new one based on the splunk alert id and the current time
 func createOrApplyKeptnContext(contextID string) string {
 	uuid.SetRand(nil)
 	keptnContext := uuid.New().String()
