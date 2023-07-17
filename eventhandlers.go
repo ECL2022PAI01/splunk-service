@@ -367,7 +367,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	//Trying to retrieve SLO file
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
-		logger.Info("No SLO file found for stage " + stage.Name + ". No alerting rules created for this stage")
+		logger.Info("No SLO file found for stage " + stage.Name + " error : "+ err.Error() + ". No alerting rules created for this stage")
 		return nil
 	}
 
@@ -461,7 +461,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					alertCondition := buildAlertCondition(resultField, criteria)
 					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
 					cronSchedule := "*/1 * * * *"
-					actions := "webhook"
+					actions := ""
 					var webhookUrl string
 					webhookUrl = "http://" + net.JoinHostPort(webhookUrlConst, webhookPortConst) //WARNING CHANGE THIS
 

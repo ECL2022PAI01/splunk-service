@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -96,7 +97,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 		ProblemID:      "",
 		ProblemTitle:   alertDetails[3], //name of sli
 		ProblemDetails: json.RawMessage(`{}`),
-		ProblemURL:     client.Endpoint + triggeredInstance.Links.Job + "/results",
+		ProblemURL:     net.JoinHostPort(client.Host, client.Port) + triggeredInstance.Links.Job + "/results",
 		ImpactedEntity: fmt.Sprintf("%s-%s", alertDetails[2], deploymentType),
 		Project:        alertDetails[0],
 		Stage:          alertDetails[1],
@@ -112,7 +113,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 			Stage:   alertDetails[1],
 			Service: alertDetails[2],
 			Labels: map[string]string{
-				"Problem URL": client.Endpoint + triggeredInstance.Links.Job + "/results",
+				"Problem URL": net.JoinHostPort(client.Host, client.Port) + triggeredInstance.Links.Job + "/results",
 			},
 		},
 		Problem: problemData,
@@ -217,19 +218,20 @@ func FiringAlertsPoll() error {
 	logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
 	logger.Infof("Event received /")
 
+	//Getting splunk API URL, PORT and TOKEN
+	splunkCreds, err := getSplunkCredentials()
+	if err != nil {
+		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		return err
+	}
+
+	// connecting to splunk
+	client := connectToSplunk(*splunkCreds, true)
+
 	for {
 
-		//Getting splunk API URL, PORT and TOKEN
-		splunkCreds, err := getSplunkCredentials()
-		if err != nil {
-			logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-			return err
-		}
-
-		// connecting to splunk
-		client := connectToSplunk(*splunkCreds, true)
-
 		//listing fired alerts
+		logger.Info("Searching for triggered alerts ...")
 		triggeredAlerts, err := splunkjob.GetTriggeredAlerts(client)
 		if err != nil {
 			logger.Errorf("Error calling GetTriggeredAlerts() while searchcing for new alerts: %v : %v", triggeredAlerts, err)

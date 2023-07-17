@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
 	"github.com/Mouhamadou305/splunk-service/pkg/utils"
@@ -61,24 +58,6 @@ func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) erro
 		return err
 	}
 	return nil
-}
-
-// HealthHandler rerts a basic health check back
-func healthEndpointHandler(w http.ResponseWriter, r *http.Request) {
-	type StatusBody struct {
-		Status string `json:"status"`
-	}
-
-	status := StatusBody{Status: "OK"}
-
-	body, _ := json.Marshal(status)
-
-	w.Header().Set("content-type", "application/json")
-
-	_, err := w.Write(body)
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 /**
@@ -227,7 +206,7 @@ func _main(args []string) int {
 
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
 	go func() {
-		log.Println("Start polling for triggered alerts ...")
+		logger.Info("Start polling for triggered alerts ...")
 		FiringAlertsPoll()		
 	}()
 
