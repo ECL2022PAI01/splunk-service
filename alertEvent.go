@@ -216,7 +216,6 @@ func FiringAlertsPoll() error {
 
 	shkeptncontext := uuid.New().String()
 	logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
-	logger.Infof("Event received /")
 
 	//Getting splunk API URL, PORT and TOKEN
 	splunkCreds, err := getSplunkCredentials()

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -407,9 +406,6 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 	for _, objective := range slos.Objectives {
 		logger.Info("SLO: " + objective.DisplayName + ", " + objective.SLI)
 
-		end := "now"
-		start := "-3m"
-
 		//getting the splunk search query for the objective
 		query := projectCustomQueries[objective.SLI]
 
@@ -457,24 +453,24 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					//Sanitize criteria : remove whitespaces
 					criteria = strings.Replace(criteria, " ", "", -1)
 
-					//Setting alert parameters
+					//Setting some alert parameters
 					alertCondition := buildAlertCondition(resultField, criteria)
 					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
 					cronSchedule := "*/1 * * * *"
-					actions := ""
-					var webhookUrl string
-					webhookUrl = "http://" + net.JoinHostPort(webhookUrlConst, webhookPortConst) //WARNING CHANGE THIS
+					alertSuppress := "1"
 
 					//Creates the alert datastructure
 					params := splunk.AlertParams{
-						Name:           alertName,
-						CronSchedule:   cronSchedule,
-						SearchQuery:    query,
-						EarliestTime:   start,
-						LatestTime:     end,
-						AlertCondition: alertCondition,
-						Actions:        actions,
-						WebhookUrl:     webhookUrl,
+						Name:           		alertName,
+						CronSchedule:   		cronSchedule,
+						SearchQuery:    		query,
+						EarliestTime:   		env.DispatchEarliestTime,
+						LatestTime:     		env.DispatchLatestTime,
+						AlertCondition: 		alertCondition,
+						AlertSuppress: 			alertSuppress,
+						AlertSuppressPeriod: 	env.AlertSuppressPeriod,
+						Actions:        		env.Actions,
+						WebhookUrl:     		env.WebhookUrl,
 					}
 					utils.RetrieveAlertTimeRange(&params)
 

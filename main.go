@@ -42,6 +42,13 @@ type envConfig struct {
 	SplunkUsername   string `envconfig:"SP_USERNAME" default:""`
 	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
 	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
+
+	AlertSuppressPeriod string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
+	CronSchedule string `envconfig:"CRON_SCHEDULE" default:"3m"`
+	DispatchEarliestTime string `envconfig:"DISPATCH_EARLIEST_TIME" default:"*/1 * * * *"`
+	DispatchLatestTime string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
+	Actions string `envconfig:"ACTIONS" default:""`
+	WebhookUrl string `envconfig:"WEBHOOK_URL" default:""`
 }
 
 var env envConfig
@@ -196,7 +203,7 @@ func _main(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-
+		
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}

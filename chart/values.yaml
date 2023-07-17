@@ -11,6 +11,13 @@ splunkservice:
   spApitoken: "" # Note: Don't use it in production environment (prefer using k8s secrets - SP_API_TOKEN)
   spSessionKey: "" # Note: Don't use it in production environment (prefer using k8s secrets - SP_SESSION_KEY)
 
+  alertSuppressPeriod: "3m"
+  cronSchedule: "*/1 * * * *"
+  dispatchEarliestTime: "-3m"
+  dispatchLatestTime: "now"
+  actions: ""
+  webhookUrl: ""
+
   # If you want to use existing Secret in the cluster
   # Secret containing splunk's SP_HOST, SP_PORT and [SP_API_TOKEN, SP_SESSSION_KEY, {SP_USERNAME, SP_PASSWORD} ](token names should be an exact match)
   existingSecret: ""
