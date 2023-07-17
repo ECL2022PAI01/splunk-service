@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -13,7 +14,6 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -21,6 +21,8 @@ var keptnOptions = keptn.KeptnOpts{}
 
 const (
 	envVarLogLevel = "LOG_LEVEL"
+	webhookUrlConst = "192.168.49.2" //ATTENTION ICI
+	webhookPortConst = "30037"
 )
 
 type envConfig struct {
@@ -40,6 +42,13 @@ type envConfig struct {
 	SplunkUsername   string `envconfig:"SP_USERNAME" default:""`
 	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
 	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
+
+	AlertSuppressPeriod string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
+	CronSchedule string `envconfig:"CRON_SCHEDULE" default:"3m"`
+	DispatchEarliestTime string `envconfig:"DISPATCH_EARLIEST_TIME" default:"*/1 * * * *"`
+	DispatchLatestTime string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
+	Actions string `envconfig:"ACTIONS" default:""`
+	WebhookUrl string `envconfig:"WEBHOOK_URL" default:""`
 }
 
 var env envConfig
@@ -193,13 +202,19 @@ func CloudEventListener(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-
+		
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
+
+	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
+	go func() {
+		logger.Info("Start polling for triggered alerts ...")
+		FiringAlertsPoll()		
+	}()
 
 	ctx := context.Background()
 	ctx = cloudevents.WithEncodingStructured(ctx)

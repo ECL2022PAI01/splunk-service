@@ -3,18 +3,25 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"gopkg.in/yaml.v2"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	api "github.com/keptn/go-utils/pkg/api/utils"
+	keptnevents "github.com/keptn/go-utils/pkg/lib"
 	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
 	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
-	"github.com/kuro-jojo/splunk-service/pkg/utils"
 	logger "github.com/sirupsen/logrus"
 )
+
+const sliFileUri = "splunk/sli.yaml"
+const keptnSuffix = "keptn"
 
 type splunkCredentials struct {
 	Host       string `json:"host" yaml:"spHost"`
@@ -27,7 +34,6 @@ type splunkCredentials struct {
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
 func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
-	const sliFileUri = "splunk/sli.yaml"
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
@@ -64,7 +70,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
-	// in keptn-contrib/dynatrace-service and keptn-contrib/prometheus-service
+	// in keptn-contrib/dynatrace-service and keptn-contrib/splunk-service
 	logger.Infof("SLI Config: %s", sliConfig)
 	if err != nil {
 		// failed to fetch sli config file
@@ -86,7 +92,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
 
-	// get splunk API URL, PORT and TOKEN or USERNAME/PASSWORD or SESSION_KEY
+	// get splunk API URL, PORT and TOKEN
+	// TRY TO MAKE A FUNCTION
 	splunkCreds, err := getSplunkCredentials()
 	if err != nil {
 		logger.Errorf("failed to get Splunk Credentials: %s", err.Error())
@@ -96,42 +103,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	logger.Info("indicators:", indicators)
 	var sliResult *keptnv2.SLIResult
 
-	var client *splunk.SplunkClient
-	if splunkCreds.Token != "" {
-		logger.Info("Using token")
-		client = splunk.NewClientAuthenticatedByToken(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Token,
-			true,
-		)
-	} else if splunkCreds.SessionKey != "" {
-		logger.Info("Using session key")
-		client = splunk.NewClientAuthenticatedBySessionKey(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.SessionKey,
-			true,
-		)
-	} else {
-		logger.Info("Using username and password")
-		client = splunk.NewBasicAuthenticatedClient(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Username,
-			splunkCreds.Password,
-			true,
-		)
-	}
+	client := connectToSplunk(*splunkCreds, true)
+
 	for _, indicatorName := range indicators {
 		sliResult, err = handleSpecificSLI(client, indicatorName, data, sliConfig)
 		if err != nil {
@@ -175,11 +148,15 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	return nil
 }
 
+// Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
 	var shkeptncontext string
+
+	//Configuring the logger
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
 
+	//Sending the configure monitoring started event
 	logger.Infof("Handling configure-monitoring.triggered Event: %s", incomingEvent.Context.GetID())
 	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
 	if err != nil {
@@ -187,12 +164,30 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		return err
 	}
 
+	//Getting splunk API URL, PORT and TOKEN
+	splunkCreds, err := getSplunkCredentials()
+	if err != nil {
+		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		return err
+	}
+
+	// connecting to splunk
+	client := connectToSplunk(*splunkCreds, true)
+
+	//Creating the alerts
+	err = CreateSplunkAlertsForEachStage(client, ddKeptn, *data)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	//Making the configure monitoring finished event
 	configureMonitoringFinishedEventData := &keptnv2.ConfigureMonitoringFinishedEventData{
 		EventData: keptnv2.EventData{
 			Status:  keptnv2.StatusSucceeded,
 			Result:  keptnv2.ResultPass,
 			Project: data.Project,
-			Stage:   data.Service,
+			Stage:   "",
 			Service: data.Service,
 			Message: "Finished configuring monitoring",
 		},
@@ -200,6 +195,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 
 	logger.Infof("Configure Monitoring finished event: %v", *configureMonitoringFinishedEventData)
 
+	// Sending the Configure Monitoring finished event
 	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, ServiceName)
 	if err != nil {
 		err := fmt.Errorf("failed to send task finished CloudEvent (%w), aborting... ", err)
@@ -247,6 +243,49 @@ func getSplunkCredentials() (*splunkCredentials, error) {
 	return &splunkCreds, nil
 }
 
+// Creates an authenticated splunk client
+func connectToSplunk(splunkCreds splunkCredentials, skipSSL bool) *splunk.SplunkClient {
+
+	logger.Info("Connecting to Splunk ...")
+	var client *splunk.SplunkClient
+	if splunkCreds.Token != "" {
+		client = splunk.NewClientAuthenticatedByToken(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.Token,
+			skipSSL,
+		)
+	} else if splunkCreds.SessionKey != "" {
+		client = splunk.NewClientAuthenticatedBySessionKey(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.SessionKey,
+			skipSSL,
+		)
+	} else {
+		client = splunk.NewBasicAuthenticatedClient(
+			&http.Client{
+				Timeout: time.Duration(60) * time.Second,
+			},
+			splunkCreds.Host,
+			splunkCreds.Port,
+			splunkCreds.Username,
+			splunkCreds.Password,
+			skipSSL,
+		)
+	}
+
+	return client
+
+}
+
+// Executes the splunk search and return the metric value
 func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string) (*keptnv2.SLIResult, error) {
 
 	query := sliConfig[indicatorName]
@@ -285,4 +324,247 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
 
 	return sliResult, nil
+}
+
+// Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData) error {
+
+	//Getting the shipyard configuration
+	scope := api.NewResourceScope()
+	scope.Project(eventData.Project)
+	scope.Resource("shipyard.yaml")
+
+	shipyard, err := k.GetShipyard()
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Removing anciant alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
+
+	//listing all alerts
+	alertsList, err := splunkjob.ListAlertsNames(client)
+	if err != nil {
+		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+	}
+
+	//removing all preexisting alerts concerning the project and the service
+	for _, alert := range alertsList.Item {
+		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+			err := splunkjob.RemoveAlert(client, alert.Name)
+			if err != nil {
+				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
+			}
+		}
+	}
+
+	//Creating the alerts for each stage of the shipyard file
+	for _, stage := range shipyard.Spec.Stages {
+		logger.Infof("Creating alerts for stage : %v", stage)
+		err = CreateSplunkAlertsIfSLOsAndRemediationDefined(client, k, eventData, stage)
+
+		if err != nil {
+			return fmt.Errorf("Error configuring splunk alerts: %w", err)
+		}
+	}
+
+	return nil
+
+}
+
+// Creates the splunk alerts of a particular stage if slo.yaml and remediation.yaml files are defined
+func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
+
+	//Trying to retrieve SLO file
+	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
+	if err != nil || slos == nil {
+		logger.Info("No SLO file found for stage " + stage.Name + " error : "+ err.Error() + ". No alerting rules created for this stage")
+		return nil
+	}
+
+	const remediationFileDefaultName = "remediation.yaml"
+
+	//Trying to retrieve remediation file
+	resourceScope := api.NewResourceScope()
+	resourceScope.Project(eventData.Project)
+	resourceScope.Service(eventData.Service)
+	resourceScope.Stage(stage.Name)
+	resourceScope.Resource(remediationFileDefaultName)
+
+	_, err = k.ResourceHandler.GetResource(*resourceScope)
+
+	if errors.Is(err, api.ResourceNotFoundError) {
+		logger.Infof("No remediation defined for project %s stage %s, skipping setup of splunk alerts",
+			eventData.Project, stage.Name)
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("error retrieving remediation definition %s for project %s and stage %s: %w",
+			remediationFileDefaultName, eventData.Project, stage.Name, err)
+	}
+
+	// get SLI searches
+	projectCustomQueries, err := getCustomQueries(k, eventData.Project, stage.Name, eventData.Service)
+	if err != nil {
+		log.Println("Failed to get custom queries for project " + eventData.Project)
+		log.Println(err.Error())
+		return err
+	}
+
+	logger.Info("Going over SLO.objectives")
+
+	//For each objective
+	for _, objective := range slos.Objectives {
+		logger.Info("SLO: " + objective.DisplayName + ", " + objective.SLI)
+
+		//getting the splunk search query for the objective
+		query := projectCustomQueries[objective.SLI]
+
+		if err != nil || query == "" {
+			logger.Error("No query defined for SLI " + objective.SLI + " in project " + eventData.Project)
+			continue
+		}
+		logger.Info("query= " + query)
+
+		//getting the name of the result field of the splunk sli search
+		resultField, err := getResultFieldName(query)
+		if err != nil {
+			log.Println("Failed to get the result field name in order to create the alert condition for " + eventData.Project)
+			log.Println(err.Error())
+			return err
+		}
+
+		//For each criteria of each pass criteria group of an objective (corresponding to an sli)
+		if objective.Pass != nil {
+			for _, criteriaGroup := range objective.Pass {
+				for _, criteria := range criteriaGroup.Criteria {
+
+					//building the splunk alert condition
+					//TO SUPPORT RELATIVE CRITERIAS I'LL HAVE TO MODIFY THAT PART
+					if strings.Contains(criteria, "+") || strings.Contains(criteria, "-") || strings.Contains(
+						criteria, "%",
+					) || (!strings.Contains(criteria, "<") && !strings.Contains(criteria, ">")) {
+						continue
+					}
+
+					if strings.Contains(criteria, "<=") {
+						criteria = strings.Replace(criteria, "<=", ">", -1)
+					} else if strings.Contains(criteria, "<") {
+						criteria = strings.Replace(criteria, "<", ">=", -1)
+					} else if strings.Contains(criteria, ">=") {
+						criteria = strings.Replace(criteria, ">=", "<", -1)
+					} else if strings.Contains(criteria, ">") {
+						criteria = strings.Replace(criteria, ">", "<=", -1)
+					} else if strings.Contains(criteria, "=") {
+						criteria = strings.Replace(criteria, "=", "!=", -1)
+					} else {
+						criteria = strings.Replace(criteria, "!=", "=", -1)
+					}
+
+					//Sanitize criteria : remove whitespaces
+					criteria = strings.Replace(criteria, " ", "", -1)
+
+					//Setting some alert parameters
+					alertCondition := buildAlertCondition(resultField, criteria)
+					alertName := buildAlertName(eventData, stage.Name, objective.SLI, criteria)
+					cronSchedule := "*/1 * * * *"
+					alertSuppress := "1"
+
+					//Creates the alert datastructure
+					params := splunk.AlertParams{
+						Name:           		alertName,
+						CronSchedule:   		cronSchedule,
+						SearchQuery:    		query,
+						EarliestTime:   		env.DispatchEarliestTime,
+						LatestTime:     		env.DispatchLatestTime,
+						AlertCondition: 		alertCondition,
+						AlertSuppress: 			alertSuppress,
+						AlertSuppressPeriod: 	env.AlertSuppressPeriod,
+						Actions:        		env.Actions,
+						WebhookUrl:     		env.WebhookUrl,
+					}
+					utils.RetrieveAlertTimeRange(&params)
+
+					spAlert := splunk.SplunkAlert{
+						Params:  params,
+						Headers: map[string]string{},
+					}
+
+					//Creates the alert in splunk
+					err = splunkjob.CreateAlert(client, &spAlert)
+					if err != nil {
+						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
+					}
+
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Retrieves the SLOs from the slo.yaml file
+func retrieveSLOs(resourceHandler *api.ResourceHandler, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string) (*keptnevents.ServiceLevelObjectives, error) {
+	resourceScope := api.NewResourceScope()
+	resourceScope.Project(eventData.Project)
+	resourceScope.Service(eventData.Service)
+	resourceScope.Stage(stage)
+	resourceScope.Resource("slo.yaml")
+
+	resource, err := resourceHandler.GetResource(*resourceScope)
+	if err != nil || resource.ResourceContent == "" {
+		return nil, errors.New("No SLO file available for service " + eventData.Service + " in stage " + stage)
+	}
+	var slos keptnevents.ServiceLevelObjectives
+
+	err = yaml.Unmarshal([]byte(resource.ResourceContent), &slos)
+
+	if err != nil {
+		return nil, errors.New("Invalid SLO file format")
+	}
+
+	return &slos, nil
+}
+
+// Returns the splunk searches defined in the sli.yaml file
+func getCustomQueries(k *keptnv2.Keptn, project string, stage string, service string) (map[string]string, error) {
+	log.Println("Checking for custom SLI queries")
+
+	customQueries, err := k.GetSLIConfiguration(project, stage, service, sliFileUri)
+	if err != nil {
+		return nil, err
+	}
+
+	return customQueries, nil
+}
+
+// Returns the name of the splunk search result
+func getResultFieldName(searchQuery string) (string, error) {
+	//returns the first word after "stats" in the search
+	if strings.Contains(searchQuery, "stats") {
+		startIndex := strings.Index(searchQuery, "stats") + 4
+		i := 0
+		for {
+			i = i + 1
+			if (startIndex+i == len(searchQuery) || searchQuery[startIndex+i] == " "[0]) && searchQuery[startIndex+i-1] != "s"[0] {
+				return searchQuery[startIndex+2 : startIndex+i], nil
+			}
+			if startIndex+i == len(searchQuery) {
+				break
+			}
+		}
+	}
+	return "", errors.New("No aggragation function found in the search query.")
+}
+
+// Appends "search", "result name" and criteria
+// e.g. search count > 0
+func buildAlertCondition(resultField string, criteria string) string {
+	return "search " + resultField + " " + criteria
+}
+
+// Builds the name of the alert by appending names of project, stage, service, sli and criteria.
+// Appends "keptn" as a suffix
+func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
+	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + keptnSuffix
 }

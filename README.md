@@ -1,6 +1,6 @@
 # splunk-service
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ECL2022PAI01/splunk-service)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kuro-jojo/splunk-service)](https://goreportcard.com/report/github.com/kuro-jojo/splunk-service)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Mouhamadou305/splunk-service)](https://goreportcard.com/report/github.com/Mouhamadou305/splunk-service)
 ![GitHub release (latest by SemVer including pre-releases)](https://img.shields.io/github/downloads-pre/ECL2022PAI01/splunk-service/latest/total)
 
 This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).

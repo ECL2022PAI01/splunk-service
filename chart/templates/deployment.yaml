@@ -39,6 +39,7 @@ spec:
           imagePullPolicy: {{ .Values.splunkservice.image.pullPolicy }}
           ports:
             - containerPort: 80
+            - containerPort: 8087
           envFrom:
           - secretRef:
               name: "{{ include "splunk-service.secret" . }}"
@@ -48,6 +49,18 @@ spec:
             value: 'production'
           - name: LOG_LEVEL
             value: "{{ .Values.splunkservice.logLevel }}"
+          - name: ALERT_SUPPRESS_PERIOD
+            value: "{{ .Values.splunkservice.alertSuppressPeriod }}"
+          - name: CRON_SCHEDULE
+            value: "{{ .Values.splunkservice.cronSchedule }}"
+          - name: DISPATCH_EARLIEST_TIME
+            value: "{{ .Values.splunkservice.dispatchEarliestTime }}"
+          - name: DISPATCH_LATEST_TIME
+            value: "{{ .Values.splunkservice.dispatchLatestTime }}"
+          - name: ACTIONS
+            value: "{{ .Values.splunkservice.actions }}"
+          - name: WEBHOOK_URL
+            value: "{{ .Values.splunkservice.webhookUrl }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: distributor

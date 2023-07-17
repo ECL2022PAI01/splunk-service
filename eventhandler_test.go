@@ -17,6 +17,7 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
@@ -66,7 +67,25 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 // Tests the HandleMonitoringTriggeredEvent
 func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
-	ddKeptn, incomingEvent, err := initializeTestObjects(configureMonitoringTriggeredEventFile, "")
+	//Building a mock resource service server
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	if err != nil {
+		t.Errorf("Error reading sli file : %s", err.Error())
+		t.Fail()
+	}
+	defer resourceServiceServer.Close()
+
+	//Building a mock splunk server
+	splunkServer := builMockSplunkServer()
+	defer splunkServer.Close()
+
+	//setting splunk credentials
+	env.SplunkPort = strings.Split(splunkServer.URL, ":")[2]
+	env.SplunkHost = strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1]
+	env.SplunkApiToken = "apiToken"
+
+	//Initializing test objects
+	ddKeptn, incomingEvent, err := initializeTestObjects(configureMonitoringTriggeredEventFile, resourceServiceServer.URL+"/api/resource-service")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -284,3 +303,4 @@ func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
 
 	return resourceServiceServer, nil
 }
+
