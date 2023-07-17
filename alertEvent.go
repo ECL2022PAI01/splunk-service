@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -12,6 +12,9 @@ import (
 
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
+	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
+	"github.com/kuro-jojo/splunk-sdk-go/client"
+	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
 
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
@@ -20,39 +23,43 @@ import (
 	"github.com/google/uuid"
 )
 
-const remediationTaskName = "remediation"
+const (
+	remediationTaskName = "remediation"
+	//indicates the frequency at which triggered alerts are checked in seconds
+	pollingFrequency = 20
+)
 
-type splunkAlertEvent struct {
-	Sid string  `json:"sid"`
-	SearchName   string  `json:"search_name"`
-	App string `json:"app"`
-	Owner string `json:"owner"`
-	ResultsLink string `json:"results_link"`
-	Result   alertResult `json:"result"`
+type SplunkAlertEvent struct {
+	Sid         string      `json:"sid"`
+	SearchName  string      `json:"search_name"`
+	App         string      `json:"app"`
+	Owner       string      `json:"owner"`
+	ResultsLink string      `json:"results_link"`
+	Result      alertResult `json:"result"`
 }
 
 // alert coming from splunk
 type alertResult struct {
-	Avg     			string      `json:"avg"`
-	Count       		string      `json:"count"`
-	DistinctCount       string      `json:"distinct_count"`
-	Estdc 				string      `json:"estdc"`
-	EstdcError 			string      `json:"estdc_error"`
-	Exactperc 			string      `json:"exactperc"`
-	Max 				string      `json:"max"`
-	Mean 				string      `json:"mean"`
-	Median 				string      `json:"median"`
-	Min 				string      `json:"min"`
-	Mode 				string      `json:"mode"`
-	Perc 				string      `json:"perc"`
-	Range 				string      `json:"range"`
-	Stdev 				string      `json:"stdev"`
-	Stdevp 				string      `json:"stdevp"`
-	Sum 				string      `json:"sum"`
-	Sumsq 				string      `json:"sumsq"`
-	Upperperc 			string      `json:"upperperc"`
-	Var 				string      `json:"var"`
-	Varp 				string      `json:"varp"`
+	Avg           string `json:"avg"`
+	Count         string `json:"count"`
+	DistinctCount string `json:"distinct_count"`
+	Estdc         string `json:"estdc"`
+	EstdcError    string `json:"estdc_error"`
+	Exactperc     string `json:"exactperc"`
+	Max           string `json:"max"`
+	Mean          string `json:"mean"`
+	Median        string `json:"median"`
+	Min           string `json:"min"`
+	Mode          string `json:"mode"`
+	Perc          string `json:"perc"`
+	Range         string `json:"range"`
+	Stdev         string `json:"stdev"`
+	Stdevp        string `json:"stdevp"`
+	Sum           string `json:"sum"`
+	Sumsq         string `json:"sumsq"`
+	Upperperc     string `json:"upperperc"`
+	Var           string `json:"var"`
+	Varp          string `json:"varp"`
 }
 
 type labels struct {
@@ -66,7 +73,6 @@ type labels struct {
 	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
 }
 
-
 type remediationTriggeredEventData struct {
 	keptnv2.EventData
 
@@ -78,25 +84,20 @@ type remediationTriggeredEventData struct {
 }
 
 // ProcessAndForwardAlertEvent reads the payload from the request and sends a valid Cloud event to the keptn event broker
-func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, logger *keptn.Logger, shkeptncontext string) {
-	var event splunkAlertEvent
+func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *keptn.Logger, client *client.SplunkClient) error {
 
-	logger.Info("Received alert from Splunk Alerting system : " + string(requestBody))
-	err := json.Unmarshal(requestBody, &event)
-	if err != nil {
-		logger.Error("Could not map received event to datastructure: " + err.Error())
-		return
-	}
+	logger.Info("New alert found in Splunk Alerting system : " + triggeredInstance.Name)
 
 	const deploymentType = "primary"
-	alertDetails := strings.Split(event.SearchName, ",")
+	alertDetails := strings.Split(triggeredInstance.Content.SavedSearchName, ",")
+	shkeptncontext := ""
 
 	problemData := keptncommons.ProblemEventData{
 		State:          "OPEN",
 		ProblemID:      "",
-		ProblemTitle:   alertDetails[3],    //name of sli
+		ProblemTitle:   alertDetails[3], //name of sli
 		ProblemDetails: json.RawMessage(`{}`),
-		ProblemURL:     event.ResultsLink,
+		ProblemURL:     net.JoinHostPort(client.Host, client.Port) + triggeredInstance.Links.Job + "/results",
 		ImpactedEntity: fmt.Sprintf("%s-%s", alertDetails[2], deploymentType),
 		Project:        alertDetails[0],
 		Stage:          alertDetails[1],
@@ -108,11 +109,11 @@ func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, log
 
 	newEventData := remediationTriggeredEventData{
 		EventData: keptnv2.EventData{
-			Project:        alertDetails[0],
-			Stage:          alertDetails[1],
-			Service:        alertDetails[2],
+			Project: alertDetails[0],
+			Stage:   alertDetails[1],
+			Service: alertDetails[2],
 			Labels: map[string]string{
-				"Problem URL": event.ResultsLink,
+				"Problem URL": net.JoinHostPort(client.Host, client.Port) + triggeredInstance.Links.Job + "/results",
 			},
 		},
 		Problem: problemData,
@@ -123,22 +124,23 @@ func ProcessAndForwardAlertEvent(rw http.ResponseWriter, requestBody []byte, log
 		},
 	}
 
-	if event.Sid != "" {
-		shkeptncontext = createOrApplyKeptnContext(event.Sid + time.Now().Format(time.UnixDate))
+	if triggeredInstance.Content.Sid != "" {
+		shkeptncontext = createOrApplyKeptnContext(triggeredInstance.Content.Sid + time.Now().Format(time.UnixDate))
 		logger.Debug("shkeptncontext=" + shkeptncontext)
 	} else {
 		logger.Debug("NO SHKEPTNCONTEXT SET")
 	}
 
 	logger.Debug("Sending event to eventbroker")
-	err = createAndSendCE(newEventData, shkeptncontext)
+	err := createAndSendCE(newEventData, shkeptncontext)
 	if err != nil {
 		logger.Error("Could not send cloud event: " + err.Error())
-		rw.WriteHeader(500)
 	} else {
 		logger.Debug("event successfully dispatched to eventbroker")
-		rw.WriteHeader(201)
 	}
+
+	return err
+
 }
 
 // createAndSendCE create a new problem.triggered event and send it to Keptn
@@ -207,4 +209,55 @@ func createOrApplyKeptnContext(contextID string) string {
 		}
 	}
 	return keptnContext
+}
+
+// FiringAlertsPoll will handle all requests for '/health' and '/ready'
+func FiringAlertsPoll() error {
+
+	shkeptncontext := uuid.New().String()
+	logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
+	logger.Infof("Event received /")
+
+	//Getting splunk API URL, PORT and TOKEN
+	splunkCreds, err := getSplunkCredentials()
+	if err != nil {
+		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
+		return err
+	}
+
+	// connecting to splunk
+	client := connectToSplunk(*splunkCreds, true)
+
+	for {
+
+		//listing fired alerts
+		logger.Info("Searching for triggered alerts ...")
+		triggeredAlerts, err := splunkjob.GetTriggeredAlerts(client)
+		if err != nil {
+			logger.Errorf("Error calling GetTriggeredAlerts() while searchcing for new alerts: %v : %v", triggeredAlerts, err)
+		}
+
+		for _, triggeredAlert := range triggeredAlerts.Entry {
+
+			if strings.HasSuffix(triggeredAlert.Name, keptnSuffix) {
+
+				triggeredInstances, err := splunkjob.GetInstancesOfTriggeredAlert(client, triggeredAlert.Links.List)
+				if err != nil {
+					logger.Errorf("Error calling GetInstancesOfTriggeredAlert(): %v : %v", triggeredInstances, err)
+				}
+
+				for _, triggeredInstance := range triggeredInstances.Entry {
+					if triggeredInstance.Content.TriggerTime < int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
+						ProcessAndForwardAlertEvent(triggeredInstance, logger, client)
+					}
+				}
+
+			}
+
+		}
+
+		time.Sleep(pollingFrequency * time.Second)
+
+	}
+
 }
