@@ -77,14 +77,6 @@ jobs:
           /usr/local/bin/minikube start --cpus=2 --memory=5GB
           minikube tunnel &> /dev/null &
           echo "minikube ready!"
-
-      - name: Cache dependencies
-        uses: actions/cache@v2.1.6
-        with:
-          path: |
-            /usr/local/bin/minikube
-          key: ${{ runner.os }}-go-${{ hashFiles('**/minikube.txt') }}
-
       - name: Install Gitea
         id: gitea
         env:
