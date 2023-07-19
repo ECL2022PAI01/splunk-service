@@ -296,7 +296,7 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 	}
 
 	// take the time range from the sli file if it is set
-	utils.RetrieveSearchTimeRange(&params)
+	params.EarliestTime, params.LatestTime, params.SearchQuery = utils.RetrieveQueryTimeRange(params.EarliestTime, params.LatestTime, params.SearchQuery)
 	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", params.SearchQuery, params.EarliestTime, params.LatestTime)
 
 	if query == "" {
@@ -360,10 +360,10 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	//Creating the alerts for each stage of the shipyard file
 	for _, stage := range shipyard.Spec.Stages {
 		logger.Infof("Creating alerts for stage : %v", stage)
-		err = CreateSplunkAlertsIfSLOsAndRemediationDefined(client, k, eventData, stage)
+		err = CreateSplunkAlerts(client, k, eventData, stage)
 
 		if err != nil {
-			return fmt.Errorf("Error configuring splunk alerts: %w", err)
+			return fmt.Errorf("error configuring splunk alerts: %w", err)
 		}
 	}
 
@@ -372,12 +372,12 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 }
 
 // Creates the splunk alerts of a particular stage if slo.yaml and remediation.yaml files are defined
-func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
+func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
 
 	//Trying to retrieve SLO file
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
-		logger.Info("No SLO file found for stage " + stage.Name + " error : "+ err.Error() + ". No alerting rules created for this stage")
+		logger.Info("No SLO file found for stage " + stage.Name + " error : " + err.Error() + ". No alerting rules created for this stage")
 		return nil
 	}
 
@@ -472,18 +472,18 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 
 					//Creates the alert datastructure
 					params := splunk.AlertParams{
-						Name:           		alertName,
-						CronSchedule:   		cronSchedule,
-						SearchQuery:    		query,
-						EarliestTime:   		env.DispatchEarliestTime,
-						LatestTime:     		env.DispatchLatestTime,
-						AlertCondition: 		alertCondition,
-						AlertSuppress: 			alertSuppress,
-						AlertSuppressPeriod: 	env.AlertSuppressPeriod,
-						Actions:        		env.Actions,
-						WebhookUrl:     		env.WebhookUrl,
+						Name:                alertName,
+						CronSchedule:        cronSchedule,
+						SearchQuery:         query,
+						EarliestTime:        env.DispatchEarliestTime,
+						LatestTime:          env.DispatchLatestTime,
+						AlertCondition:      alertCondition,
+						AlertSuppress:       alertSuppress,
+						AlertSuppressPeriod: env.AlertSuppressPeriod,
+						Actions:             env.Actions,
+						WebhookUrl:          env.WebhookUrl,
 					}
-					utils.RetrieveAlertTimeRange(&params)
+					params.EarliestTime, params.LatestTime, params.SearchQuery = utils.RetrieveQueryTimeRange(params.EarliestTime, params.LatestTime, params.SearchQuery)
 
 					spAlert := splunk.SplunkAlert{
 						Params:  params,
@@ -520,7 +520,7 @@ func retrieveSLOs(resourceHandler *api.ResourceHandler, eventData keptnv2.Config
 	err = yaml.Unmarshal([]byte(resource.ResourceContent), &slos)
 
 	if err != nil {
-		return nil, errors.New("Invalid SLO file format")
+		return nil, errors.New("invalid SLO file format")
 	}
 
 	return &slos, nil
@@ -554,7 +554,7 @@ func getResultFieldName(searchQuery string) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("No aggragation function found in the search query.")
+	return "", errors.New("no aggregation function found in the search query")
 }
 
 // Appends "search", "result name" and criteria

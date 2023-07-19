@@ -45,7 +45,10 @@ func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.Requ
 	splunkRequestParams.EarliestTime = earliestTimeInParams
 	splunkRequestParams.LatestTime = latestTimeInParams
 
-	RetrieveSearchTimeRange(splunkRequestParams)
+	splunkRequestParams.EarliestTime,
+	splunkRequestParams.LatestTime,
+	splunkRequestParams.SearchQuery = RetrieveQueryTimeRange(splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, splunkRequestParams.SearchQuery)
+	
 	if splunkRequestParams.EarliestTime != expectedEarliestTime || splunkRequestParams.LatestTime != expectedLatestTime {
 		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
 			splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, expectedEarliestTime, expectedLatestTime)
