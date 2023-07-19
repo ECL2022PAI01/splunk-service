@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunkjob "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
 )
 
 // Tests the retrieveSearchTimeRange function
@@ -14,7 +14,7 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 	const latestTimeInRequest = "+2m"
 	const latestTimeInParams = "+1m"
 
-	splunkRequestParams := &splunk.RequestParams{}
+	splunkRequestParams := &splunkjob.SearchParams{}
 
 	//Verify if the function overwrites the time values in params and set theme to the values specified in the search query
 	splunkRequestParams.SearchQuery = "source=/opt/splunk/var/log/secure.log sourcetype=osx_secure earliest=" + earliestTimeInRequest + " latest=" + latestTimeInRequest + " |stats count"
@@ -39,7 +39,7 @@ func TestRetrieveSearchTimeRange(t *testing.T) {
 }
 
 // checks if we have the expected parameters in the final request sent to splunk
-func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunk.RequestParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
+func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunkjob.SearchParams, earliestTimeInParams string, latestTimeInParams string, expectedEarliestTime string, expectedLatestTime string) {
 
 	// reinit the params
 	splunkRequestParams.EarliestTime = earliestTimeInParams

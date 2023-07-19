@@ -20,7 +20,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
@@ -75,7 +75,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer()
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -133,7 +133,7 @@ func TestHandleSpecificSli(t *testing.T) {
 
 	//Building a mock splunk server returning default responses when getting  get and post requests
 
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer()
 	defer splunkServer.Close()
 
 	//Retrieving the mock splunk server credentials
@@ -174,7 +174,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer()
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -262,7 +262,7 @@ func TestGetSplunkCredentials(t *testing.T) {
 }
 
 // Build a mock splunk server returning default responses when getting  get and post requests
-func builMockSplunkServer() *httptest.Server {
+func buildMockSplunkServer() *httptest.Server {
 
 	jsonResponsePOST := `{
 		"sid": "10"
@@ -277,7 +277,7 @@ func builMockSplunkServer() *httptest.Server {
 	splunkResponses[1] = map[string]interface{}{
 		"GET": jsonResponseGET,
 	}
-	splunkServer := splunktest.MutitpleMockRequest(splunkResponses, true)
+	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 
 	return splunkServer
 }

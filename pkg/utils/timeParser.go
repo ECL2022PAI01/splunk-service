@@ -3,11 +3,12 @@ package utils
 import (
 	"strings"
 
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunkalert "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunkjob "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
 )
 
 // check if the search string contains the earliest or latest time and return the value
-func getSearchTime(kind string, search string, params *splunk.RequestParams, defaultTime string) string {
+func getSearchTime(kind string, search string, params *splunkjob.SearchParams, defaultTime string) string {
 	if strings.Contains(search, kind) {
 		startIndex := strings.Index(search, kind)
 		q1 := strings.Fields(search[startIndex:])
@@ -37,7 +38,7 @@ func getSearchTime(kind string, search string, params *splunk.RequestParams, def
 }
 
 // check if the search string contains the earliest or latest time and return the value
-func getAlertTime(kind string, search string, params *splunk.AlertParams, defaultTime string) string {
+func getAlertTime(kind string, search string, params *splunkalert.AlertParams, defaultTime string) string {
 	if strings.Contains(search, kind) {
 		startIndex := strings.Index(search, kind)
 		q1 := strings.Fields(search[startIndex:])
@@ -67,14 +68,14 @@ func getAlertTime(kind string, search string, params *splunk.AlertParams, defaul
 }
 
 // get the earliest and latest time from the splunk search is set
-func RetrieveSearchTimeRange(params *splunk.RequestParams) {
+func RetrieveSearchTimeRange(params *splunkjob.SearchParams) {
 	search := params.SearchQuery
 
 	params.EarliestTime = getSearchTime("earliest", search, params, params.EarliestTime)
 	params.LatestTime = getSearchTime("latest", search, params, params.LatestTime)
 }
 
-func RetrieveAlertTimeRange(params *splunk.AlertParams) {
+func RetrieveAlertTimeRange(params *splunkalert.AlertParams) {
 	search := params.SearchQuery
 
 	params.EarliestTime = getAlertTime("earliest", search, params, params.EarliestTime)
