@@ -11,7 +11,7 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Mouhamadou305/splunk-service/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"

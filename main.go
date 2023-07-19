@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Mouhamadou305/splunk-service/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -20,8 +20,8 @@ import (
 var keptnOptions = keptn.KeptnOpts{}
 
 const (
-	envVarLogLevel = "LOG_LEVEL"
-	webhookUrlConst = "192.168.49.2" //ATTENTION ICI
+	envVarLogLevel   = "LOG_LEVEL"
+	webhookUrlConst  = "192.168.49.2" //ATTENTION ICI
 	webhookPortConst = "30037"
 )
 
@@ -43,12 +43,12 @@ type envConfig struct {
 	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
 	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
 
-	AlertSuppressPeriod string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
-	CronSchedule string `envconfig:"CRON_SCHEDULE" default:"3m"`
+	AlertSuppressPeriod  string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
+	CronSchedule         string `envconfig:"CRON_SCHEDULE" default:"3m"`
 	DispatchEarliestTime string `envconfig:"DISPATCH_EARLIEST_TIME" default:"*/1 * * * *"`
-	DispatchLatestTime string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
-	Actions string `envconfig:"ACTIONS" default:""`
-	WebhookUrl string `envconfig:"WEBHOOK_URL" default:""`
+	DispatchLatestTime   string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
+	Actions              string `envconfig:"ACTIONS" default:""`
+	WebhookUrl           string `envconfig:"WEBHOOK_URL" default:""`
 }
 
 var env envConfig
@@ -202,7 +202,7 @@ func CloudEventListener(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-		
+
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
@@ -213,7 +213,7 @@ func CloudEventListener(args []string) int {
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
 	go func() {
 		logger.Info("Start polling for triggered alerts ...")
-		FiringAlertsPoll()		
+		FiringAlertsPoll()
 	}()
 
 	ctx := context.Background()

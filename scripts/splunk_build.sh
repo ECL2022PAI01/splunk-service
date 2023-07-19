@@ -13,7 +13,7 @@ cd $1
 
 # build a new docker image of the service
 
-docker build . -t mouhamadou305/splunk-service:latest --network=host && docker push mouhamadou305/splunk-service:latest
+docker build . -t kuro08/splunk-service:latest --network=host && docker push kuro08/splunk-service:latest
 
 # remove an existing helm chart of the splunk service
 if [[ $(get_splunk_pod)  ]] ; then
