@@ -33,6 +33,13 @@ func getSearchTime(kind string, search string, params *splunkjob.SearchParams, d
 		}
 		return strings.TrimSuffix(val, "\"")
 	}
+	startIndex := strings.Index(searchQuery, kind)
+	q1 := strings.Fields(searchQuery[startIndex:])
+
+	timeValue := ""
+	if !strings.HasPrefix(q1[0][len(kind)+1:], "\"") {
+		timeValue = q1[0][len(kind)+1:]
+		searchQuery = strings.ReplaceAll(searchQuery, q1[0], "")
 
 	return defaultTime
 }
@@ -64,16 +71,15 @@ func getAlertTime(kind string, search string, params *splunkalert.AlertParams, d
 		return strings.TrimSuffix(val, "\"")
 	}
 
-	return defaultTime
+	return strings.TrimSuffix(timeValue, "\""), searchQuery
 }
 
 // get the earliest and latest time from the splunk search is set
 func RetrieveSearchTimeRange(params *splunkjob.SearchParams) {
 	search := params.SearchQuery
 
-	params.EarliestTime = getSearchTime("earliest", search, params, params.EarliestTime)
-	params.LatestTime = getSearchTime("latest", search, params, params.LatestTime)
-}
+	earliestTime, searchQuery = getQueryTime("earliest", searchQuery, earliestTime)
+	latestTime, searchQuery = getQueryTime("latest", searchQuery, latestTime)
 
 func RetrieveAlertTimeRange(params *splunkalert.AlertParams) {
 	search := params.SearchQuery
