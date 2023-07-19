@@ -1,12 +1,10 @@
-package main
+package handler
 
 import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"strings"
-	"time"
 
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"gopkg.in/yaml.v2"
@@ -20,162 +18,34 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-const sliFileUri = "splunk/sli.yaml"
-const keptnSuffix = "keptn"
-
-type splunkCredentials struct {
-	Host       string `json:"host" yaml:"spHost"`
-	Port       string `json:"port" yaml:"spPort"`
-	Username   string `json:"username" yaml:"spUsername"`
-	Password   string `json:"password" yaml:"spPassword"`
-	Token      string `json:"token" yaml:"spApiToken"`
-	SessionKey string `json:"sessionKey" yaml:"spSessionKey"`
-}
-
-// HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
-func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData) error {
-	var shkeptncontext string
-	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
-	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
-
-	logger.Infof("Handling get-sli.triggered Event: %s", incomingEvent.Context.GetID())
-
-	// Step 1 - Do we need to do something?
-	// Lets make sure we are only processing an event that really belongs to our SLI Provider
-	if data.GetSLI.SLIProvider != "splunk" {
-		logger.Infof("Not handling get-sli event as it is meant for %s", data.GetSLI.SLIProvider)
-		return nil
-	}
-
-	// Step 2 - Send out a get-sli.started CloudEvent
-	// The get-sli.started cloud-event is new since Keptn 0.8.0 and is required to be send when the task is started
-	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
-	if err != nil {
-		err := fmt.Errorf("failed to send task started CloudEvent (%w), aborting... ", err)
-		logger.Error(err)
-		return err
-	}
-
-	// Step 4 - prep-work
-	// Get any additional input / configuration data
-	// - Labels: get the incoming labels for potential config data and use it to pass more labels on result, e.g: links
-	// - SLI.yaml: if your service uses SLI.yaml to store query definitions for SLIs get that file from Keptn
-	labels := data.Labels
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-
-	// Step 5 - get SLI Config File
-	// Get SLI File from splunk subdirectory of the config repo - to add the file use:
-	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
-	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
-	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
-	// in keptn-contrib/dynatrace-service and keptn-contrib/splunk-service
-	logger.Infof("SLI Config: %s", sliConfig)
-	if err != nil {
-		// failed to fetch sli config file
-		err := fmt.Errorf("failed to fetch SLI file %s from config repo: %w", sliFileUri, err)
-		logger.Error(err)
-		// send a get-sli.finished event with status=error and result=failed back to Keptn
-
-		_, _ = ddKeptn.SendTaskFinishedEvent(&keptnv2.EventData{
-			Status: keptnv2.StatusErrored,
-			Result: keptnv2.ResultFailed,
-			Labels: labels,
-		}, ServiceName)
-
-		return err
-	}
-	// Step 6 - do your work - iterate through the list of requested indicators and return their values
-	// Indicators: this is the list of indicators as requested in the SLO.yaml
-	// SLIResult: this is the array that will receive the results
-	indicators := data.GetSLI.Indicators
-	sliResults := []*keptnv2.SLIResult{}
-
-	// get splunk API URL, PORT and TOKEN
-	// TRY TO MAKE A FUNCTION
-	splunkCreds, err := getSplunkCredentials()
-	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %s", err.Error())
-		return err
-	}
-
-	logger.Info("indicators:", indicators)
-	var sliResult *keptnv2.SLIResult
-
-	client := connectToSplunk(*splunkCreds, true)
-
-	for _, indicatorName := range indicators {
-		sliResult, err = handleSpecificSLI(client, indicatorName, data, sliConfig)
-		if err != nil {
-			break
-		}
-
-		sliResults = append(sliResults, sliResult)
-	}
-
-	logger.Infof("SLI Results: %v", sliResults)
-	// Step 7 - Build get-sli.finished event data
-	getSliFinishedEventData := &keptnv2.GetSLIFinishedEventData{
-		EventData: keptnv2.EventData{
-			Status: keptnv2.StatusSucceeded,
-			Result: keptnv2.ResultPass,
-			Labels: labels,
-		},
-		GetSLI: keptnv2.GetSLIFinished{
-			IndicatorValues: sliResults,
-			Start:           data.GetSLI.Start,
-			End:             data.GetSLI.End,
-		},
-	}
-
-	if err != nil {
-		getSliFinishedEventData.EventData.Status = keptnv2.StatusErrored
-		getSliFinishedEventData.EventData.Result = keptnv2.ResultFailed
-		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %s", ServiceName, err.Error())
-	}
-
-	logger.Infof("SLI finished event: %v", *getSliFinishedEventData)
-
-	_, err = ddKeptn.SendTaskFinishedEvent(getSliFinishedEventData, ServiceName)
-
-	if err != nil {
-		err := fmt.Errorf("failed to send task finished CloudEvent (%w), aborting... ", err)
-		logger.Error(err)
-		return err
-	}
-
-	return nil
-}
-
 // Handles configure monitoring event
-func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
+func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) error {
 	var shkeptncontext string
 
 	//Configuring the logger
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
-	configureLogger(incomingEvent.Context.GetID(), shkeptncontext)
+	utils.ConfigureLogger(incomingEvent.Context.GetID(), shkeptncontext, "LOG_LEVEL")
 
 	//Sending the configure monitoring started event
 	logger.Infof("Handling configure-monitoring.triggered Event: %s", incomingEvent.Context.GetID())
-	_, err := ddKeptn.SendTaskStartedEvent(data, ServiceName)
+	_, err := ddKeptn.SendTaskStartedEvent(data, serviceName)
 	if err != nil {
 		logger.Errorf("err when sending task started the event: %v", err)
 		return err
 	}
 
 	//Getting splunk API URL, PORT and TOKEN
-	splunkCreds, err := getSplunkCredentials()
+	splunkCreds, err := utils.GetSplunkCredentials(envConfig)
 	if err != nil {
 		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		return err
 	}
 
 	// connecting to splunk
-	client := connectToSplunk(*splunkCreds, true)
+	client := utils.ConnectToSplunk(*splunkCreds, true)
 
 	//Creating the alerts
-	err = CreateSplunkAlertsForEachStage(client, ddKeptn, *data)
+	err = CreateSplunkAlertsForEachStage(client, ddKeptn, *data, envConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -196,7 +66,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	logger.Infof("Configure Monitoring finished event: %v", *configureMonitoringFinishedEventData)
 
 	// Sending the Configure Monitoring finished event
-	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, ServiceName)
+	_, err = ddKeptn.SendTaskFinishedEvent(configureMonitoringFinishedEventData, serviceName)
 	if err != nil {
 		err := fmt.Errorf("failed to send task finished CloudEvent (%w), aborting... ", err)
 		logger.Error(err)
@@ -206,128 +76,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	return nil
 }
 
-// getSplunkCredentials get the splunk host, port and api token from the environment variables set from secret
-func getSplunkCredentials() (*splunkCredentials, error) {
-
-	logger.Info("Trying to retrieve splunk credentials ...")
-	splunkCreds := splunkCredentials{}
-	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
-		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
-		splunkCreds.Token = env.SplunkApiToken
-		splunkCreds.Port = env.SplunkPort
-		splunkCreds.Username = env.SplunkUsername
-		splunkCreds.Password = env.SplunkPassword
-		splunkCreds.SessionKey = env.SplunkSessionKey
-
-		logger.Info("Successfully retrieved splunk credentials")
-
-	} else {
-		if env.SplunkHost == "" {
-			logger.Error("SP_HOST not set")
-		}
-		if env.SplunkPort == "" {
-			logger.Error("SP_PORT not set")
-		}
-		if env.SplunkApiToken == "" {
-			logger.Error("SP_API_TOKEN not set")
-		}
-		if env.SplunkUsername == "" || env.SplunkPassword == "" {
-			logger.Error("SP_USERNAME and SP_PASSWORD not set")
-		}
-		if env.SplunkSessionKey == "" {
-			logger.Error("SP_SESSION_KEY not set")
-		}
-		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
-	}
-
-	return &splunkCreds, nil
-}
-
-// Creates an authenticated splunk client
-func connectToSplunk(splunkCreds splunkCredentials, skipSSL bool) *splunk.SplunkClient {
-
-	logger.Info("Connecting to Splunk ...")
-	var client *splunk.SplunkClient
-	if splunkCreds.Token != "" {
-		client = splunk.NewClientAuthenticatedByToken(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Token,
-			skipSSL,
-		)
-	} else if splunkCreds.SessionKey != "" {
-		client = splunk.NewClientAuthenticatedBySessionKey(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.SessionKey,
-			skipSSL,
-		)
-	} else {
-		client = splunk.NewBasicAuthenticatedClient(
-			&http.Client{
-				Timeout: time.Duration(60) * time.Second,
-			},
-			splunkCreds.Host,
-			splunkCreds.Port,
-			splunkCreds.Username,
-			splunkCreds.Password,
-			skipSSL,
-		)
-	}
-
-	return client
-
-}
-
-// Executes the splunk search and return the metric value
-func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string) (*keptnv2.SLIResult, error) {
-
-	query := sliConfig[indicatorName]
-	params := splunk.RequestParams{
-		SearchQuery:  query,
-		EarliestTime: data.GetSLI.Start,
-		LatestTime:   data.GetSLI.End,
-	}
-
-	// take the time range from the sli file if it is set
-	params.EarliestTime, params.LatestTime, params.SearchQuery = utils.RetrieveQueryTimeRange(params.EarliestTime, params.LatestTime, params.SearchQuery)
-	logger.Infof("actual query sent to splunk: %v, from: %v, to: %v", params.SearchQuery, params.EarliestTime, params.LatestTime)
-
-	if query == "" {
-		return nil, fmt.Errorf("no query found for indicator %s", indicatorName)
-	}
-
-	spReq := splunk.SplunkRequest{
-		Params:  params,
-		Headers: map[string]string{},
-	}
-
-	// get the metric we want
-	sliValue, err := splunkjob.GetMetricFromNewJob(client, &spReq)
-	if err != nil {
-		return nil, fmt.Errorf("error getting value for the query: %v : %w", spReq.Params.SearchQuery, err)
-	}
-
-	logger.Infof("response from the metrics api: %v", sliValue)
-
-	sliResult := &keptnv2.SLIResult{
-		Metric:  indicatorName,
-		Value:   sliValue,
-		Success: true,
-	}
-	logger.WithFields(logger.Fields{"indicatorName": indicatorName}).Infof("SLI result from the metrics api: %v", sliResult)
-
-	return sliResult, nil
-}
-
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
-func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData) error {
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) error {
 
 	//Getting the shipyard configuration
 	scope := api.NewResourceScope()
@@ -360,7 +110,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	//Creating the alerts for each stage of the shipyard file
 	for _, stage := range shipyard.Spec.Stages {
 		logger.Infof("Creating alerts for stage : %v", stage)
-		err = CreateSplunkAlerts(client, k, eventData, stage)
+		err = CreateSplunkAlerts(client, k, eventData, stage, envConfig)
 
 		if err != nil {
 			return fmt.Errorf("error configuring splunk alerts: %w", err)
@@ -372,7 +122,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 }
 
 // Creates the splunk alerts of a particular stage if slo.yaml and remediation.yaml files are defined
-func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage) error {
+func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage, envConfig utils.EnvConfig) error {
 
 	//Trying to retrieve SLO file
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
@@ -475,13 +225,13 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 						Name:                alertName,
 						CronSchedule:        cronSchedule,
 						SearchQuery:         query,
-						EarliestTime:        env.DispatchEarliestTime,
-						LatestTime:          env.DispatchLatestTime,
+						EarliestTime:        envConfig.DispatchEarliestTime,
+						LatestTime:          envConfig.DispatchLatestTime,
 						AlertCondition:      alertCondition,
 						AlertSuppress:       alertSuppress,
-						AlertSuppressPeriod: env.AlertSuppressPeriod,
-						Actions:             env.Actions,
-						WebhookUrl:          env.WebhookUrl,
+						AlertSuppressPeriod: envConfig.AlertSuppressPeriod,
+						Actions:             envConfig.Actions,
+						WebhookUrl:          envConfig.WebhookUrl,
 					}
 					params.EarliestTime, params.LatestTime, params.SearchQuery = utils.RetrieveQueryTimeRange(params.EarliestTime, params.LatestTime, params.SearchQuery)
 

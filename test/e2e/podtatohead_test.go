@@ -27,7 +27,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	if !isE2ETestingAllowed() {
 		t.Skip("Skipping TestHelloWorldDeployment, not allowed by environment")
 	}
-	
+
 	// Setup the E2E test environment
 	testEnv, err := newTestEnvironment(
 		podtatoDeployV1Event,
@@ -49,10 +49,12 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	}
 	shipyardFileBase64 := base64.StdEncoding.EncodeToString(testEnv.shipyard)
 
-	_, _ = testEnv.API.APIHandler.CreateProject(models.CreateProject{
+	_, errP := testEnv.API.APIHandler.CreateProject(models.CreateProject{
 		Name:     &testEnv.EventData.Project,
 		Shipyard: &shipyardFileBase64,
 	})
+
+	require.NoError(t, errP.ToError())
 	token, errToken := GetGiteaToken()
 	require.NoError(t, errToken)
 

@@ -1,4 +1,4 @@
-package main
+package alerts
 
 import (
 	"crypto/sha256"
@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
-	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
+	"github.com/keptn/go-utils/pkg/lib/keptn"
 	"github.com/kuro-jojo/splunk-sdk-go/client"
 	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
 
-	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
@@ -27,6 +27,8 @@ const (
 	remediationTaskName = "remediation"
 	//indicates the frequency at which triggered alerts are checked in seconds
 	pollingFrequency = 20
+	keptnSuffix      = "keptn"
+	serviceName      = "splunk-service"
 )
 
 type SplunkAlertEvent struct {
@@ -62,16 +64,16 @@ type alertResult struct {
 	Varp          string `json:"varp"`
 }
 
-type labels struct {
-	AlertName  string `json:"alertname,omitempty"`
-	Namespace  string `json:"namespace,omitempty"`
-	PodName    string `json:"pod_name,omitempty"`
-	Severity   string `json:"severity,omitempty"`
-	Service    string `json:"service,omitempty" yaml:"service"`
-	Stage      string `json:"stage,omitempty" yaml:"stage"`
-	Project    string `json:"project,omitempty" yaml:"project"`
-	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
-}
+// type labels struct {
+// 	AlertName  string `json:"alertname,omitempty"`
+// 	Namespace  string `json:"namespace,omitempty"`
+// 	PodName    string `json:"pod_name,omitempty"`
+// 	Severity   string `json:"severity,omitempty"`
+// 	Service    string `json:"service,omitempty" yaml:"service"`
+// 	Stage      string `json:"stage,omitempty" yaml:"stage"`
+// 	Project    string `json:"project,omitempty" yaml:"project"`
+// 	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
+// }
 
 type remediationTriggeredEventData struct {
 	keptnv2.EventData
@@ -84,7 +86,7 @@ type remediationTriggeredEventData struct {
 }
 
 // ProcessAndForwardAlertEvent reads the payload from the request and sends a valid Cloud event to the keptn event broker
-func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *keptn.Logger, client *client.SplunkClient) error {
+func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *keptn.Logger, client *client.SplunkClient, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	logger.Info("New alert found in Splunk Alerting system : " + triggeredInstance.Name)
 
@@ -132,7 +134,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 	}
 
 	logger.Debug("Sending event to eventbroker")
-	err := createAndSendCE(newEventData, shkeptncontext)
+	err := createAndSendCE(newEventData, shkeptncontext, keptnOptions, envConfig)
 	if err != nil {
 		logger.Error("Could not send cloud event: " + err.Error())
 	} else {
@@ -144,7 +146,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 }
 
 // createAndSendCE create a new problem.triggered event and send it to Keptn
-func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext string) error {
+func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext string, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 	source, _ := url.Parse("splunk")
 
 	eventType := keptnv2.GetTriggeredEventType(problemData.Stage + "." + remediationTaskName)
@@ -164,7 +166,7 @@ func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext s
 	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
 
 	//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
-	if env.Env == "local" {
+	if envConfig.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
 		authHeader := "x-token"
 		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
@@ -212,20 +214,20 @@ func createOrApplyKeptnContext(contextID string) string {
 }
 
 // FiringAlertsPoll will handle all requests for '/health' and '/ready'
-func FiringAlertsPoll() error {
+func FiringAlertsPoll(keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	shkeptncontext := uuid.New().String()
-	logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
+	logger := keptn.NewLogger(shkeptncontext, "", serviceName)
 
 	//Getting splunk API URL, PORT and TOKEN
-	splunkCreds, err := getSplunkCredentials()
+	splunkCreds, err := utils.GetSplunkCredentials(envConfig)
 	if err != nil {
 		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
 		return err
 	}
 
 	// connecting to splunk
-	client := connectToSplunk(*splunkCreds, true)
+	client := utils.ConnectToSplunk(*splunkCreds, true)
 
 	for {
 
@@ -247,7 +249,7 @@ func FiringAlertsPoll() error {
 
 				for _, triggeredInstance := range triggeredInstances.Entry {
 					if triggeredInstance.Content.TriggerTime < int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
-						ProcessAndForwardAlertEvent(triggeredInstance, logger, client)
+						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, keptnOptions, envConfig)
 					}
 				}
 
@@ -256,7 +258,5 @@ func FiringAlertsPoll() error {
 		}
 
 		time.Sleep(pollingFrequency * time.Second)
-
 	}
-
 }

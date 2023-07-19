@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ECL2022PAI01/splunk-service/alerts"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
@@ -17,41 +18,14 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-var keptnOptions = keptn.KeptnOpts{}
-
 const (
 	envVarLogLevel   = "LOG_LEVEL"
 	webhookUrlConst  = "192.168.49.2" //ATTENTION ICI
 	webhookPortConst = "30037"
 )
 
-type envConfig struct {
-	// Port on which to listen for cloudevents
-	Port int `envconfig:"RCV_PORT" default:"8080"`
-	// Path to which cloudevents are sent
-	Path string `envconfig:"RCV_PATH" default:"/"`
-	// Whether we are running locally (e.g., for testing) or on production
-	Env string `envconfig:"ENV" default:"local"`
-	// URL of the Keptn configuration service (this is where we can fetch files from the config repo)
-
-	ConfigurationServiceUrl string `envconfig:"CONFIGURATION_SERVICE" default:""`
-
-	SplunkApiToken   string `envconfig:"SP_API_TOKEN" default:""`
-	SplunkHost       string `envconfig:"SP_HOST" default:""`
-	SplunkPort       string `envconfig:"SP_PORT" default:"8089"`
-	SplunkUsername   string `envconfig:"SP_USERNAME" default:""`
-	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
-	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
-
-	AlertSuppressPeriod  string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
-	CronSchedule         string `envconfig:"CRON_SCHEDULE" default:"3m"`
-	DispatchEarliestTime string `envconfig:"DISPATCH_EARLIEST_TIME" default:"*/1 * * * *"`
-	DispatchLatestTime   string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
-	Actions              string `envconfig:"ACTIONS" default:""`
-	WebhookUrl           string `envconfig:"WEBHOOK_URL" default:""`
-}
-
-var env envConfig
+var env utils.EnvConfig
+var keptnOptions = keptn.KeptnOpts{}
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
 
@@ -150,7 +124,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		parseKeptnCloudEventPayload(event, eventData)
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
+		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData, env)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
@@ -160,7 +134,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventData)
 
-		return handleGetSliTriggeredEvent(ddKeptn, event, eventData)
+		return handleGetSliTriggeredEvent(ddKeptn, event, eventData, env)
 
 	}
 	// Unknown Event -> Throw Error!
@@ -178,7 +152,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
  * env=runlocal   -> will fetch resources from local drive instead of configuration service
  */
 func main() {
-	configureLogger("", "")
+	utils.ConfigureLogger("", "", "")
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
@@ -213,7 +187,7 @@ func CloudEventListener(args []string) int {
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
 	go func() {
 		logger.Info("Start polling for triggered alerts ...")
-		FiringAlertsPoll()
+		alerts.FiringAlertsPoll(keptnOptions, env)
 	}()
 
 	ctx := context.Background()
@@ -235,24 +209,4 @@ func CloudEventListener(args []string) int {
 	logger.Infof("Starting receiver")
 	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
 	return 0
-}
-
-func configureLogger(eventID, keptnContext string) {
-	logger.SetFormatter(&utils.Formatter{
-		Fields: logger.Fields{
-			"service":      "splunk-service",
-			"eventId":      eventID,
-			"keptnContext": keptnContext,
-		},
-		BuiltinFormatter: &logger.TextFormatter{},
-	})
-
-	if os.Getenv(envVarLogLevel) != "" {
-		logLevel, err := logger.ParseLevel(os.Getenv(envVarLogLevel))
-		if err != nil {
-			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
-		} else {
-			logger.SetLevel(logLevel)
-		}
-	}
 }
