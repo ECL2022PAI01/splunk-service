@@ -1,4 +1,4 @@
-package main
+package alerts
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	"github.com/google/uuid"
@@ -20,55 +21,14 @@ import (
 )
 
 const (
-	alertNamesFilePath         = "./test/data/unitTests/firedAlerts.json"
-	firedAlertInstanceFilePath = "./test/data/unitTests/firedAlertInstances.json"
+	alertNamesFilePath         = "../test/data/unitTests/firedAlerts.json"
+	firedAlertInstanceFilePath = "../test/data/unitTests/firedAlertInstances.json"
 	stage                      = "production"
 	project                    = "fulltour2"
 	service                    = "helloservice"
 	state                      = "OPEN"
 	problemTitle               = "number_of_logs"
 )
-
-func TestFiringAlertsPoll(t *testing.T) {
-
-	//Building a mock splunk server
-	splunkServer := buildMockAlertSplunkServer(t)
-	defer splunkServer.Close()
-
-	//setting splunk credentials
-	env.SplunkPort = strings.Split(splunkServer.URL, ":")[2]
-	env.SplunkHost = strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1]
-	env.SplunkApiToken = "apiToken"
-
-	ddKeptn, err := initializeObjects()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ddKeptn.UseLocalFileSystem = false
-	FiringAlertsPoll(ddKeptn)
-
-	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
-
-	// Verify that HandleGetSliTriggeredEvent has sent a cloudevent
-	if gotEvents != 1 {
-		t.Fatalf("Expected one event to be sent, but got %v", gotEvents)
-	}
-
-	// Verify that the CE sent is a <stage>.remediation.triggered event
-	if keptnv2.GetTriggeredEventType(stage+"."+remediationTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Fatal("Expected a " + stage + "." + remediationTaskName + " event type but got " + ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type())
-	}
-
-	var respData RemediationTriggeredEventData
-	err = datacodec.Decode(context.Background(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].DataMediaType(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Data(), &respData)
-
-	// Verify that the correct data is included in the remediation.triggered event sent
-	if respData.Project != project || respData.Service != service || respData.Stage != stage || respData.Problem.State != state || respData.Problem.ProblemTitle != problemTitle {
-		t.Fatal("The data (project, stage, service, problem state or problem title) sent for the remediation.triggered event is incorrect")
-	}
-
-}
 
 /**
  * loads a cloud event from the passed test json file and initializes a keptn object with it
@@ -98,6 +58,57 @@ func initializeObjects() (*keptnv2.Keptn, error) {
 	return ddKeptn, err
 }
 
+func TestFiringAlertsPoll(t *testing.T) {
+
+	//Building a mock splunk server
+	splunkServer := buildMockAlertSplunkServer(t)
+	defer splunkServer.Close()
+
+	//setting splunk credentials
+	env := utils.EnvConfig{}
+
+	env.SplunkPort = strings.Split(splunkServer.URL, ":")[2]
+	env.SplunkHost = strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1]
+	env.SplunkApiToken = "apiToken"
+
+	ddKeptn, err := initializeObjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+	splunkCreds, err := utils.GetSplunkCredentials(env)
+	if err != nil {
+		t.Fatalf("failed to get Splunk Credentials: %v", err.Error())
+	}
+	client := utils.ConnectToSplunk(*splunkCreds, true)
+
+	ddKeptn.UseLocalFileSystem = false
+	FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, env)
+
+	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
+
+	// Verify that HandleGetSliTriggeredEvent has sent a cloudevent
+	if gotEvents != 1 {
+		t.Fatalf("Expected one event to be sent, but got %v", gotEvents)
+	}
+
+	// Verify that the CE sent is a <stage>.remediation.triggered event
+	if keptnv2.GetTriggeredEventType(stage+"."+remediationTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
+		t.Fatal("Expected a " + stage + "." + remediationTaskName + " event type but got " + ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type())
+	}
+
+	var respData RemediationTriggeredEventData
+	err = datacodec.Decode(context.Background(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].DataMediaType(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Data(), &respData)
+
+	if err != nil {
+		t.Fatal("Error decoding the data of the remediation.triggered event sent")
+	}
+	// Verify that the correct data is included in the remediation.triggered event sent
+	if respData.Project != project || respData.Service != service || respData.Stage != stage || respData.Problem.State != state || respData.Problem.ProblemTitle != problemTitle {
+		t.Fatal("The data (project, stage, service, problem state or problem title) sent for the remediation.triggered event is incorrect")
+	}
+
+}
+
 /**
  * loads from files the default responses we want the fake splunk server to send
  */
@@ -118,9 +129,12 @@ func buildMockAlertSplunkServer(t *testing.T) *httptest.Server {
 
 	//getting the default splunk responses for listing fired alerts and instances of a fired alert
 	getFiredAlertsResponse, err := initializeResponses(alertNamesFilePath)
+	if err != nil {
+		t.Fatal("Error initializing default responses for the mock splunk server.")
+	}
 	getFiredAlertInstancesResponse, err := initializeResponses(firedAlertInstanceFilePath)
 	if err != nil {
-		t.Fatal("Error initialising default responses for the mock splunk server.")
+		t.Fatal("Error initializing default responses for the mock splunk server.")
 	}
 
 	//Customizing the fired alert and the instances of the fired alert for the responses we want to send when the fake splunk server receive a request
@@ -138,7 +152,7 @@ func buildMockAlertSplunkServer(t *testing.T) *httptest.Server {
 		"sid": "10"
 	}`
 	jsonResponseGET := `{
-		"results":[{"theRequest":"` + fmt.Sprint(defaultSplunkTestResult) + `"}]
+		"results":[{"theRequest":"` + fmt.Sprint(200) + `"}]
 	}`
 
 	splunkResponses := make([]map[string]interface{}, 2)

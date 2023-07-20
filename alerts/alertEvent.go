@@ -1,4 +1,4 @@
-package main
+package alerts
 
 import (
 	"crypto/sha256"
@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
-	keptncommon "github.com/keptn/go-utils/pkg/lib/keptn"
-	splunkalert "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	"github.com/kuro-jojo/splunk-sdk-go/src/client"
+	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
@@ -27,6 +27,8 @@ const (
 	remediationTaskName = "remediation"
 	//indicates the frequency at which triggered alerts are checked in seconds
 	pollingFrequency = 20
+	keptnSuffix      = "keptn"
+	serviceName      = "splunk-service"
 )
 
 type SplunkAlertEvent struct {
@@ -62,16 +64,16 @@ type alertResult struct {
 	Varp          string `json:"varp"`
 }
 
-type labels struct {
-	AlertName  string `json:"alertname,omitempty"`
-	Namespace  string `json:"namespace,omitempty"`
-	PodName    string `json:"pod_name,omitempty"`
-	Severity   string `json:"severity,omitempty"`
-	Service    string `json:"service,omitempty" yaml:"service"`
-	Stage      string `json:"stage,omitempty" yaml:"stage"`
-	Project    string `json:"project,omitempty" yaml:"project"`
-	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
-}
+// type labels struct {
+// 	AlertName  string `json:"alertname,omitempty"`
+// 	Namespace  string `json:"namespace,omitempty"`
+// 	PodName    string `json:"pod_name,omitempty"`
+// 	Severity   string `json:"severity,omitempty"`
+// 	Service    string `json:"service,omitempty" yaml:"service"`
+// 	Stage      string `json:"stage,omitempty" yaml:"stage"`
+// 	Project    string `json:"project,omitempty" yaml:"project"`
+// 	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
+// }
 
 type RemediationTriggeredEventData struct {
 	keptnv2.EventData
@@ -84,7 +86,7 @@ type RemediationTriggeredEventData struct {
 }
 
 // ProcessAndForwardAlertEvent reads the payload from the request and sends a valid Cloud event to the keptn event broker
-func ProcessAndForwardAlertEvent(triggeredInstance splunkalert.EntryItem, logger *keptn.Logger, client *client.SplunkClient, ddKeptn *keptnv2.Keptn) error {
+func ProcessAndForwardAlertEvent(triggeredInstance splunkalerts.EntryItem, logger *keptn.Logger, client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	logger.Info("New alert found in Splunk Alerting system : " + triggeredInstance.Name)
 
@@ -132,7 +134,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkalert.EntryItem, logger
 	}
 
 	logger.Debug("Sending event to eventbroker")
-	err := createAndSendCE(newEventData, shkeptncontext, ddKeptn)
+	err := createAndSendCE(newEventData, shkeptncontext, ddKeptn, keptnOptions, envConfig)
 	if err != nil {
 		logger.Error("Could not send cloud event: " + err.Error())
 	} else {
@@ -144,7 +146,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkalert.EntryItem, logger
 }
 
 // createAndSendCE create a new problem.triggered event and send it to Keptn
-func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext string, ddKeptn *keptnv2.Keptn) error {
+func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext string, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 	source, _ := url.Parse("splunk")
 
 	eventType := keptnv2.GetTriggeredEventType(problemData.Stage + "." + remediationTaskName)
@@ -161,11 +163,11 @@ func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext s
 		return fmt.Errorf("unable to set cloud event data: %w", err)
 	}
 
-	if(ddKeptn==nil){
+	if ddKeptn == nil {
 		ddKeptn, err = keptnv2.NewKeptn(&event, keptnOptions)
 
 		//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
-		if env.Env == "local" {
+		if envConfig.Env == "local" {
 			authToken := os.Getenv("KEPTN_API_TOKEN")
 			authHeader := "x-token"
 			ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
@@ -175,7 +177,7 @@ func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext s
 			return fmt.Errorf("Could not create Keptn Handler: " + err.Error())
 		}
 	}
-	
+
 	err = ddKeptn.SendCloudEvent(event)
 	if err != nil {
 		return err
@@ -214,26 +216,16 @@ func createOrApplyKeptnContext(contextID string) string {
 }
 
 // FiringAlertsPoll will handle all requests for '/health' and '/ready'
-func FiringAlertsPoll(ddKeptn *keptnv2.Keptn) error {
+func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	shkeptncontext := uuid.New().String()
-	logger := keptncommon.NewLogger(shkeptncontext, "", ServiceName)
-
-	//Getting splunk API URL, PORT and TOKEN
-	splunkCreds, err := getSplunkCredentials()
-	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-		return err
-	}
-
-	// connecting to splunk
-	client := connectToSplunk(*splunkCreds, true)
+	logger := keptn.NewLogger(shkeptncontext, "", serviceName)
 
 	for {
 
 		//listing fired alerts
 		logger.Info("Searching for triggered alerts ...")
-		triggeredAlerts, err := splunkalert.GetTriggeredAlerts(client)
+		triggeredAlerts, err := splunkalerts.GetTriggeredAlerts(client)
 		if err != nil {
 			logger.Errorf("Error calling GetTriggeredAlerts() while searchcing for new alerts: %v : %v", triggeredAlerts, err)
 		}
@@ -242,29 +234,24 @@ func FiringAlertsPoll(ddKeptn *keptnv2.Keptn) error {
 
 			if strings.HasSuffix(triggeredAlert.Name, keptnSuffix) {
 
-				triggeredInstances, err := splunkalert.GetInstancesOfTriggeredAlert(client, triggeredAlert.Links.List)
-
+				triggeredInstances, err := splunkalerts.GetInstancesOfTriggeredAlert(client, triggeredAlert.Links.List)
 				if err != nil {
 					logger.Errorf("Error calling GetInstancesOfTriggeredAlert(): %v : %v", triggeredInstances, err)
 				}
 
 				for _, triggeredInstance := range triggeredInstances.Entry {
 					if triggeredInstance.Content.TriggerTime <= int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
-						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn)
+						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn, keptnOptions, envConfig)
 					}
 				}
 
 			}
 
 		}
-
-		//Condition only verified in case of a test
-		if(ddKeptn!=nil){
-				return nil
+		// Condition only verified in case of a test
+		if ddKeptn != nil {
+			return nil
 		}
-
 		time.Sleep(pollingFrequency * time.Second)
-
 	}
-
 }

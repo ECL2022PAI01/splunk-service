@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Mouhamadou305/splunk-service/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/handler"
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -15,43 +16,17 @@ import (
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
-)
 
-var keptnOptions = keptn.KeptnOpts{}
+	
+)
 
 const (
-	envVarLogLevel = "LOG_LEVEL"
-	webhookUrlConst = "192.168.49.2" //ATTENTION ICI
-	webhookPortConst = "30037"
+	envVarLogLevel          = "LOG_LEVEL"
+	UnhandleKeptnCloudEvent = "Unhandled Keptn Cloud Event : "
 )
 
-type envConfig struct {
-	// Port on which to listen for cloudevents
-	Port int `envconfig:"RCV_PORT" default:"8080"`
-	// Path to which cloudevents are sent
-	Path string `envconfig:"RCV_PATH" default:"/"`
-	// Whether we are running locally (e.g., for testing) or on production
-	Env string `envconfig:"ENV" default:"local"`
-	// URL of the Keptn configuration service (this is where we can fetch files from the config repo)
-
-	ConfigurationServiceUrl string `envconfig:"CONFIGURATION_SERVICE" default:""`
-
-	SplunkApiToken   string `envconfig:"SP_API_TOKEN" default:""`
-	SplunkHost       string `envconfig:"SP_HOST" default:""`
-	SplunkPort       string `envconfig:"SP_PORT" default:"8089"`
-	SplunkUsername   string `envconfig:"SP_USERNAME" default:""`
-	SplunkPassword   string `envconfig:"SP_PASSWORD" default:""`
-	SplunkSessionKey string `envconfig:"SP_SESSION_KEY" default:""`
-
-	AlertSuppressPeriod string `envconfig:"ALERT_SUPPRESS_PERIOD" default:"3m"`
-	CronSchedule string `envconfig:"CRON_SCHEDULE" default:"3m"`
-	DispatchEarliestTime string `envconfig:"DISPATCH_EARLIEST_TIME" default:"*/1 * * * *"`
-	DispatchLatestTime string `envconfig:"DISPATCH_LATEST_TIME" default:"now"`
-	Actions string `envconfig:"ACTIONS" default:""`
-	WebhookUrl string `envconfig:"WEBHOOK_URL" default:""`
-}
-
-var env envConfig
+var env utils.EnvConfig
+var keptnOptions = keptn.KeptnOpts{}
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
 
@@ -139,6 +114,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* Please follow the documentation provided above for more guidance on the different types.
 	* Feel free to delete parts that you don't need.
 	**/
+
 	switch event.Type() {
 
 	// -------------------------------------------------------
@@ -150,7 +126,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		parseKeptnCloudEventPayload(event, eventData)
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData)
+		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData, env)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
@@ -160,7 +136,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventData)
 
-		return handleGetSliTriggeredEvent(ddKeptn, event, eventData)
+		return handleGetSliTriggeredEvent(ddKeptn, event, eventData, env)
 
 	}
 	// Unknown Event -> Throw Error!
@@ -177,12 +153,16 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
  * Environment Variables
  * env=runlocal   -> will fetch resources from local drive instead of configuration service
  */
+var cloudEventListener = CloudEventListener
+var processKeptnCloudEvent = ProcessKeptnCloudEvent
+var handleConfigureMonitoringTriggeredEvent = handler.HandleConfigureMonitoringTriggeredEvent
+var handleGetSliTriggeredEvent = handler.HandleGetSliTriggeredEvent
+
 func main() {
-	configureLogger("", "")
+	utils.ConfigureLogger("", "", "")
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
-	logger.Info(cloudEventListener(os.Args[1:]))
 	os.Exit(cloudEventListener(os.Args[1:]))
 }
 
@@ -202,19 +182,13 @@ func CloudEventListener(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-		
+
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
-
-	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
-	go func() {
-		logger.Info("Start polling for triggered alerts ...")
-		FiringAlertsPoll(nil)		
-	}()
 
 	ctx := context.Background()
 	ctx = cloudevents.WithEncodingStructured(ctx)
@@ -235,24 +209,4 @@ func CloudEventListener(args []string) int {
 	logger.Infof("Starting receiver")
 	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
 	return 0
-}
-
-func configureLogger(eventID, keptnContext string) {
-	logger.SetFormatter(&utils.Formatter{
-		Fields: logger.Fields{
-			"service":      "splunk-service",
-			"eventId":      eventID,
-			"keptnContext": keptnContext,
-		},
-		BuiltinFormatter: &logger.TextFormatter{},
-	})
-
-	if os.Getenv(envVarLogLevel) != "" {
-		logLevel, err := logger.ParseLevel(os.Getenv(envVarLogLevel))
-		if err != nil {
-			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
-		} else {
-			logger.SetLevel(logLevel)
-		}
-	}
 }

@@ -1,7 +1,7 @@
 splunkservice:
   image:
-    repository: mouhamadou305/splunk-service # Container Image Name  logLevel: info
-    pullPolicy: IfNotPresent # Kubernetes Image Pull Policy
+    repository: kuro08/splunk-service # Container Image Name  logLevel: info
+    pullPolicy: Always # Kubernetes Image Pull Policy
     tag: "" # Container Tag
   # Set to SP_HOST in the chart's Secret
   spHost: "" # Note: Don't use it in production environment (prefer using k8s secrets - SP_HOST)

@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/kelseyhightower/envconfig"
@@ -49,11 +50,11 @@ func TestProcessKeptnCloudEvent(t *testing.T) {
 	*calledSLI = false
 	*calledConfig = false
 
-	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData) error {
+	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, env utils.EnvConfig) error {
 		*calledConfig = true
 		return nil
 	}
-	handleGetSliTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.GetSLITriggeredEventData) error {
+	handleGetSliTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.GetSLITriggeredEventData, env utils.EnvConfig) error {
 		*calledSLI = true
 		return nil
 	}
