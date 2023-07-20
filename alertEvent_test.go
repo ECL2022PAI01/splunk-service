@@ -19,45 +19,27 @@ import (
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
-const(
-	firedAlertFilePath = "./test/data/firedAlerts.json"
-	firedAlertInstanceFilePath = "./test/data/firedAlertInstances.json"
-	stage = "production"
-	project = "fulltour2"
-	service = "helloservice"
-	state = "OPEN"
-	problemTitle = "number_of_logs"
-
+const (
+	alertNamesFilePath         = "./test/data/unitTests/firedAlerts.json"
+	firedAlertInstanceFilePath = "./test/data/unitTests/firedAlertInstances.json"
+	stage                      = "production"
+	project                    = "fulltour2"
+	service                    = "helloservice"
+	state                      = "OPEN"
+	problemTitle               = "number_of_logs"
 )
 
 func TestFiringAlertsPoll(t *testing.T) {
 
-	//getting the default splunk responses for listing fired alerts and instances of a fired alert
-	getFiredAlertsResponse, getFiredAlertInstancesResponse, err := initializeResponses(firedAlertFilePath, firedAlertInstanceFilePath)
-	if err!=nil {
-		t.Fatal("Error initialising default responses for the mock splunk server.")
-	}
-
-	//Customizing the fired alert and the instances of the fired alert for the responses we want to send when the fake splunk server receive a request
-	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "1689080402", fmt.Sprint(time.Now().Unix()), -1)
-	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "production", stage, -1)
-	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "production", stage, -1)
-	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "fulltour2", project, -1)
-	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "fulltour2", project, -1)
-	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "helloservice", service, -1)
-	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "helloservice", service, -1)
-	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "number_of_logs", problemTitle, -1)
-	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "number_of_logs", problemTitle, -1)
-
 	//Building a mock splunk server
-	splunkServer := buildMockAlertSplunkServer(getFiredAlertsResponse, getFiredAlertInstancesResponse)
+	splunkServer := buildMockAlertSplunkServer(t)
 	defer splunkServer.Close()
 
 	//setting splunk credentials
 	env.SplunkPort = strings.Split(splunkServer.URL, ":")[2]
 	env.SplunkHost = strings.Split(strings.Split(splunkServer.URL, ":")[1], "//")[1]
 	env.SplunkApiToken = "apiToken"
-	
+
 	ddKeptn, err := initializeObjects()
 	if err != nil {
 		t.Fatal(err)
@@ -74,27 +56,26 @@ func TestFiringAlertsPoll(t *testing.T) {
 	}
 
 	// Verify that the CE sent is a <stage>.remediation.triggered event
-	if keptnv2.GetTriggeredEventType(stage + "." + remediationTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
-		t.Fatal("Expected a " + stage + "."+ remediationTaskName + " event type but got "+ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type())
+	if keptnv2.GetTriggeredEventType(stage+"."+remediationTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type() {
+		t.Fatal("Expected a " + stage + "." + remediationTaskName + " event type but got " + ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Type())
 	}
 
 	var respData RemediationTriggeredEventData
 	err = datacodec.Decode(context.Background(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].DataMediaType(), ddKeptn.EventSender.(*fake.EventSender).SentEvents[0].Data(), &respData)
 
 	// Verify that the correct data is included in the remediation.triggered event sent
-	if respData.Project!=project || respData.Service!=service || respData.Stage!=stage || respData.Problem.State!=state || respData.Problem.ProblemTitle!=problemTitle {
+	if respData.Project != project || respData.Service != service || respData.Stage != stage || respData.Problem.State != state || respData.Problem.ProblemTitle != problemTitle {
 		t.Fatal("The data (project, stage, service, problem state or problem title) sent for the remediation.triggered event is incorrect")
 	}
 
 }
 
-
 /**
  * loads a cloud event from the passed test json file and initializes a keptn object with it
  */
- func initializeObjects() (*keptnv2.Keptn, error) {
+func initializeObjects() (*keptnv2.Keptn, error) {
 	// load sample event
-	
+
 	source, _ := url.Parse("splunk")
 
 	eventType := keptnv2.GetTriggeredEventType(stage + "." + remediationTaskName)
@@ -120,27 +101,38 @@ func TestFiringAlertsPoll(t *testing.T) {
 /**
  * loads from files the default responses we want the fake splunk server to send
  */
- func initializeResponses(firedAlertFileName string, firedAlertInstancesFileName string) (string, string, error) {
+func initializeResponses(fileName string) (string, error) {
 
 	// load a json http response for requests to get fired alerts
-	firedAlertFile, err := os.ReadFile(firedAlertFileName)
+	file, err := os.ReadFile(fileName)
 	if err != nil {
-		return "", "", fmt.Errorf("Can't load %s: %w", firedAlertFileName, err)
+		return "", fmt.Errorf("Can't load %s: %w", fileName, err)
 	}
-	getFiredAlertsResponse := string(firedAlertFile)
+	getResponse := string(file)
 
-	// load a json http response for requests to get instances of a fired alerts
-	firedAlertInstanceFile, err := os.ReadFile(firedAlertInstancesFileName)
-	if err != nil {
-		return "", "", fmt.Errorf("Can't load %s: %w", firedAlertInstancesFileName, err)
-	}
-	getFiredAlertInstancesResponse := string(firedAlertInstanceFile)
-
-	return getFiredAlertsResponse, getFiredAlertInstancesResponse, nil
+	return getResponse, nil
 }
 
 // Builds a fake splunk server able to respond when we try to list fired alerts and instances of fired alerts
-func buildMockAlertSplunkServer(getFiredAlertsResponse string, getFiredAlertInstancesResponse string) *httptest.Server {
+func buildMockAlertSplunkServer(t *testing.T) *httptest.Server {
+
+	//getting the default splunk responses for listing fired alerts and instances of a fired alert
+	getFiredAlertsResponse, err := initializeResponses(alertNamesFilePath)
+	getFiredAlertInstancesResponse, err := initializeResponses(firedAlertInstanceFilePath)
+	if err != nil {
+		t.Fatal("Error initialising default responses for the mock splunk server.")
+	}
+
+	//Customizing the fired alert and the instances of the fired alert for the responses we want to send when the fake splunk server receive a request
+	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "1689080402", fmt.Sprint(time.Now().Unix()), -1)
+	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "production", stage, -1)
+	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "production", stage, -1)
+	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "fulltour2", project, -1)
+	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "fulltour2", project, -1)
+	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "helloservice", service, -1)
+	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "helloservice", service, -1)
+	getFiredAlertsResponse = strings.Replace(getFiredAlertsResponse, "number_of_logs", problemTitle, -1)
+	getFiredAlertInstancesResponse = strings.Replace(getFiredAlertInstancesResponse, "number_of_logs", problemTitle, -1)
 
 	jsonResponsePOST := `{
 		"sid": "10"
@@ -151,10 +143,10 @@ func buildMockAlertSplunkServer(getFiredAlertsResponse string, getFiredAlertInst
 
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
-		"getTriggeredAlerts": getFiredAlertsResponse,
+		"getTriggeredAlerts":    getFiredAlertsResponse,
 		"getTriggeredInstances": getFiredAlertInstancesResponse,
-		"POST": jsonResponsePOST,
-		"GET": jsonResponseGET,
+		"POST":                  jsonResponsePOST,
+		"GET":                   jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

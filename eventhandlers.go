@@ -340,7 +340,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 		return err
 	}
 
-	logger.Infof("Removing anciant alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
+	logger.Infof("Removing old alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
 
 	//listing all alerts
 	alertsList, err := splunkalert.ListAlertsNames(client)
@@ -441,7 +441,8 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 				for _, criteria := range criteriaGroup.Criteria {
 
 					//building the splunk alert condition
-					//TO SUPPORT RELATIVE CRITERIAS I'LL HAVE TO MODIFY THAT PART
+
+					//Skipping relative criterias
 					if strings.Contains(criteria, "+") || strings.Contains(criteria, "-") || strings.Contains(
 						criteria, "%",
 					) || (!strings.Contains(criteria, "<") && !strings.Contains(criteria, ">")) {
@@ -492,7 +493,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					}
 
 					//Creates the alert in splunk
-					err = splunkalert.CreateAlert(client, &spAlert)
+					err = createAlert(client, &spAlert)
 					if err != nil {
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
 					}
