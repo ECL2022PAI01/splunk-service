@@ -213,7 +213,7 @@ func CloudEventListener(args []string) int {
 	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
 	go func() {
 		logger.Info("Start polling for triggered alerts ...")
-		FiringAlertsPoll()		
+		FiringAlertsPoll(nil)		
 	}()
 
 	ctx := context.Background()

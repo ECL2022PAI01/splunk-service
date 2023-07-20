@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Mouhamadou305/splunk-service/pkg/utils"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	"github.com/joho/godotenv"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
@@ -20,7 +21,8 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	"github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
@@ -32,7 +34,15 @@ const (
 	getSliTriggeredEventFile              = "test/events/get-sli.triggered.json"
 	configureMonitoringTriggeredEventFile = "test/events/monitoring.configure.json"
 	sliFilePath                           = "./test/data/podtatohead.sli.yaml"
+	sloFilePath                           = "./test/data/podtatohead.slo.yaml"
+	shipyardFilePath                      = "./test/data/unitTests/shipyard.yaml"
+	remediationFilePath                   = "./test/data/unitTests/remediation.yaml"
 	defaultSplunkTestResult               = 1250
+	shipyardUri                           = "shipyard.yaml"
+	sloUri                                = "slo.yaml"
+	remediationUri                        = "remediation.yaml"
+	sli									  = "number_of_errors"
+	criteria							  = ">=100"
 )
 
 /**
@@ -63,11 +73,11 @@ func initializeTestObjects(eventFileName string, resourceServiceUrl string) (*ke
 	return ddKeptn, incomingEvent, err
 }
 
-// Tests the HandleMonitoringTriggeredEvent
+//Tests the HandleMonitoringTriggeredEvent
 func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	//Building a mock resource service server
-	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
 		t.Errorf("Error reading sli file : %s", err.Error())
 		t.Fail()
@@ -75,7 +85,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer(t)
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -100,6 +110,19 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 		t.Fatal("Error getting keptn event data")
 	}
 
+	alertCreated := false
+
+	createAlert = func(client *splunk.SplunkClient, spAlert *alerts.AlertRequest) error {
+		
+		if(spAlert.Params.Name == data.Project + "," + stage + "," + data.Service + "," + sli + "," + criteria + "," + keptnSuffix &&
+			spAlert.Params.SearchQuery==`source="http:podtato-error" (index="keptn-splunk-dev") "[error]" | stats count` &&
+			spAlert.Params.AlertCondition == "search count "+criteria){
+			alertCreated = true
+		}
+
+		return nil
+	}
+
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data)
 
 	if err != nil {
@@ -122,6 +145,11 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	if keptnv2.GetFinishedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
 		t.Fatal("Expected a configure-monitoring.finished event type")
 	}
+
+	// Verify if createAlert has been called (We have one stage, one objective and one criteria so only one alert should be created)
+	if alertCreated==false {
+		t.Fatal("No alert has been created")
+	}
 }
 
 // Tests the HandleSpecificSli function
@@ -133,7 +161,7 @@ func TestHandleSpecificSli(t *testing.T) {
 
 	//Building a mock splunk server returning default responses when getting  get and post requests
 
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer(t)
 	defer splunkServer.Close()
 
 	//Retrieving the mock splunk server credentials
@@ -167,14 +195,14 @@ func TestHandleSpecificSli(t *testing.T) {
 func TestHandleGetSliTriggered(t *testing.T) {
 
 	//Building a mock resource service server
-	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
 		t.Fatalf("Error reading sli file : %s", err.Error())
 	}
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := builMockSplunkServer()
+	splunkServer := buildMockSplunkServer(t)
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -261,8 +289,14 @@ func TestGetSplunkCredentials(t *testing.T) {
 	}
 }
 
-// Build a mock splunk server returning default responses when getting  get and post requests
-func builMockSplunkServer() *httptest.Server {
+// Builds a fake splunk server able to respond when we try to list fired alerts and instances of fired alerts
+func buildMockSplunkServer(t *testing.T) *httptest.Server {
+
+	//getting the default splunk responses for listing fired alerts and instances of a fired alert
+	getAlertsNamesResponse, err := initializeResponses(alertNamesFilePath)
+	if err != nil {
+		t.Fatal("Error initialising default responses for the mock splunk server.")
+	}
 
 	jsonResponsePOST := `{
 		"sid": "10"
@@ -270,36 +304,67 @@ func builMockSplunkServer() *httptest.Server {
 	jsonResponseGET := `{
 		"results":[{"theRequest":"` + fmt.Sprint(defaultSplunkTestResult) + `"}]
 	}`
+
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
+		"getAlertsNames": 	getAlertsNamesResponse,
+		"POST":            	jsonResponsePOST,
+		"GET":    			jsonResponseGET,
 	}
-	splunkResponses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
-	}
-	splunkServer := splunktest.MutitpleMockRequest(splunkResponses, true)
+	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 
 	return splunkServer
 }
 
 // Build a mock resource service server returning a response with the content of the sli file
-func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
+func buildMockResourceServiceServer(sliFilePath string, shipyardFilePath string, sloFilePath string, remediationFilePath string) (*httptest.Server, error) {
 
-	fileContent, err := os.ReadFile(filePath)
+	var getResponses []string
+	var postResponses []string
+	var paths []string
+	
+	err := updateGetResponses(&getResponses, &paths, sliFilePath, sliFileUri)
 	if err != nil {
 		return nil, err
 	}
-	jsonResourceFileResp := `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(fileContent) + `",
-		"resourceURI": "sli.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`
+	err = updateGetResponses(&getResponses, &paths, shipyardFilePath, shipyardUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, sloFilePath, sloUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, remediationFilePath, remediationUri)
+	if err != nil {
+		return nil, err
+	}
 
-	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp, false)
+	resourceServiceServer := utils.MultitpleMockRequest(getResponses, postResponses, paths, false)
 
 	return resourceServiceServer, nil
 }
 
+func updateGetResponses(getResponses *[]string, paths *[]string, filePath string, fileUri string) error{
+
+	if filePath != "" {
+		fileContent, err := os.ReadFile(filePath)
+		if err != nil {
+			return err
+		}
+
+		*getResponses = append(*getResponses, `{
+			"resourceContent": "` + base64.StdEncoding.EncodeToString(fileContent) + `",
+			"resourceURI":"` + fileUri +`",
+			"metadata": {
+			  "upstreamURL": "https://github.com/user/keptn.git",
+			  "version": "1.0.0"
+			}
+		  }`)
+	
+		*paths = append(*paths, fileUri)
+	}
+
+	return nil
+
+}

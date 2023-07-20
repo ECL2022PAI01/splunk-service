@@ -15,8 +15,9 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
-	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+	splunkjob "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
+	splunkalert "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -289,7 +290,7 @@ func connectToSplunk(splunkCreds splunkCredentials, skipSSL bool) *splunk.Splunk
 func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string) (*keptnv2.SLIResult, error) {
 
 	query := sliConfig[indicatorName]
-	params := splunk.RequestParams{
+	params := splunkjob.SearchParams{
 		SearchQuery:  query,
 		EarliestTime: data.GetSLI.Start,
 		LatestTime:   data.GetSLI.End,
@@ -303,7 +304,7 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 		return nil, fmt.Errorf("no query found for indicator %s", indicatorName)
 	}
 
-	spReq := splunk.SplunkRequest{
+	spReq := splunkjob.SearchRequest{
 		Params:  params,
 		Headers: map[string]string{},
 	}
@@ -339,10 +340,10 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 		return err
 	}
 
-	logger.Infof("Removing anciant alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
+	logger.Infof("Removing old alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
 
 	//listing all alerts
-	alertsList, err := splunkjob.ListAlertsNames(client)
+	alertsList, err := splunkalert.ListAlertsNames(client)
 	if err != nil {
 		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
 	}
@@ -350,7 +351,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
 		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
-			err := splunkjob.RemoveAlert(client, alert.Name)
+			err := splunkalert.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
 			}
@@ -440,7 +441,8 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 				for _, criteria := range criteriaGroup.Criteria {
 
 					//building the splunk alert condition
-					//TO SUPPORT RELATIVE CRITERIAS I'LL HAVE TO MODIFY THAT PART
+
+					//Skipping relative criterias
 					if strings.Contains(criteria, "+") || strings.Contains(criteria, "-") || strings.Contains(
 						criteria, "%",
 					) || (!strings.Contains(criteria, "<") && !strings.Contains(criteria, ">")) {
@@ -471,7 +473,7 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					alertSuppress := "1"
 
 					//Creates the alert datastructure
-					params := splunk.AlertParams{
+					params := splunkalert.AlertParams{
 						Name:           		alertName,
 						CronSchedule:   		cronSchedule,
 						SearchQuery:    		query,
@@ -485,13 +487,13 @@ func CreateSplunkAlertsIfSLOsAndRemediationDefined(client *splunk.SplunkClient, 
 					}
 					utils.RetrieveAlertTimeRange(&params)
 
-					spAlert := splunk.SplunkAlert{
+					spAlert := splunkalert.AlertRequest{
 						Params:  params,
 						Headers: map[string]string{},
 					}
 
 					//Creates the alert in splunk
-					err = splunkjob.CreateAlert(client, &spAlert)
+					err = createAlert(client, &spAlert)
 					if err != nil {
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
 					}
