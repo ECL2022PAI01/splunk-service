@@ -240,7 +240,7 @@ func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptn
 				}
 
 				for _, triggeredInstance := range triggeredInstances.Entry {
-					if triggeredInstance.Content.TriggerTime < int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
+					if triggeredInstance.Content.TriggerTime <= int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
 						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn, keptnOptions, envConfig)
 					}
 				}
@@ -248,7 +248,10 @@ func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptn
 			}
 
 		}
-
+		// Condition only verified in case of a test
+		if ddKeptn != nil {
+			return nil
+		}
 		time.Sleep(pollingFrequency * time.Second)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ECL2022PAI01/splunk-service/handler"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
@@ -15,12 +16,13 @@ import (
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
+
+	
 )
 
 const (
-	envVarLogLevel   = "LOG_LEVEL"
-	webhookUrlConst  = "192.168.49.2" //ATTENTION ICI
-	webhookPortConst = "30037"
+	envVarLogLevel          = "LOG_LEVEL"
+	UnhandleKeptnCloudEvent = "Unhandled Keptn Cloud Event : "
 )
 
 var env utils.EnvConfig
@@ -112,6 +114,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* Please follow the documentation provided above for more guidance on the different types.
 	* Feel free to delete parts that you don't need.
 	**/
+
 	switch event.Type() {
 
 	// -------------------------------------------------------
@@ -150,12 +153,16 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
  * Environment Variables
  * env=runlocal   -> will fetch resources from local drive instead of configuration service
  */
+var cloudEventListener = CloudEventListener
+var processKeptnCloudEvent = ProcessKeptnCloudEvent
+var handleConfigureMonitoringTriggeredEvent = handler.HandleConfigureMonitoringTriggeredEvent
+var handleGetSliTriggeredEvent = handler.HandleGetSliTriggeredEvent
+
 func main() {
 	utils.ConfigureLogger("", "", "")
 	if err := envconfig.Process("", &env); err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
-	logger.Info(cloudEventListener(os.Args[1:]))
 	os.Exit(cloudEventListener(os.Args[1:]))
 }
 

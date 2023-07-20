@@ -31,8 +31,26 @@ const (
 	getSliTriggeredEventFile              = "../test/events/get-sli.triggered.json"
 	configureMonitoringTriggeredEventFile = "../test/events/monitoring.configure.json"
 	sliFilePath                           = "../test/data/podtatohead.sli.yaml"
+	alertNamesFilePath                    = "../test/data/unitTests/firedAlerts.json"
 	defaultSplunkTestResult               = 1250
+	stage                                 = "production"
+	project                               = "fulltour2"
+	service                               = "helloservice"
+	state                                 = "OPEN"
+	problemTitle                          = "number_of_logs"
 )
+
+func initializeResponses(fileName string) (string, error) {
+
+	// load a json http response for requests to get fired alerts
+	file, err := os.ReadFile(fileName)
+	if err != nil {
+		return "", fmt.Errorf("Can't load %s: %w", fileName, err)
+	}
+	getResponse := string(file)
+
+	return getResponse, nil
+}
 
 /**
  * loads a cloud event from the passed test json file and initializes a keptn object with it
@@ -102,17 +120,18 @@ func TestHandleSpecificSli(t *testing.T) {
 }
 
 // Tests the handleGetSliTriggered function
+// Tests the handleGetSliTriggered function
 func TestHandleGetSliTriggered(t *testing.T) {
 
 	//Building a mock resource service server
-	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
 		t.Fatalf("Error reading sli file : %s", err.Error())
 	}
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := utils.BuildMockSplunkServer(defaultSplunkTestResult)
+	splunkServer := buildMockSplunkServer(t)
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -180,23 +199,81 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	}
 }
 
-// Build a mock resource service server returning a response with the content of the sli file
-func buildMockResourceServiceServer(filePath string) (*httptest.Server, error) {
+// Builds a fake splunk server able to respond when we try to list fired alerts and instances of fired alerts
+func buildMockSplunkServer(t *testing.T) *httptest.Server {
 
-	fileContent, err := os.ReadFile(filePath)
+	//getting the default splunk responses for listing fired alerts and instances of a fired alert
+	getAlertsNamesResponse, err := initializeResponses(alertNamesFilePath)
+	if err != nil {
+		t.Fatal("Error initialising default responses for the mock splunk server.")
+	}
+
+	jsonResponsePOST := `{
+		"sid": "10"
+	}`
+	jsonResponseGET := `{
+		"results":[{"theRequest":"` + fmt.Sprint(defaultSplunkTestResult) + `"}]
+	}`
+
+	splunkResponses := make([]map[string]interface{}, 2)
+	splunkResponses[0] = map[string]interface{}{
+		"getAlertsNames": getAlertsNamesResponse,
+		"POST":           jsonResponsePOST,
+		"GET":            jsonResponseGET,
+	}
+	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
+
+	return splunkServer
+}
+
+// Build a mock resource service server returning a response with the content of the sli file
+func buildMockResourceServiceServer(sliFilePath string, shipyardFilePath string, sloFilePath string, remediationFilePath string) (*httptest.Server, error) {
+
+	var getResponses []string
+	var postResponses []string
+	var paths []string
+
+	err := updateGetResponses(&getResponses, &paths, sliFilePath, sliFileUri)
 	if err != nil {
 		return nil, err
 	}
-	jsonResourceFileResp := `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(fileContent) + `",
-		"resourceURI": "sli.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`
+	err = updateGetResponses(&getResponses, &paths, shipyardFilePath, shipyardUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, sloFilePath, sloUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, remediationFilePath, remediationUri)
+	if err != nil {
+		return nil, err
+	}
 
-	resourceServiceServer := splunktest.MockRequest(jsonResourceFileResp, false)
+	resourceServiceServer := utils.MultitpleMockRequest(getResponses, postResponses, paths, false)
 
 	return resourceServiceServer, nil
+}
+
+func updateGetResponses(getResponses *[]string, paths *[]string, filePath string, fileUri string) error {
+
+	if filePath != "" {
+		fileContent, err := os.ReadFile(filePath)
+		if err != nil {
+			return err
+		}
+
+		*getResponses = append(*getResponses, `{
+			"resourceContent": "`+base64.StdEncoding.EncodeToString(fileContent)+`",
+			"resourceURI":"`+fileUri+`",
+			"metadata": {
+			  "upstreamURL": "https://github.com/user/keptn.git",
+			  "version": "1.0.0"
+			}
+		  }`)
+
+		*paths = append(*paths, fileUri)
+	}
+
+	return nil
 }

@@ -20,6 +20,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+var createAlert = splunkalerts.CreateAlert
+
 // Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) error {
 	var shkeptncontext string
@@ -59,7 +61,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			logger.Info("Start polling for triggered alerts ...")
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
-	}else {
+	} else {
 		logger.Info("No alerts configured, no need to start the polling system")
 	}
 
@@ -262,7 +264,7 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 					}
 
 					//Creates the alert in splunk
-					err = splunkalerts.CreateAlert(client, &spAlert)
+					err = createAlert(client, &spAlert)
 					if err != nil {
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
 						return false, fmt.Errorf("error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)

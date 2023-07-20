@@ -8,13 +8,25 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
+	"github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 )
 
-// Tests the HandleMonitoringTriggeredEvent
+const (
+	sloFilePath         = "../test/data/podtatohead.slo.yaml"
+	shipyardFilePath    = "../test/data/unitTests/shipyard.yaml"
+	remediationFilePath = "../test/data/unitTests/remediation.yaml"
+	shipyardUri         = "shipyard.yaml"
+	sloUri              = "slo.yaml"
+	remediationUri      = "remediation.yaml"
+	sli                 = "number_of_errors"
+	criteria            = ">=100"
+)
+
 func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	//Building a mock resource service server
-	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath)
+	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
 		t.Errorf("Error reading sli file : %s", err.Error())
 		t.Fail()
@@ -22,7 +34,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	defer resourceServiceServer.Close()
 
 	//Building a mock splunk server
-	splunkServer := utils.BuildMockSplunkServer(defaultSplunkTestResult)
+	splunkServer := buildMockSplunkServer(t)
 	defer splunkServer.Close()
 
 	//setting splunk credentials
@@ -48,6 +60,19 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 		t.Fatal("Error getting keptn event data")
 	}
 
+	alertCreated := false
+
+	createAlert = func(client *splunk.SplunkClient, spAlert *alerts.AlertRequest) error {
+
+		if spAlert.Params.Name == data.Project+","+stage+","+data.Service+","+sli+","+criteria+","+keptnSuffix &&
+			spAlert.Params.SearchQuery == `source="http:podtato-error" (index="keptn-splunk-dev") "[error]" | stats count` &&
+			spAlert.Params.AlertCondition == "search count "+criteria {
+			alertCreated = true
+		}
+
+		return nil
+	}
+
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data, env)
 
 	if err != nil {
@@ -69,5 +94,10 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	// Verify that the second CE sent is a .finished event
 	if keptnv2.GetFinishedEventType(keptnv2.ConfigureMonitoringTaskName) != ddKeptn.EventSender.(*fake.EventSender).SentEvents[1].Type() {
 		t.Fatal("Expected a configure-monitoring.finished event type")
+	}
+
+	// Verify if createAlert has been called (We have one stage, one objective and one criteria so only one alert should be created)
+	if alertCreated == false {
+		t.Fatal("No alert has been created")
 	}
 }
