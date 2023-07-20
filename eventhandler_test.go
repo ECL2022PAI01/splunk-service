@@ -308,7 +308,6 @@ func buildMockSplunkServer(t *testing.T) *httptest.Server {
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
 		"getAlertsNames": 	getAlertsNamesResponse,
-		"createAlert": 		"",	 //the response has default value in th splunk-sgk-go. The body of the request is sent back in the response
 		"POST":            	jsonResponsePOST,
 		"GET":    			jsonResponseGET,
 	}
@@ -320,86 +319,52 @@ func buildMockSplunkServer(t *testing.T) *httptest.Server {
 // Build a mock resource service server returning a response with the content of the sli file
 func buildMockResourceServiceServer(sliFilePath string, shipyardFilePath string, sloFilePath string, remediationFilePath string) (*httptest.Server, error) {
 
-	var sliFileContent, shipyardFileContent, sloFileContent, remediationFileContent []byte
-	var err error
-
-	if sliFilePath != "" {
-		sliFileContent, err = os.ReadFile(sliFilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if shipyardFilePath != "" {
-		shipyardFileContent, err = os.ReadFile(shipyardFilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if sloFilePath != "" {
-		sloFileContent, err = os.ReadFile(sloFilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if remediationFilePath != "" {
-		remediationFileContent, err = os.ReadFile(remediationFilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var getResponses []string
 	var postResponses []string
 	var paths []string
-
-	getResponses = append(getResponses, `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(sliFileContent) + `",
-		"resourceURI": "sli.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`)
-
-	paths = append(paths, sliFileUri)
-
-	getResponses = append(getResponses, `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(shipyardFileContent) + `",
-		"resourceURI": "shipyard.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`)
-
-	paths = append(paths, shipyardUri)
-
-	getResponses = append(getResponses, `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(sloFileContent) + `",
-		"resourceURI": "slo.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`)
-
-	paths = append(paths, sloUri)
-
-	getResponses = append(getResponses, `{
-		"resourceContent": "` + base64.StdEncoding.EncodeToString(remediationFileContent) + `",
-		"resourceURI": "remediation.yaml",
-		"metadata": {
-		  "upstreamURL": "https://github.com/user/keptn.git",
-		  "version": "1.0.0"
-		}
-	  }`)
-
-	paths = append(paths, remediationUri)
+	
+	err := updateGetResponses(&getResponses, &paths, sliFilePath, sliFileUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, shipyardFilePath, shipyardUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, sloFilePath, sloUri)
+	if err != nil {
+		return nil, err
+	}
+	err = updateGetResponses(&getResponses, &paths, remediationFilePath, remediationUri)
+	if err != nil {
+		return nil, err
+	}
 
 	resourceServiceServer := utils.MultitpleMockRequest(getResponses, postResponses, paths, false)
 
 	return resourceServiceServer, nil
+}
+
+func updateGetResponses(getResponses *[]string, paths *[]string, filePath string, fileUri string) error{
+
+	if filePath != "" {
+		fileContent, err := os.ReadFile(filePath)
+		if err != nil {
+			return err
+		}
+
+		*getResponses = append(*getResponses, `{
+			"resourceContent": "` + base64.StdEncoding.EncodeToString(fileContent) + `",
+			"resourceURI":"` + fileUri +`",
+			"metadata": {
+			  "upstreamURL": "https://github.com/user/keptn.git",
+			  "version": "1.0.0"
+			}
+		  }`)
+	
+		*paths = append(*paths, fileUri)
+	}
+
+	return nil
+
 }
