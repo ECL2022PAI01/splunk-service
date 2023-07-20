@@ -10,7 +10,7 @@ import (
 
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -117,7 +117,7 @@ func BuildMockSplunkServer(splunkResult float64) *httptest.Server {
 	splunkResponses[1] = map[string]interface{}{
 		"GET": jsonResponseGET,
 	}
-	splunkServer := splunktest.MutitpleMockRequest(splunkResponses, true)
+	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 
 	return splunkServer
 }

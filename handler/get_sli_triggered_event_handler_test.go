@@ -19,7 +19,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 

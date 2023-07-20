@@ -7,8 +7,8 @@ import (
 
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
-	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+	splunkjobs "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -136,7 +136,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *keptnv2.GetSLITriggeredEventData, sliConfig map[string]string) (*keptnv2.SLIResult, error) {
 
 	query := sliConfig[indicatorName]
-	params := splunk.RequestParams{
+	params := splunkjobs.SearchParams{
 		SearchQuery:  query,
 		EarliestTime: data.GetSLI.Start,
 		LatestTime:   data.GetSLI.End,
@@ -150,13 +150,13 @@ func handleSpecificSLI(client *splunk.SplunkClient, indicatorName string, data *
 		return nil, fmt.Errorf("no query found for indicator %s", indicatorName)
 	}
 
-	spReq := splunk.SplunkRequest{
+	spReq := splunkjobs.SearchRequest{
 		Params:  params,
 		Headers: map[string]string{},
 	}
 
 	// get the metric we want
-	sliValue, err := splunkjob.GetMetricFromNewJob(client, &spReq)
+	sliValue, err := splunkjobs.GetMetricFromNewJob(client, &spReq)
 	if err != nil {
 		return nil, fmt.Errorf("error getting value for the query: %v : %w", spReq.Params.SearchQuery, err)
 	}

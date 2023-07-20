@@ -13,10 +13,10 @@ import (
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
-	"github.com/keptn/go-utils/pkg/lib/keptn"
-	"github.com/kuro-jojo/splunk-sdk-go/client"
-	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
+	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 
+	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
@@ -75,7 +75,7 @@ type alertResult struct {
 // 	Deployment string `json:"deployment,omitempty" yaml:"deployment"`
 // }
 
-type remediationTriggeredEventData struct {
+type RemediationTriggeredEventData struct {
 	keptnv2.EventData
 
 	// Problem contains details about the problem
@@ -86,7 +86,7 @@ type remediationTriggeredEventData struct {
 }
 
 // ProcessAndForwardAlertEvent reads the payload from the request and sends a valid Cloud event to the keptn event broker
-func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *keptn.Logger, client *client.SplunkClient, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
+func ProcessAndForwardAlertEvent(triggeredInstance splunkalerts.EntryItem, logger *keptn.Logger, client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	logger.Info("New alert found in Splunk Alerting system : " + triggeredInstance.Name)
 
@@ -109,7 +109,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 		},
 	}
 
-	newEventData := remediationTriggeredEventData{
+	newEventData := RemediationTriggeredEventData{
 		EventData: keptnv2.EventData{
 			Project: alertDetails[0],
 			Stage:   alertDetails[1],
@@ -134,7 +134,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 	}
 
 	logger.Debug("Sending event to eventbroker")
-	err := createAndSendCE(newEventData, shkeptncontext, keptnOptions, envConfig)
+	err := createAndSendCE(newEventData, shkeptncontext, ddKeptn, keptnOptions, envConfig)
 	if err != nil {
 		logger.Error("Could not send cloud event: " + err.Error())
 	} else {
@@ -146,7 +146,7 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkjob.EntryItem, logger *
 }
 
 // createAndSendCE create a new problem.triggered event and send it to Keptn
-func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext string, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
+func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext string, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 	source, _ := url.Parse("splunk")
 
 	eventType := keptnv2.GetTriggeredEventType(problemData.Stage + "." + remediationTaskName)
@@ -163,17 +163,19 @@ func createAndSendCE(problemData remediationTriggeredEventData, shkeptncontext s
 		return fmt.Errorf("unable to set cloud event data: %w", err)
 	}
 
-	ddKeptn, err := keptnv2.NewKeptn(&event, keptnOptions)
+	if ddKeptn == nil {
+		ddKeptn, err = keptnv2.NewKeptn(&event, keptnOptions)
 
-	//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
-	if envConfig.Env == "local" {
-		authToken := os.Getenv("KEPTN_API_TOKEN")
-		authHeader := "x-token"
-		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
-	}
+		//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
+		if envConfig.Env == "local" {
+			authToken := os.Getenv("KEPTN_API_TOKEN")
+			authHeader := "x-token"
+			ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
+		}
 
-	if err != nil {
-		return fmt.Errorf("Could not create Keptn Handler: " + err.Error())
+		if err != nil {
+			return fmt.Errorf("Could not create Keptn Handler: " + err.Error())
+		}
 	}
 
 	err = ddKeptn.SendCloudEvent(event)
@@ -214,26 +216,16 @@ func createOrApplyKeptnContext(contextID string) string {
 }
 
 // FiringAlertsPoll will handle all requests for '/health' and '/ready'
-func FiringAlertsPoll(keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
+func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
 	shkeptncontext := uuid.New().String()
 	logger := keptn.NewLogger(shkeptncontext, "", serviceName)
-
-	//Getting splunk API URL, PORT and TOKEN
-	splunkCreds, err := utils.GetSplunkCredentials(envConfig)
-	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-		return err
-	}
-
-	// connecting to splunk
-	client := utils.ConnectToSplunk(*splunkCreds, true)
 
 	for {
 
 		//listing fired alerts
 		logger.Info("Searching for triggered alerts ...")
-		triggeredAlerts, err := splunkjob.GetTriggeredAlerts(client)
+		triggeredAlerts, err := splunkalerts.GetTriggeredAlerts(client)
 		if err != nil {
 			logger.Errorf("Error calling GetTriggeredAlerts() while searchcing for new alerts: %v : %v", triggeredAlerts, err)
 		}
@@ -242,14 +234,14 @@ func FiringAlertsPoll(keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) e
 
 			if strings.HasSuffix(triggeredAlert.Name, keptnSuffix) {
 
-				triggeredInstances, err := splunkjob.GetInstancesOfTriggeredAlert(client, triggeredAlert.Links.List)
+				triggeredInstances, err := splunkalerts.GetInstancesOfTriggeredAlert(client, triggeredAlert.Links.List)
 				if err != nil {
 					logger.Errorf("Error calling GetInstancesOfTriggeredAlert(): %v : %v", triggeredInstances, err)
 				}
 
 				for _, triggeredInstance := range triggeredInstances.Entry {
 					if triggeredInstance.Content.TriggerTime < int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
-						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, keptnOptions, envConfig)
+						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn, keptnOptions, envConfig)
 					}
 				}
 

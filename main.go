@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ECL2022PAI01/splunk-service/alerts"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
@@ -183,12 +182,6 @@ func CloudEventListener(args []string) int {
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
-
-	// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
-	go func() {
-		logger.Info("Start polling for triggered alerts ...")
-		alerts.FiringAlertsPoll(keptnOptions, env)
-	}()
 
 	ctx := context.Background()
 	ctx = cloudevents.WithEncodingStructured(ctx)

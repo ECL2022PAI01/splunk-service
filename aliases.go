@@ -1,6 +1,9 @@
 package main
 
-import "github.com/ECL2022PAI01/splunk-service/handler"
+import (
+	"github.com/ECL2022PAI01/splunk-service/handler"
+
+ 	splunkalert "github.com/kuro-jojo/splunk-sdk-go/src/alerts")
 
 const UnhandleKeptnCloudEvent = "Unhandled Keptn Cloud Event : "
 
@@ -12,3 +15,4 @@ var cloudEventListener = CloudEventListener
 var processKeptnCloudEvent = ProcessKeptnCloudEvent
 var handleConfigureMonitoringTriggeredEvent = handler.HandleConfigureMonitoringTriggeredEvent
 var handleGetSliTriggeredEvent = handler.HandleGetSliTriggeredEvent
+var createAlert = splunkalert.CreateAlert

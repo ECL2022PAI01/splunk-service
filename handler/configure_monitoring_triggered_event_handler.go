@@ -6,15 +6,17 @@ import (
 	"log"
 	"strings"
 
+	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ECL2022PAI01/splunk-service/alerts"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/client"
-	splunkjob "github.com/kuro-jojo/splunk-sdk-go/jobs"
+	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -42,13 +44,23 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	}
 
 	// connecting to splunk
+	logger.Info(&splunkCreds)
 	client := utils.ConnectToSplunk(*splunkCreds, true)
 
 	//Creating the alerts
-	err = CreateSplunkAlertsForEachStage(client, ddKeptn, *data, envConfig)
+	setPollingSystem, err := CreateSplunkAlertsForEachStage(client, ddKeptn, *data, envConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
+	}
+	if setPollingSystem {
+		// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
+		go func() {
+			logger.Info("Start polling for triggered alerts ...")
+			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
+		}()
+	}else {
+		logger.Info("No alerts configured, no need to start the polling system")
 	}
 
 	//Making the configure monitoring finished event
@@ -77,8 +89,10 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 }
 
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
-func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) error {
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
+	// if no alerts are configured, no need to start the polling system
+	setPollingSystem := false
 	//Getting the shipyard configuration
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
@@ -86,23 +100,25 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 
 	shipyard, err := k.GetShipyard()
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	logger.Infof("Removing anciant alerts that might have been set for the service %v in project %v", eventData.Service, eventData.Project)
+	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
 
 	//listing all alerts
-	alertsList, err := splunkjob.ListAlertsNames(client)
+	alertsList, err := splunkalerts.ListAlertsNames(client)
 	if err != nil {
 		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %v", alertsList, err)
 	}
 
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
 		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
-			err := splunkjob.RemoveAlert(client, alert.Name)
+			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
+				return false, fmt.Errorf("error calling RemoveAlert(): %v : %v", alertsList, err)
 			}
 		}
 	}
@@ -110,25 +126,26 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	//Creating the alerts for each stage of the shipyard file
 	for _, stage := range shipyard.Spec.Stages {
 		logger.Infof("Creating alerts for stage : %v", stage)
-		err = CreateSplunkAlerts(client, k, eventData, stage, envConfig)
-
+		setPollingSystemTmp, err := CreateSplunkAlerts(client, k, eventData, stage, envConfig)
 		if err != nil {
-			return fmt.Errorf("error configuring splunk alerts: %w", err)
+			return false, fmt.Errorf("error configuring splunk alerts: %w", err)
+		}
+		if setPollingSystemTmp {
+			setPollingSystem = true
 		}
 	}
 
-	return nil
-
+	return setPollingSystem, nil
 }
 
 // Creates the splunk alerts of a particular stage if slo.yaml and remediation.yaml files are defined
-func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage, envConfig utils.EnvConfig) error {
+func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage keptnv2.Stage, envConfig utils.EnvConfig) (bool, error) {
 
 	//Trying to retrieve SLO file
 	slos, err := retrieveSLOs(k.ResourceHandler, eventData, stage.Name)
 	if err != nil || slos == nil {
 		logger.Info("No SLO file found for stage " + stage.Name + " error : " + err.Error() + ". No alerting rules created for this stage")
-		return nil
+		return false, nil
 	}
 
 	const remediationFileDefaultName = "remediation.yaml"
@@ -145,11 +162,11 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 	if errors.Is(err, api.ResourceNotFoundError) {
 		logger.Infof("No remediation defined for project %s stage %s, skipping setup of splunk alerts",
 			eventData.Project, stage.Name)
-		return nil
+		return false, nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("error retrieving remediation definition %s for project %s and stage %s: %w",
+		return false, fmt.Errorf("error retrieving remediation definition %s for project %s and stage %s: %w",
 			remediationFileDefaultName, eventData.Project, stage.Name, err)
 	}
 
@@ -158,12 +175,16 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 	if err != nil {
 		log.Println("Failed to get custom queries for project " + eventData.Project)
 		log.Println(err.Error())
-		return err
+		return false, err
 	}
 
 	logger.Info("Going over SLO.objectives")
 
 	//For each objective
+	if len(slos.Objectives) == 0 {
+		logger.Info("No objectives defined in the SLO file for stage " + stage.Name + ". No alerting rules created for this stage")
+		return false, nil
+	}
 	for _, objective := range slos.Objectives {
 		logger.Info("SLO: " + objective.DisplayName + ", " + objective.SLI)
 
@@ -181,7 +202,7 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 		if err != nil {
 			log.Println("Failed to get the result field name in order to create the alert condition for " + eventData.Project)
 			log.Println(err.Error())
-			return err
+			return false, err
 		}
 
 		//For each criteria of each pass criteria group of an objective (corresponding to an sli)
@@ -221,7 +242,7 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 					alertSuppress := "1"
 
 					//Creates the alert datastructure
-					params := splunk.AlertParams{
+					params := splunkalerts.AlertParams{
 						Name:                alertName,
 						CronSchedule:        cronSchedule,
 						SearchQuery:         query,
@@ -235,22 +256,23 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 					}
 					params.EarliestTime, params.LatestTime, params.SearchQuery = utils.RetrieveQueryTimeRange(params.EarliestTime, params.LatestTime, params.SearchQuery)
 
-					spAlert := splunk.SplunkAlert{
+					spAlert := splunkalerts.AlertRequest{
 						Params:  params,
 						Headers: map[string]string{},
 					}
 
 					//Creates the alert in splunk
-					err = splunkjob.CreateAlert(client, &spAlert)
+					err = splunkalerts.CreateAlert(client, &spAlert)
 					if err != nil {
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
+						return false, fmt.Errorf("error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
 					}
 
 				}
 			}
 		}
 	}
-	return nil
+	return true, nil
 }
 
 // Retrieves the SLOs from the slo.yaml file
