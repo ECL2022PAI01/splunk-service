@@ -19,6 +19,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -50,11 +51,11 @@ func TestProcessKeptnCloudEvent(t *testing.T) {
 	*calledSLI = false
 	*calledConfig = false
 
-	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, env utils.EnvConfig) error {
+	handleConfigureMonitoringTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, env utils.EnvConfig, client *splunk.SplunkClient, pollingSystemHasBeenStarted bool) error {
 		*calledConfig = true
 		return nil
 	}
-	handleGetSliTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.GetSLITriggeredEventData, env utils.EnvConfig) error {
+	handleGetSliTriggeredEvent = func(ddKeptn *keptnv2.Keptn, incomingEvent event.Event, data *keptnv2.GetSLITriggeredEventData, client *splunk.SplunkClient) error {
 		*calledSLI = true
 		return nil
 	}
@@ -99,7 +100,7 @@ func TestCloudEventListener(t *testing.T) {
 
 // Tests the main function by verifying if the exit code corresponds to the one returned by cloudEventListener function
 func TestMain(t *testing.T) {
-	const expectedReturn = 15
+	const expectedReturn = 10
 
 	cloudEventListener = func(args []string) int {
 		return expectedReturn
@@ -108,14 +109,16 @@ func TestMain(t *testing.T) {
 		main()
 		return
 	}
-
 	cmd := exec.Command(os.Args[0], "-test.run=TestMain")
 	cmd.Env = append(os.Environ(), "BE_MAIN=1")
+	logger.Infof("Running test %v", cmd.Args)
 	err := cmd.Run()
-	if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == expectedReturn {
+
+	e, ok := err.(*exec.ExitError)
+	if ok && e.ExitCode() == expectedReturn {
 		return
 	}
-	t.Fatalf("process ran with err %v, want exit status "+fmt.Sprint(expectedReturn), err)
+	t.Fatalf("process ran with err %v, want exit status %v", expectedReturn, err)
 }
 
 // reads the json event file and convert its content into an event

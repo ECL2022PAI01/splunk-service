@@ -25,7 +25,7 @@ import (
 var createAlert = splunkalerts.CreateAlert
 
 // Handles configure monitoring event
-func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) error {
+func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig, client *splunk.SplunkClient, pollingSystemHasBeenStarted bool) error {
 	var shkeptncontext string
 
 	//Configuring the logger
@@ -40,26 +40,17 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		return err
 	}
 
-	//Getting splunk API URL, PORT and TOKEN
-	splunkCreds, err := utils.GetSplunkCredentials(envConfig)
-	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %v", err.Error())
-		return err
-	}
-
-	// connecting to splunk
-	logger.Info(&splunkCreds)
-	client := utils.ConnectToSplunk(*splunkCreds, true)
-
 	//Creating the alerts
 	setPollingSystem, err := CreateSplunkAlertsForEachStage(client, ddKeptn, *data, envConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
-	if setPollingSystem {
-		// Starts polling for triggered alerts if configure monitoring is successful
-		alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
+	if !pollingSystemHasBeenStarted && setPollingSystem {
+		go func() {
+			// Starts polling for triggered alerts if configure monitoring is successful
+			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
+		}()
 	} else {
 		logger.Info("No alerts configured, no need to start the polling system")
 	}

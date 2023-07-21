@@ -72,8 +72,15 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 		return nil
 	}
+	// create splunk credentials
+	splunkCreds, err := utils.GetSplunkCredentials(env)
 
-	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data, env)
+	if err != nil {
+		t.Fatalf("Failed to get splunk credentials: %s", err)
+		return
+	}
+	client := utils.ConnectToSplunk(*splunkCreds, true)
+	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data, env, client, false)
 
 	if err != nil {
 		t.Fatalf("Error: %s", err.Error())
