@@ -5,10 +5,12 @@ import (
 
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 
+	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+
+	splunkjobs "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/jobs"
+
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
-	splunkjobs "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
 	logger "github.com/sirupsen/logrus"
 )
 

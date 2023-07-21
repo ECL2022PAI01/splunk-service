@@ -10,11 +10,13 @@ import (
 	"strings"
 	"time"
 
+	splunkalerts "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/alerts"
+
+	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
-	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"

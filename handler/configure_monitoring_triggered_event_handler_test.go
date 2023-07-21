@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
-	"github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 )
 
 const (

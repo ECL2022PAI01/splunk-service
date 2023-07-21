@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+	splunktest "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/tests"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	"github.com/google/uuid"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
-	splunktest "github.com/kuro-jojo/splunk-sdk-go/tests"
 )
 
 const (
