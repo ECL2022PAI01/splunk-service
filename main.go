@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ECL2022PAI01/splunk-service/alerts"
 	"github.com/ECL2022PAI01/splunk-service/handler"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
@@ -15,9 +16,9 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
+	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 	logger "github.com/sirupsen/logrus"
-
-	
 )
 
 const (
@@ -26,7 +27,11 @@ const (
 )
 
 var env utils.EnvConfig
-var keptnOptions = keptn.KeptnOpts{}
+var keptnOptions keptn.KeptnOpts
+var splunkClient *splunk.SplunkClient
+var splunkCreds *utils.SplunkCredentials
+var ddKeptn *keptnv2.Keptn
+var pollingSystemHasBeenStarted = false
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
 
@@ -63,6 +68,9 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	//Setting authentication header when accessing to keptn locally in order to be able to access to the resource-service
 	if env.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
+		if authToken == "" {
+			return errors.New("KEPTN_API_TOKEN not set")
+		}
 		authHeader := "x-token"
 		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
 	}
@@ -126,7 +134,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		parseKeptnCloudEventPayload(event, eventData)
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData, env)
+		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData, env, splunkClient, pollingSystemHasBeenStarted)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)
@@ -136,7 +144,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventData)
 
-		return handleGetSliTriggeredEvent(ddKeptn, event, eventData, env)
+		return handleGetSliTriggeredEvent(ddKeptn, event, eventData, splunkClient)
 
 	}
 	// Unknown Event -> Throw Error!
@@ -160,8 +168,42 @@ var handleGetSliTriggeredEvent = handler.HandleGetSliTriggeredEvent
 
 func main() {
 	utils.ConfigureLogger("", "", "")
-	if err := envconfig.Process("", &env); err != nil {
+	logger.Infof("Starting splunk-service...")
+	err := envconfig.Process("", &env)
+	if err != nil {
 		logger.Fatalf("Failed to process env var: %s", err)
+	}
+
+	// create splunk credentials
+	splunkCreds, err = utils.GetSplunkCredentials(env)
+
+	if err != nil {
+		logger.Fatalf("Failed to get splunk credentials: %s", err)
+		return
+	}
+
+	// connect to splunk
+	splunkClient = utils.ConnectToSplunk(*splunkCreds, true)
+
+	// start polling if alerts are configured
+	alertsList, err := splunkalerts.ListAlertsNames(splunkClient)
+	if err != nil {
+		logger.Fatalf("Failed to get alerts list: %s", err)
+		return
+	}
+
+	if len(alertsList.Item) > 0 {
+		ddKeptn, err = keptnv2.NewKeptn(nil, keptnOptions)
+		if err != nil {
+			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
+
+		}
+		go func() {
+			logger.Info("Start polling for triggered alerts ...")
+			alerts.FiringAlertsPoll(splunkClient, ddKeptn, keptn.KeptnOpts{}, env)
+		}()
+
+		pollingSystemHasBeenStarted = true
 	}
 	os.Exit(cloudEventListener(os.Args[1:]))
 }

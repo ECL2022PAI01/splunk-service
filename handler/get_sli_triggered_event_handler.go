@@ -17,7 +17,7 @@ const keptnSuffix = "keptn"
 const serviceName = "splunk-service"
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
-func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData, envConfig utils.EnvConfig) error {
+func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.GetSLITriggeredEventData, client *splunk.SplunkClient) error {
 	var shkeptncontext string
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	utils.ConfigureLogger(incomingEvent.Context.GetID(), shkeptncontext, "LOG_LEVEL")
@@ -76,18 +76,8 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	indicators := data.GetSLI.Indicators
 	sliResults := []*keptnv2.SLIResult{}
 
-	// get splunk API URL, PORT and TOKEN
-	// TRY TO MAKE A FUNCTION
-	splunkCreds, err := utils.GetSplunkCredentials(envConfig)
-	if err != nil {
-		logger.Errorf("failed to get Splunk Credentials: %s", err.Error())
-		return err
-	}
-
 	logger.Info("indicators:", indicators)
 	var sliResult *keptnv2.SLIResult
-
-	client := utils.ConnectToSplunk(*splunkCreds, true)
 
 	for _, indicatorName := range indicators {
 		sliResult, err = handleSpecificSLI(client, indicatorName, data, sliConfig)
