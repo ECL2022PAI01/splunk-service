@@ -30,7 +30,6 @@ var env utils.EnvConfig
 var keptnOptions keptn.KeptnOpts
 var splunkClient *splunk.SplunkClient
 var splunkCreds *utils.SplunkCredentials
-var ddKeptn *keptnv2.Keptn
 var pollingSystemHasBeenStarted = false
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
@@ -174,6 +173,33 @@ func main() {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
+	// create splunk credentials
+	splunkCreds, err = utils.GetSplunkCredentials(env)
+
+	if err != nil {
+		logger.Fatalf("Failed to get splunk credentials: %s", err)
+	}
+	// connect to splunk
+	splunkClient = utils.ConnectToSplunk(*splunkCreds, true)
+
+	// start polling if alerts are configured
+	alertsList, err := splunkalerts.ListAlertsNames(splunkClient)
+	if err != nil {
+		logger.Fatalf("Failed to get alerts list: %s", err)
+	}
+
+	if len(alertsList.Item) > 0 {
+		if err != nil {
+			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
+
+		}
+		go func() {
+			logger.Info("Start polling for triggered alerts ...")
+			alerts.FiringAlertsPoll(splunkClient, nil, keptnOptions, env)
+		}()
+
+		pollingSystemHasBeenStarted = true
+	}
 	os.Exit(cloudEventListener(os.Args[1:]))
 }
 
@@ -214,35 +240,6 @@ func CloudEventListener(args []string) int {
 	c, err := cloudevents.NewClient(p)
 	if err != nil {
 		logger.Fatalf("failed to create client, %v", err)
-	}
-
-	// create splunk credentials
-	splunkCreds, err = utils.GetSplunkCredentials(env)
-
-	if err != nil {
-		logger.Fatalf("Failed to get splunk credentials: %s", err)
-	}
-	// connect to splunk
-	splunkClient = utils.ConnectToSplunk(*splunkCreds, true)
-
-	// start polling if alerts are configured
-	alertsList, err := splunkalerts.ListAlertsNames(splunkClient)
-	if err != nil {
-		logger.Fatalf("Failed to get alerts list: %s", err)
-	}
-
-	if len(alertsList.Item) > 0 {
-		ddKeptn, err = keptnv2.NewKeptn(nil, keptnOptions)
-		if err != nil {
-			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
-
-		}
-		go func() {
-			logger.Info("Start polling for triggered alerts ...")
-			alerts.FiringAlertsPoll(splunkClient, ddKeptn, keptn.KeptnOpts{}, env)
-		}()
-
-		pollingSystemHasBeenStarted = true
 	}
 
 	logger.Infof("Starting receiver")
