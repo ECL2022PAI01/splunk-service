@@ -14,9 +14,9 @@ import (
 
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 
-	"github.com/ECL2022PAI01/splunk-service/alerts"
-	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/keptn-contrib/splunk-service/alerts"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
 	logger "github.com/sirupsen/logrus"

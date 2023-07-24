@@ -12,6 +12,8 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/keptn-contrib/splunk-service/handler"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
