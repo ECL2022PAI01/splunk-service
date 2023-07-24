@@ -16,8 +16,8 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 	logger "github.com/sirupsen/logrus"
 )
 

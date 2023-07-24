@@ -18,7 +18,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 	logger "github.com/sirupsen/logrus"
 )
 
