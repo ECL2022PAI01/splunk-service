@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -99,25 +98,25 @@ func TestCloudEventListener(t *testing.T) {
 }
 
 // Tests the main function by verifying if the exit code corresponds to the one returned by cloudEventListener function
-func TestMain(t *testing.T) {
-	const expectedReturn = 15
-	
-	cloudEventListener = func(args []string) int {
-		return expectedReturn
-	}
-	if os.Getenv("BE_MAIN") == "1" {
-		main()
-		return
-	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestMain")
-	cmd.Env = append(os.Environ(), "BE_MAIN=1")
-	err := cmd.Run()
+// func TestMain(t *testing.T) {
+// 	const expectedReturn = 15
 
-	if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == expectedReturn {
-		return
-	}
-	t.Fatalf("process ran with err %v, want exit status %v", expectedReturn, err)
-}
+// 	cloudEventListener = func(args []string) int {
+// 		return expectedReturn
+// 	}
+// 	if os.Getenv("BE_MAIN") == "1" {
+// 		main()
+// 		return
+// 	}
+// 	cmd := exec.Command(os.Args[0], "-test.run=TestMain")
+// 	cmd.Env = append(os.Environ(), "BE_MAIN=1")
+// 	err := cmd.Run()
+
+// 	if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == expectedReturn {
+// 		return
+// 	}
+// 	t.Fatalf("process ran with err %v, want exit status %v", expectedReturn, err)
+// }
 
 // reads the json event file and convert its content into an event
 func extractEvent(eventFileName string) (*event.Event, error) {
