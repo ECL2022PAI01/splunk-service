@@ -100,8 +100,8 @@ func TestCloudEventListener(t *testing.T) {
 
 // Tests the main function by verifying if the exit code corresponds to the one returned by cloudEventListener function
 func TestMain(t *testing.T) {
-	const expectedReturn = 10
-
+	const expectedReturn = 15
+	
 	cloudEventListener = func(args []string) int {
 		return expectedReturn
 	}
@@ -111,11 +111,9 @@ func TestMain(t *testing.T) {
 	}
 	cmd := exec.Command(os.Args[0], "-test.run=TestMain")
 	cmd.Env = append(os.Environ(), "BE_MAIN=1")
-	logger.Infof("Running test %v", cmd.Args)
 	err := cmd.Run()
 
-	e, ok := err.(*exec.ExitError)
-	if ok && e.ExitCode() == expectedReturn {
+	if e, ok := err.(*exec.ExitError); ok && e.ExitCode() == expectedReturn {
 		return
 	}
 	t.Fatalf("process ran with err %v, want exit status %v", expectedReturn, err)
