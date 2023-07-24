@@ -15,7 +15,7 @@ import (
 )
 
 const sliFileUri = "splunk/sli.yaml"
-const keptnSuffix = "keptn"
+const KeptnSuffix = "keptn"
 const serviceName = "splunk-service"
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk

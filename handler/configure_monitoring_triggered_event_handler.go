@@ -106,7 +106,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
-		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
 			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
@@ -330,5 +330,5 @@ func buildAlertCondition(resultField string, criteria string) string {
 // Builds the name of the alert by appending names of project, stage, service, sli and criteria.
 // Appends "keptn" as a suffix
 func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
-	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + keptnSuffix
+	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + KeptnSuffix
 }

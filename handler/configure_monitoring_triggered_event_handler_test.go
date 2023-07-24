@@ -64,7 +64,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	createAlert = func(client *splunk.SplunkClient, spAlert *alerts.AlertRequest) error {
 
-		if spAlert.Params.Name == data.Project+","+stage+","+data.Service+","+sli+","+criteria+","+keptnSuffix &&
+		if spAlert.Params.Name == data.Project+","+stage+","+data.Service+","+sli+","+criteria+","+KeptnSuffix &&
 			spAlert.Params.SearchQuery == `source="http:podtato-error" (index="keptn-splunk-dev") "[error]" | stats count` &&
 			spAlert.Params.AlertCondition == "search count "+criteria {
 			alertCreated = true
