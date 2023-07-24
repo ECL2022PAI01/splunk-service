@@ -23,9 +23,9 @@ If you haven't already installed Splunk Enterprise, download it [here](http://ww
 
 Use the following command to install the Splunk SDK for Go
 
-    go get -u github.com/ECL2022PAI01/splunk-service/splunkSdkGo
+    go get -u github.com/keptn-contrib/splunk-service/splunkSdkGo
 
-### Example [![Go Reference](https://pkg.go.dev/badge/github.com/ECL2022PAI01/splunk-service/splunkSdkGo.svg)](https://pkg.go.dev/github.com/ECL2022PAI01/splunk-service/splunkSdkGo)
+### Example [![Go Reference](https://pkg.go.dev/badge/github.com/keptn-contrib/splunk-service/splunkSdkGo.svg)](https://pkg.go.dev/github.com/keptn-contrib/splunk-service/splunkSdkGo)
 
 
 You'll need at first a Splunk enterprise instance running. If you don't have one, you can run a local instance with a docker image.
@@ -45,7 +45,7 @@ You'll need at first a Splunk enterprise instance running. If you don't have one
 **Using username and password**
 ```go
     import (
-        splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo"
+        splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo"
     )
     ...
         splunkInstance := "localhost" // or your splunk instance IP
@@ -65,7 +65,7 @@ You'll need at first a Splunk enterprise instance running. If you don't have one
 **Using token authentication**
 ```go
     import (
-        splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo"
+        splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo"
     )
     ...
         splunkInstance := "localhost"
@@ -83,7 +83,7 @@ You'll need at first a Splunk enterprise instance running. If you don't have one
 **Using authentication sessionKey**
 ```go
     import (
-        splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo"
+        splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo"
     )
     ...
         splunkInstance := "localhost"
@@ -104,8 +104,8 @@ You'll need at first a Splunk enterprise instance running. If you don't have one
 ```go
 ...
 import ( 
-    splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/client"
-    job "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/jobs"
+    splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/client"
+    job "github.com/keptn-contrib/splunk-service/splunkSdkGo/jobs"
     ...
 )
 ...
@@ -136,8 +136,8 @@ import (
 ```go
 ...
 import ( 
-    splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/client"
-    job "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/jobs"
+    splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/client"
+    job "github.com/keptn-contrib/splunk-service/splunkSdkGo/jobs"
     ...
 )
 ...
@@ -156,8 +156,8 @@ import (
 ```go
 ...
 import ( 
-    splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/client"
-    job "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/jobs"
+    splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/client"
+    job "github.com/keptn-contrib/splunk-service/splunkSdkGo/jobs"
     ...
 )
 ...

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	splunktest "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/tests"
+	splunktest "github.com/keptn-contrib/splunk-service/splunkSdkGo/tests"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 
 	logger "github.com/sirupsen/logrus"
 )

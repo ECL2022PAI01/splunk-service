@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
-	splunktest "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/tests"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
+	splunktest "github.com/keptn-contrib/splunk-service/splunkSdkGo/tests"
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 )

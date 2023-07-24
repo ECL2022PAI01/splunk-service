@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
-	utils "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/pkg/utils"
+	utils "github.com/keptn-contrib/splunk-service/splunkSdkGo/pkg/utils"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 )
 
 func PostJob(client *splunk.SplunkClient, spRequest *SearchRequest) (*http.Response, error) {

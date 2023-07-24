@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ECL2022PAI01/splunk-service/splunkSdkGo/pkg/utils"
+	"github.com/keptn-contrib/splunk-service/splunkSdkGo/pkg/utils"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 
-	"github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/jobs"
+	"github.com/keptn-contrib/splunk-service/splunkSdkGo/src/jobs"
 
 	"github.com/joho/godotenv"
 )

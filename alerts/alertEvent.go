@@ -10,16 +10,17 @@ import (
 	"strings"
 	"time"
 
-	splunkalerts "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/alerts"
+	splunkalerts "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/alerts"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 
-	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
 
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
@@ -217,6 +218,15 @@ func createOrApplyKeptnContext(contextID string) string {
 	return keptnContext
 }
 
+func isTestKeptn(i interface{}) bool {
+	switch i.(type) {
+	case *fake.EventSender:
+		return true
+	default:
+		return false
+	}
+}
+
 // FiringAlertsPoll will handle all requests for '/health' and '/ready'
 func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
 
@@ -251,7 +261,7 @@ func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptn
 
 		}
 		// Condition only verified in case of a test
-		if ddKeptn != nil {
+		if ddKeptn != nil && isTestKeptn(ddKeptn.EventSender) {
 			return nil
 		}
 		time.Sleep(pollingFrequency * time.Second)

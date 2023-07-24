@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"

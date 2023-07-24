@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 )
 
 func ValidateSearchQuery(searchQuery string) string {

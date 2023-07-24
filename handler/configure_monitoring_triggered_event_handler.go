@@ -10,13 +10,13 @@ import (
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"gopkg.in/yaml.v2"
 
-	splunkalerts "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/alerts"
+	splunkalerts "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/alerts"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 
-	"github.com/ECL2022PAI01/splunk-service/alerts"
-	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/keptn-contrib/splunk-service/alerts"
+	"github.com/keptn-contrib/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
 	logger "github.com/sirupsen/logrus"
@@ -58,11 +58,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		return err
 	}
 	if setPollingSystem {
-		// Creating an HTTP listener on port 8080 to receive alerts from Prometheus directly
-		go func() {
-			logger.Info("Start polling for triggered alerts ...")
-			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
-		}()
+		// Starts polling for triggered alerts if configure monitoring is successful
+		alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 	} else {
 		logger.Info("No alerts configured, no need to start the polling system")
 	}

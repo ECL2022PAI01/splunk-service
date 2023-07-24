@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	utils "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/pkg/utils"
+	utils "github.com/keptn-contrib/splunk-service/splunkSdkGo/pkg/utils"
 
-	splunk "github.com/ECL2022PAI01/splunk-service/splunkSdkGo/src/client"
+	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
 )
 
 const resutltUri = "results"

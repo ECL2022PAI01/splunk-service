@@ -33,7 +33,7 @@ actions:
             valueFrom: string
 
         serviceAccount: "helm"
-        image: "kuro08/python:latest"
+        image: "mouhamadou305/python:latest"
         cmd: ["python"]
         args: ["/keptn/scripts/splunk-hec.py"]
 
