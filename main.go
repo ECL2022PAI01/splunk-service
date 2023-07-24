@@ -174,37 +174,6 @@ func main() {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 
-	// create splunk credentials
-	splunkCreds, err = utils.GetSplunkCredentials(env)
-
-	if err != nil {
-		logger.Fatalf("Failed to get splunk credentials: %s", err)
-		return
-	}
-
-	// connect to splunk
-	splunkClient = utils.ConnectToSplunk(*splunkCreds, true)
-
-	// start polling if alerts are configured
-	alertsList, err := splunkalerts.ListAlertsNames(splunkClient)
-	if err != nil {
-		logger.Fatalf("Failed to get alerts list: %s", err)
-		return
-	}
-
-	if len(alertsList.Item) > 0 {
-		ddKeptn, err = keptnv2.NewKeptn(nil, keptnOptions)
-		if err != nil {
-			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
-
-		}
-		go func() {
-			logger.Info("Start polling for triggered alerts ...")
-			alerts.FiringAlertsPoll(splunkClient, ddKeptn, keptn.KeptnOpts{}, env)
-		}()
-
-		pollingSystemHasBeenStarted = true
-	}
 	os.Exit(cloudEventListener(os.Args[1:]))
 }
 
@@ -224,7 +193,6 @@ func CloudEventListener(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-
 	} else {
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
@@ -246,6 +214,35 @@ func CloudEventListener(args []string) int {
 	c, err := cloudevents.NewClient(p)
 	if err != nil {
 		logger.Fatalf("failed to create client, %v", err)
+	}
+
+	// create splunk credentials
+	splunkCreds, err = utils.GetSplunkCredentials(env)
+
+	if err != nil {
+		logger.Fatalf("Failed to get splunk credentials: %s", err)
+	}
+	// connect to splunk
+	splunkClient = utils.ConnectToSplunk(*splunkCreds, true)
+
+	// start polling if alerts are configured
+	alertsList, err := splunkalerts.ListAlertsNames(splunkClient)
+	if err != nil {
+		logger.Fatalf("Failed to get alerts list: %s", err)
+	}
+
+	if len(alertsList.Item) > 0 {
+		ddKeptn, err = keptnv2.NewKeptn(nil, keptnOptions)
+		if err != nil {
+			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
+
+		}
+		go func() {
+			logger.Info("Start polling for triggered alerts ...")
+			alerts.FiringAlertsPoll(splunkClient, ddKeptn, keptn.KeptnOpts{}, env)
+		}()
+
+		pollingSystemHasBeenStarted = true
 	}
 
 	logger.Infof("Starting receiver")
