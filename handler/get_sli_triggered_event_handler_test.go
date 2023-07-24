@@ -153,7 +153,15 @@ func TestHandleGetSliTriggered(t *testing.T) {
 		t.Fatalf("Error while getting keptn event data : %s", err.Error())
 	}
 
-	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data, env)
+	// create splunk credentials
+	splunkCreds, err := utils.GetSplunkCredentials(env)
+
+	if err != nil {
+		t.Fatalf("Failed to get splunk credentials: %s", err)
+		return
+	}
+	client := utils.ConnectToSplunk(*splunkCreds, true)
+	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data, client)
 
 	if err != nil {
 		t.Fatalf("Error : %s", err.Error())
