@@ -1,4 +1,4 @@
-package tests
+package jobs
 
 import (
 	"net/http"
@@ -6,12 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keptn-contrib/splunk-service/splunkSdkGo/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
 
-	splunk "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/client"
-
-	"github.com/keptn-contrib/splunk-service/splunkSdkGo/src/jobs"
-
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
+	splunkTest "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
 	"github.com/joho/godotenv"
 )
 
@@ -50,27 +48,27 @@ func TestGetMetric(t *testing.T) {
 		"GET": jsonResponseGET,
 	}
 
-	server := MultitpleMockRequest(responses, true)
+	server := splunkTest.MultitpleMockRequest(responses, true)
 
 	client := splunk.NewClientAuthenticatedByToken(
 		&http.Client{
 			Timeout: time.Duration(60) * time.Second,
 		},
-		GetTestHostname(server),
-		GetTestPort(server),
-		GetTestToken(),
+		splunkTest.GetTestHostname(server),
+		splunkTest.GetTestPort(server),
+		splunkTest.GetTestToken(),
 		true,
 	)
 
 	defer server.Close()
 
-	spReq := jobs.SearchRequest{
-		Params: jobs.SearchParams{
+	spReq := SearchRequest{
+		Params: SearchParams{
 			SearchQuery: "source=\"http:podtato-error\" (index=\"keptn-splunk-dev\") \"[error]\" | stats count",
 		},
 	}
 
-	metric, err := jobs.GetMetricFromNewJob(client, &spReq)
+	metric, err := GetMetricFromNewJob(client, &spReq)
 
 	if err != nil {
 		t.Fatalf("Got an error : %s", err)
@@ -87,11 +85,11 @@ func TestCreateJob(t *testing.T) {
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`
-	server := MockRequest(jsonResponsePOST, true)
+	server := splunkTest.MockRequest(jsonResponsePOST, true)
 	defer server.Close()
 
-	spReq := jobs.SearchRequest{
-		Params: jobs.SearchParams{
+	spReq := SearchRequest{
+		Params: SearchParams{
 			SearchQuery: "source=\"http:podtato-error\" (index=\"keptn-splunk-dev\") \"[error]\" | stats count",
 		},
 	}
@@ -99,15 +97,15 @@ func TestCreateJob(t *testing.T) {
 		&http.Client{
 			Timeout: time.Duration(60) * time.Second,
 		},
-		GetTestHostname(server),
-		GetTestPort(server),
-		GetTestToken(),
+		splunkTest.GetTestHostname(server),
+		splunkTest.GetTestPort(server),
+		splunkTest.GetTestToken(),
 		true,
 	)
 
-	utils.CreateEndpoint(client, jobsPathv2)
+	utils.CreateEndpoint(client, splunkTest.JobsPathv2)
 
-	sid, err := jobs.CreateJob(client, &spReq, jobsPathv2)
+	sid, err := CreateJob(client, &spReq, splunkTest.JobsPathv2)
 
 	if err != nil {
 		t.Fatalf("Got an error : %s", err)
@@ -124,20 +122,20 @@ func TestRetrieveJobResult(t *testing.T) {
 	jsonResponseGET := `{
 		"results":[{"count":"2566"}]
 	}`
-	server := MockRequest(jsonResponseGET, true)
+	server := splunkTest.MockRequest(jsonResponseGET, true)
 	defer server.Close()
 
 	client := splunk.NewClientAuthenticatedByToken(
 		&http.Client{
 			Timeout: time.Duration(60) * time.Second,
 		},
-		GetTestHostname(server),
-		GetTestPort(server),
-		GetTestToken(),
+		splunkTest.GetTestHostname(server),
+		splunkTest.GetTestPort(server),
+		splunkTest.GetTestToken(),
 		true,
 	)
-	utils.CreateEndpoint(client, jobsPathv2)
-	results, err := jobs.RetrieveJobResult(client, "1689673231.191")
+	utils.CreateEndpoint(client, splunkTest.JobsPathv2)
+	results, err := RetrieveJobResult(client, "1689673231.191")
 
 	if err != nil {
 		t.Fatalf("Got an error : %s", err)

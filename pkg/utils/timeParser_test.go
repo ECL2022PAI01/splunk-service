@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	splunkjob "github.com/keptn-contrib/splunk-service/splunkSdkGo/src/jobs"
+	splunkjob "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/jobs"
 )
 
 // Tests the retrieveSearchTimeRange function
