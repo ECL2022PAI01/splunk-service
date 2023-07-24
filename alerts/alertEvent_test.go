@@ -15,8 +15,6 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	"github.com/google/uuid"
-	"github.com/keptn-contrib/splunk-service/pkg/utils"
-	splunktest "github.com/keptn-contrib/splunk-service/splunkSdkGo/tests"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"

@@ -14,7 +14,7 @@ import (
 
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 
-	"github.com/keptn-contrib/splunk-service/pkg/utils"
+	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
 

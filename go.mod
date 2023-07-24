@@ -1,4 +1,4 @@
-module github.com/keptn-contrib/splunk-service
+module github.com/ECL2022PAI01/splunk-service
 
 go 1.20
 

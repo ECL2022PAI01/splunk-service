@@ -1,7 +1,7 @@
 # splunk-service
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/keptn-contrib/splunk-service)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ECL2022PAI01/splunk-service)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Mouhamadou305/splunk-service)](https://goreportcard.com/report/github.com/Mouhamadou305/splunk-service)
-![GitHub release (latest by SemVer including pre-releases)](https://img.shields.io/github/downloads-pre/keptn-contrib/splunk-service/latest/total)
+![GitHub release (latest by SemVer including pre-releases)](https://img.shields.io/github/downloads-pre/ECL2022PAI01/splunk-service/latest/total)
 
 This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/). The `splunk-service` can also use splunk for monitoring your microservice through saved searches alerts and triggering remediation sequences.
 If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
@@ -13,9 +13,9 @@ Please always double-check the version of Keptn you are using compared to the ve
 
 | Keptn Version    | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 |:----------------:|:----------------------------------------:|
-|       0.18.x       | keptn-contrib/splunk-service:0.2.0 |
-|       0.19.x      | keptn-contrib/splunk-service:0.2.0 |
-|       1.x.y      | keptn-contrib/splunk-service:0.2.0 |
+|       0.18.x       | ECL2022PAI01/splunk-service:0.2.0 |
+|       0.19.x      | ECL2022PAI01/splunk-service:0.2.0 |
+|       1.x.y      | ECL2022PAI01/splunk-service:0.2.0 |
  
 ## Installation instructions
 ### Install splunk
@@ -40,7 +40,7 @@ docker run -p 8089:<splunkdPort> -p 8000:<splunkInstancePort> -e "SPLUNK_START_A
   the `keptn` namespace.
    ```bash
    helm upgrade --install -n keptn splunk-service \
-      https://github.com/keptn-contrib/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
+      https://github.com/ECL2022PAI01/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
       --set splunkservice.spHost="<SPLUNK_HOST>" \
       --set splunkservice.spPort=<SPLUNK_PORT>\
       --set splunkservice.spUsername="<SPLUNK_USERNAME>" \
@@ -60,7 +60,7 @@ docker run -p 8089:<splunkdPort> -p 8000:<splunkInstancePort> -e "SPLUNK_START_A
    SPLUNK_NAMESPACE=<SPLUNK_NAMESPACE>
    
    helm upgrade --install -n ${KEPTN_NAMESPACE} splunk-service \
-      https://github.com/keptn-contrib/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
+      https://github.com/ECL2022PAI01/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
       --set splunkservice.spHost="<SPLUNK_HOST>" \
       --set splunkservice.spPort=<SPLUNK_PORT>\
       --set splunkservice.spUsername="<SPLUNK_USERNAME>" \
@@ -71,7 +71,7 @@ docker run -p 8089:<splunkdPort> -p 8000:<splunkInstancePort> -e "SPLUNK_START_A
    
    ```bash
    helm upgrade --install -n keptn splunk-service \
-      https://github.com/keptn-contrib/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
+      https://github.com/ECL2022PAI01/splunk-service/releases/download/<VERSION>/splunk-service-<VERSION>.tgz \
       --set splunkservice.spHost="<SPLUNK_HOST>" \
       --set splunkservice.spPort=<SPLUNK_PORT>\
       --set splunkservice.existingSecret=<mysecretname>
@@ -162,7 +162,7 @@ helm upgrade -n keptn --set image.tag=$VERSION splunk-service chart/
 
 # or via an official release
 helm upgrade --install -n keptn splunk-service \
-   https://github.com/keptn-contrib/splunk-service/releases/download/$VERSION/splunk-service-$VERSION.tgz \
+   https://github.com/ECL2022PAI01/splunk-service/releases/download/$VERSION/splunk-service-$VERSION.tgz \
    --reuse-values   
 ```
 
