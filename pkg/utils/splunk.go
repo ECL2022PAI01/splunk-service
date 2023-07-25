@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	splunktest "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
-	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
+	splunktest "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/pkg/utils"
 
 	logger "github.com/sirupsen/logrus"
 )

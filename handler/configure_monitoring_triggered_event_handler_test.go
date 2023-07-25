@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/alerts"
-	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
+	"github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
-	
+
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"

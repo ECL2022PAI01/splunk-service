@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
-	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/event"

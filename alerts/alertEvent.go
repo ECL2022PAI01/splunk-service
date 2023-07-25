@@ -10,24 +10,24 @@ import (
 	"strings"
 	"time"
 
-	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/alerts"
-	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
+	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
 
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/google/uuid"
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
-	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/google/uuid"
 )
 
 const (
 	remediationTaskName = "remediation"
-	pollingFrequency = 20 				//indicates the frequency at which triggered alerts are checked in seconds
-	keptnSuffix      = "keptn"			//Added at the end of each splunk alert created using configure monitoring
-	serviceName      = "splunk-service" 
+	pollingFrequency    = 20      //indicates the frequency at which triggered alerts are checked in seconds
+	keptnSuffix         = "keptn" //Added at the end of each splunk alert created using configure monitoring
+	serviceName         = "splunk-service"
 )
 
 type SplunkAlertEvent struct {

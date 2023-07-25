@@ -12,15 +12,15 @@ import (
 	"testing"
 	"time"
 
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
+	splunktest "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/pkg/utils"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
-	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
-	splunktest "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
 
-	"github.com/cloudevents/sdk-go/v2/event/datacodec"
-	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
+	"github.com/cloudevents/sdk-go/v2/event/datacodec"
 	keptn "github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
+	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
 )
 
 // You can configure your tests by specifying the path to get-sli triggered event file in json,
