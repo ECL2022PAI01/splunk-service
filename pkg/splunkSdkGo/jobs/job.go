@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	utils "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
-
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 )
 

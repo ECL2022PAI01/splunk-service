@@ -12,6 +12,7 @@ import (
 	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/alerts"
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+	
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	splunktest "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/pkg/utils"
-
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
 
 	logger "github.com/sirupsen/logrus"

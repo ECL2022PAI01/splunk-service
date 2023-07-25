@@ -11,27 +11,23 @@ import (
 	"time"
 
 	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/alerts"
-
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
-
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptncommons "github.com/keptn/go-utils/pkg/lib"
-
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
-
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 )
 
 const (
 	remediationTaskName = "remediation"
-	//indicates the frequency at which triggered alerts are checked in seconds
-	pollingFrequency = 20
-	keptnSuffix      = "keptn"
-	serviceName      = "splunk-service"
+	pollingFrequency = 20 				//indicates the frequency at which triggered alerts are checked in seconds
+	keptnSuffix      = "keptn"			//Added at the end of each splunk alert created using configure monitoring
+	serviceName      = "splunk-service" 
 )
 
 type SplunkAlertEvent struct {
@@ -80,11 +76,9 @@ type alertResult struct {
 
 type RemediationTriggeredEventData struct {
 	keptnv2.EventData
-
 	// Problem contains details about the problem
 	Problem keptncommons.ProblemEventData `json:"problem"`
-	// Deployment contains the current deployment, that is inferred from the alert event
-
+	// Deployment contains the current deployment, that is inferred from the alert details
 	Deployment keptnv2.DeploymentFinishedData `json:"deployment"`
 }
 

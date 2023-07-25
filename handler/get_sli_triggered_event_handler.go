@@ -3,13 +3,11 @@ package handler
 import (
 	"fmt"
 
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-
 	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/client"
-
 	splunkjobs "github.com/ECL2022PAI01/splunk-service/pkg/splunkSdkGo/jobs"
-
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	logger "github.com/sirupsen/logrus"
 )
