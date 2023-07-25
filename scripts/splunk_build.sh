@@ -5,18 +5,18 @@ get_splunk_pod() {
 }
 # go to the splunk service directory
 
-if [[ $# -ne 1 ]] ; then
-    echo 'please enter the splunk service directory'
-    exit 1
+if [[ $# -ne 1 ]]; then
+	echo 'please enter the splunk service directory'
+	exit 1
 fi
 cd $1
 
 # build a new docker image of the service
 
-docker build . -t mouhamadou305/splunk-service:latest --network=host && docker push mouhamadou305/splunk-service:latest
+docker build . -t kuro08/splunk-service:latest --network=host && docker push kuro08/splunk-service:latest
 
 # remove an existing helm chart of the splunk service
-if [[ $(get_splunk_pod)  ]] ; then
+if [[ $(get_splunk_pod) ]]; then
 	helm uninstall -n keptn splunk-sli
 	t=10
 	kubectl -n keptn get pods
@@ -25,11 +25,11 @@ if [[ $(get_splunk_pod)  ]] ; then
 fi
 # release the new chart
 chartName=splunk-service.tgz
-tar -czvf $chartName chart/ && helm upgrade --install -n keptn splunk-service $chartName  --set splunkservice.existingSecret=splunk-service-secret
+tar -czvf $chartName chart/ && helm upgrade --install -n keptn splunk-service $chartName --set splunkservice.existingSecret=splunk-service-secret
 
 kubectl -n keptn get pods
 
 t=20
 echo "Waiting $t s for the splunk service pod to be running"
 sleep $t
-kubectl -n keptn logs -f -c splunk-service  $(get_splunk_pod)
+kubectl -n keptn logs -f -c splunk-service $(get_splunk_pod)
