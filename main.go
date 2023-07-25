@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ECL2022PAI01/splunk-service/alerts"
 	"github.com/ECL2022PAI01/splunk-service/handler"
+	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -16,8 +20,7 @@ import (
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	"github.com/keptn/go-utils/pkg/lib/keptn"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -188,18 +191,18 @@ func main() {
 		logger.Fatalf("Failed to get alerts list: %s", err)
 	}
 
-	if len(alertsList.Item) > 0 {
-		if err != nil {
-			logger.Fatalf("Could not create Keptn Handler: " + err.Error())
+	for _, alert := range alertsList.Item {
+		if strings.HasSuffix(alert.Name, handler.KeptnSuffix) {
+			go func() {
+				logger.Info("Start polling for triggered alerts ...")
+				alerts.FiringAlertsPoll(splunkClient, nil, keptnOptions, env)
+			}()
+			pollingSystemHasBeenStarted = true
 
+			break
 		}
-		go func() {
-			logger.Info("Start polling for triggered alerts ...")
-			alerts.FiringAlertsPoll(splunkClient, nil, keptnOptions, env)
-		}()
-
-		pollingSystemHasBeenStarted = true
 	}
+
 	os.Exit(cloudEventListener(os.Args[1:]))
 }
 

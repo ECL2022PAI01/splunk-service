@@ -15,8 +15,17 @@ actions:
         image: "alpine/helm:3.7.2"
         imagePullPolicy: IfNotPresent
         cmd: ["helm"]
-        args: ["upgrade", "--create-namespace", "--install", "-n", "$(KEPTN_PROJECT)-$(KEPTN_STAGE)", "$(KEPTN_SERVICE)", "/keptn/charts/$(KEPTN_SERVICE).tgz"]
-        
+        args:
+          [
+            "upgrade",
+            "--create-namespace",
+            "--install",
+            "-n",
+            "$(KEPTN_PROJECT)-$(KEPTN_STAGE)",
+            "$(KEPTN_SERVICE)",
+            "/keptn/charts/$(KEPTN_SERVICE).tgz",
+          ]
+
   - name: "Load logs into Splunk"
     events:
       - name: "sh.keptn.event.test.triggered"
@@ -36,5 +45,4 @@ actions:
         image: "kuro08/python:latest"
         cmd: ["python"]
         args: ["/keptn/scripts/splunk-hec.py"]
-
 # TODO: Create an issue to add tests sequence

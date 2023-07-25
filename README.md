@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ECL2022PAI01/splunk-service)](https://goreportcard.com/report/github.com/ECL2022PAI01/splunk-service)
 ![GitHub release (latest by SemVer including pre-releases)](https://img.shields.io/github/downloads-pre/ECL2022PAI01/splunk-service/latest/total)
 
-This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/).
+This implements the `splunk-service` that integrates the [splunk enterprise](https://en.wikipedia.org/wiki/splunk) platform with Keptn. This enables you to use splunk as the source for the Service Level Indicators ([SLIs](https://keptn.sh/docs/0.19.x/reference/files/sli/)) that are used for Keptn [Quality Gates](https://keptn.sh/docs/concepts/quality_gates/). The `splunk-service` can also use splunk for monitoring your microservice through saved searches alerts and triggering remediation sequences.
 If you want to learn more about Keptn visit [keptn.sh](https://keptn.sh)
 
 ## Compatibility Matrix
@@ -93,6 +93,7 @@ _Note_: Make sure to replace `<VERSION>` with the version you want to install.
 ### Advanced Options
 
 You can customize splunk-service with the following environment variables:
+For splunk credentials :
 
 ```yaml
 # Splunk host
@@ -112,6 +113,29 @@ You can customize splunk-service with the following environment variables:
   value: ""
 - name: SP_HOST ""
   value: ""
+```
+
+For customizing the alerts set when receiving a comfigure monitoring event :
+
+```yaml
+#The period during which the triggering of the alert is suppressed after it is already triggered. By default to "3m" (3 minutes)
+- name: ALERT_SUPPRESS_PERIOD
+  value: "{{ .Values.splunkservice.alertSuppressPeriod }}"
+#A splunk expression specifying the frequency for the execution of the saved searches. By default to "*/1 * * * *" (every minute)
+- name: CRON_SCHEDULE
+  value: "{{ .Values.splunkservice.cronSchedule }}"
+#The earliest time for the saved search. By default to "-3m"
+- name: DISPATCH_EARLIEST_TIME
+  value: "{{ .Values.splunkservice.dispatchEarliestTime }}"
+#The latest time for the saved search. By default to "now"
+- name: DISPATCH_LATEST_TIME
+  value: "{{ .Values.splunkservice.dispatchLatestTime }}"
+#The coma separated list of actions to perform after the triggering of alerts. By default to "". But can be "webhook"
+- name: ACTIONS
+  value: "{{ .Values.splunkservice.actions }}"
+#Has to be set if webhook is one of the actions to be done
+- name: WEBHOOK_URL
+  value: "{{ .Values.splunkservice.webhookUrl }}"
 ```
 
 #### Add SLI and SLO
@@ -222,7 +246,7 @@ When writing code, it is recommended to follow the coding style suggested by the
 
 ### Where to start
 
-If you don't care about the details, your first entrypoint is [eventhandlers.go](eventhandlers.go). Within this file
+If you don't care about the details, your first entrypoint is [handler](eventhandlers.go). Within this folder
 you can add implementation for pre-defined Keptn Cloud events.
 
 To better understand all variants of Keptn CloudEvents, please look at the [Keptn Spec](https://github.com/keptn/spec).

@@ -6,18 +6,18 @@ import (
 	"log"
 	"strings"
 
-	"github.com/keptn/go-utils/pkg/lib/keptn"
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-	"gopkg.in/yaml.v2"
-
 	"github.com/ECL2022PAI01/splunk-service/alerts"
+	splunkalerts "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
 	api "github.com/keptn/go-utils/pkg/api/utils"
 	keptnevents "github.com/keptn/go-utils/pkg/lib"
-	splunkalerts "github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
+	"github.com/keptn/go-utils/pkg/lib/keptn"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 var createAlert = splunkalerts.CreateAlert
@@ -46,7 +46,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	}
 	if !pollingSystemHasBeenStarted && setPollingSystem {
 		go func() {
-			logger.Info("Start polling for triggered alerts ...")
+			// Starts polling for triggered alerts if configure monitoring is successful
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
 	} else {
@@ -104,7 +104,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
-		if strings.HasSuffix(alert.Name, keptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
 			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
@@ -328,5 +328,5 @@ func buildAlertCondition(resultField string, criteria string) string {
 // Builds the name of the alert by appending names of project, stage, service, sli and criteria.
 // Appends "keptn" as a suffix
 func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
-	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + keptnSuffix
+	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + KeptnSuffix
 }

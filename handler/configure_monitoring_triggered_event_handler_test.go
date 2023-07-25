@@ -4,12 +4,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/alerts"
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
 	keptnv1 "github.com/keptn/go-utils/pkg/lib"
 	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	"github.com/keptn/go-utils/pkg/lib/v0_2_0/fake"
-	"github.com/kuro-jojo/splunk-sdk-go/src/alerts"
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
 )
 
 const (
@@ -64,7 +65,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 
 	createAlert = func(client *splunk.SplunkClient, spAlert *alerts.AlertRequest) error {
 
-		if spAlert.Params.Name == data.Project+","+stage+","+data.Service+","+sli+","+criteria+","+keptnSuffix &&
+		if spAlert.Params.Name == data.Project+","+stage+","+data.Service+","+sli+","+criteria+","+KeptnSuffix &&
 			spAlert.Params.SearchQuery == `source="http:podtato-error" (index="keptn-splunk-dev") "[error]" | stats count` &&
 			spAlert.Params.AlertCondition == "search count "+criteria {
 			alertCreated = true

@@ -3,17 +3,17 @@ package handler
 import (
 	"fmt"
 
-	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
-
+	splunk "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/client"
+	splunkjobs "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/jobs"
 	"github.com/ECL2022PAI01/splunk-service/pkg/utils"
+
 	cloudevents "github.com/cloudevents/sdk-go/v2" // make sure to use v2 cloudevents here
-	splunk "github.com/kuro-jojo/splunk-sdk-go/src/client"
-	splunkjobs "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
+	keptnv2 "github.com/keptn/go-utils/pkg/lib/v0_2_0"
 	logger "github.com/sirupsen/logrus"
 )
 
 const sliFileUri = "splunk/sli.yaml"
-const keptnSuffix = "keptn"
+const KeptnSuffix = "keptn"
 const serviceName = "splunk-service"
 
 // HandleGetSliTriggeredEvent handles get-sli.triggered events if SLIProvider == splunk
@@ -54,7 +54,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	//   keptn add-resource --project=PROJECT --stage=STAGE --service=SERVICE --resource=my-sli-config.yaml  --resourceUri=splunk/sli.yaml
 	sliConfig, err := ddKeptn.GetSLIConfiguration(data.Project, data.Stage, data.Service, sliFileUri)
 	// FYI you do not need to "fail" if sli.yaml is missing, you can also assume smart defaults like we do
-	// in keptn-contrib/dynatrace-service and keptn-contrib/splunk-service
+	// in keptn-contrib/dynatrace-service and ECL2022PAI01/splunk-service
 	logger.Infof("SLI Config: %s", sliConfig)
 	if err != nil {
 		// failed to fetch sli config file

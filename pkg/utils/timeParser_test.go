@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	splunkjob "github.com/kuro-jojo/splunk-sdk-go/src/jobs"
+	splunkjob "github.com/ECL2022PAI01/splunk-service/pkg/splunksdk/jobs"
 )
 
 // Tests the retrieveSearchTimeRange function
@@ -46,9 +46,9 @@ func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunkjob.S
 	splunkRequestParams.LatestTime = latestTimeInParams
 
 	splunkRequestParams.EarliestTime,
-	splunkRequestParams.LatestTime,
-	splunkRequestParams.SearchQuery = RetrieveQueryTimeRange(splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, splunkRequestParams.SearchQuery)
-	
+		splunkRequestParams.LatestTime,
+		splunkRequestParams.SearchQuery = RetrieveQueryTimeRange(splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, splunkRequestParams.SearchQuery)
+
 	if splunkRequestParams.EarliestTime != expectedEarliestTime || splunkRequestParams.LatestTime != expectedLatestTime {
 		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
 			splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, expectedEarliestTime, expectedLatestTime)
