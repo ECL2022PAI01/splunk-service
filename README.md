@@ -13,9 +13,9 @@ Please always double-check the version of Keptn you are using compared to the ve
 
 | Keptn Version | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 | :-----------: | :----------------------------------------------------------------------------------------------------------: |
-|    0.18.x     |                                      ECL2022PAI01/splunk-service:0.2.0                                       |
-|    0.19.x     |                                      ECL2022PAI01/splunk-service:0.2.0                                       |
-|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.2.0                                       |
+|    0.18.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
+|    0.19.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
+|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.3.0                                       3
 
 ## Installation instructions
 
