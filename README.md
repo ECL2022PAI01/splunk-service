@@ -15,7 +15,7 @@ Please always double-check the version of Keptn you are using compared to the ve
 | :-----------: | :----------------------------------------------------------------------------------------------------------: |
 |    0.18.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
 |    0.19.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
-|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.3.0                                       3
+|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
 
 ## Installation instructions
 
