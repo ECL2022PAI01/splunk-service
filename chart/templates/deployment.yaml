@@ -39,7 +39,6 @@ spec:
           imagePullPolicy: {{ .Values.splunkservice.image.pullPolicy }}
           ports:
             - containerPort: 80
-            - containerPort: 8087
           envFrom:
           - secretRef:
               name: "{{ include "splunk-service.secret" . }}"
