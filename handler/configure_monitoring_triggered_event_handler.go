@@ -81,6 +81,24 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
 func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
+	//listing all alerts
+	alertsList, err := splunkalerts.ListAlertsNames(client)
+	if err != nil {
+		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
+		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %v", alertsList, err)
+	}
+	
+	//removing all preexisting alerts concerning the project and the service
+	for _, alert := range alertsList.Item {
+		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+			err := splunkalerts.RemoveAlert(client, alert.Name)
+			if err != nil {
+				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
+				return false, fmt.Errorf("error calling RemoveAlert(): %v : %v", alertsList, err)
+			}
+		}
+	}
+	
 	// if no alerts are configured, no need to start the polling system
 	setPollingSystem := false
 	//Getting the shipyard configuration
@@ -94,24 +112,6 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	}
 
 	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
-
-	//listing all alerts
-	alertsList, err := splunkalerts.ListAlertsNames(client)
-	if err != nil {
-		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
-		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %v", alertsList, err)
-	}
-
-	//removing all preexisting alerts concerning the project and the service
-	for _, alert := range alertsList.Item {
-		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
-			err := splunkalerts.RemoveAlert(client, alert.Name)
-			if err != nil {
-				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
-				return false, fmt.Errorf("error calling RemoveAlert(): %v : %v", alertsList, err)
-			}
-		}
-	}
 
 	//Creating the alerts for each stage of the shipyard file
 	for _, stage := range shipyard.Spec.Stages {
