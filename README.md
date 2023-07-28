@@ -140,6 +140,8 @@ For customizing the alerts set when receiving a comfigure monitoring event :
 
 #### Add SLI and SLO
 
+Note that the sli.yaml should contain sli queries that are splunk searches returning each an atomic numeric value.
+
 ```bash
 keptn add-resource --project="<your-project>" --stage="<stage-name>" --service="<service-name>" --resource=/path-to/your/sli-file.yaml --resourceUri=splunk/sli.yaml
 keptn add-resource --project="<your-project>"  --stage="<stage-name>" --service="<service-name>" --resource=/path-to/your/slo-file.yaml --resourceUri=slo.yaml
@@ -152,7 +154,7 @@ keptn add-resource --project="podtatohead" --stage="hardening" --service="hellos
 keptn add-resource --project="podtatohead" --stage="hardening" --service="helloservice" --resource=./quickstart/slo.yaml --resourceUri=slo.yaml
 ```
 
-### Configure Keptn to use splunk SLI provider
+### Configure Keptn to use splunk as SLI-provider
 
 Use keptn CLI version [0.15.0](https://github.com/keptn/keptn/releases/tag/0.15.0) or later.
 
@@ -230,6 +232,23 @@ e2e test
 ```bash
 gotestsum --format standard-verbose -- -timeout=120m  ./test/e2e/...
 ```
+## How does it work?
+
+### SLI Provider for quality gates
+
+The splunk-service allows keptn to use splunk as its SLI-provider for the quality gates. For an evaluation stage, when an sh.keptn.event.getsli.triggered is received by the splunk-service, that latter sends an sh.keptn.event.getsli.started, executes de splunk searches of the indicators and sends an sh.keptn.event.getsli.finished containing the results for the indicators.
+In order for it to work properly, the slo.yaml and sli.yaml should be uploaded and the monitoring should be configured for the service as explained in the installation section. 
+
+### Monitoring and Remediation
+
+* For using this functionality, AVOID using comas "," in the indicator names within the sli.yaml file.
+* The splunk-service allows keptn to use splunk in order to monitor the deployed service. Executing the command "keptn configure monitoring splunk --project=<project> --service=<service>" sends an sh.keptn.configure-monitoring.triggered event. Whenever the splunk-service receives that event, it sends the corresponding .started event, creates splunk alerts from the SLIs and SLOs for the stages where slo.yaml and remediation.yaml files are defined and finally sends the corresponding .finished event to keptn. The splunk alerts created are saved searches that run in a periodic way and are in a fired state whenever the alert conditions are met. See the advanced options section for more information.
+* Splunk alerts are deleted and recreated for a particular service in a particular project whenever the keptn configure monitoring command is executed for splunk. This way, it is possible to UPDATE the splunk alerts when changes have been made regarding the sli.yaml and slo.yaml.
+* If you only want to DELETE the keptn splunk alerts concerning a particular service in a particular project without updating them, just delete one of these : the remediation file, the sli file, the slo file, the service OR the entire project and then execute :
+```bash
+keptn configure monitoring splunk --project <project>  --service <service>
+```
+
 
 ## Development
 

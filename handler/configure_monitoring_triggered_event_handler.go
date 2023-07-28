@@ -81,6 +81,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
 func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
+	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
+
 	//listing all alerts
 	alertsList, err := splunkalerts.ListAlertsNames(client)
 	if err != nil {
@@ -110,8 +112,6 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	if err != nil {
 		return false, err
 	}
-
-	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
 
 	//Creating the alerts for each stage of the shipyard file
 	for _, stage := range shipyard.Spec.Stages {
