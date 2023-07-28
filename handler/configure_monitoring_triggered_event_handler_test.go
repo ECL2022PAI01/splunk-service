@@ -81,6 +81,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 		return
 	}
 	client := utils.ConnectToSplunk(*splunkCreds, true)
+	data.ConfigureMonitoring.Type = "splunk"
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data, env, client, false)
 
 	if err != nil {

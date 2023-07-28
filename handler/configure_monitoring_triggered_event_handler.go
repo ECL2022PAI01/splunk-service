@@ -27,7 +27,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	
 	if isNotForSplunk(data.ConfigureMonitoring.Type){
 		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
-		return fmt.Errorf("event is not for splunk-service")
+		return fmt.Errorf("event is not for splunk")
 	}
 
 	var shkeptncontext string
