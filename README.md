@@ -13,9 +13,9 @@ Please always double-check the version of Keptn you are using compared to the ve
 
 | Keptn Version | [splunk-service Docker Image](https://github.com/keptn-sandbox/splunk-service/pkgs/container/splunk-service) |
 | :-----------: | :----------------------------------------------------------------------------------------------------------: |
-|    0.18.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
-|    0.19.x     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
-|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.3.0                                       |
+|    0.18.x     |                                      ECL2022PAI01/splunk-service:0.3.x                                       |
+|    0.19.x     |                                      ECL2022PAI01/splunk-service:0.3.x                                       |
+|     1.x.y     |                                      ECL2022PAI01/splunk-service:0.3.x                                       |
 
 ## Installation instructions
 
@@ -243,6 +243,7 @@ In order for it to work properly, the slo.yaml and sli.yaml should be uploaded a
 
 * For using this functionality, AVOID using comas "," in the indicator names within the sli.yaml file.
 * The splunk-service allows keptn to use splunk in order to monitor the deployed service. Executing the command "keptn configure monitoring splunk --project=<project> --service=<service>" sends an sh.keptn.configure-monitoring.triggered event. Whenever the splunk-service receives that event, it sends the corresponding .started event, creates splunk alerts from the SLIs and SLOs for the stages where slo.yaml and remediation.yaml files are defined and finally sends the corresponding .finished event to keptn. The splunk alerts created are saved searches that run in a periodic way and are in a fired state whenever the alert conditions are met. See the advanced options section for more information.
+* The splunk-service checks periodically whether or not one of the keptn splunk alerts is triggered. Once it detects a triggered keptn alert, an sh.keptn.event.remediation.triggered event is sent to keptn with the details concerning the problem. Keptn then executes the remediation actions specified in the remediation file. 
 * Splunk alerts are deleted and recreated for a particular service in a particular project whenever the keptn configure monitoring command is executed for splunk. This way, it is possible to UPDATE the splunk alerts when changes have been made regarding the sli.yaml and slo.yaml.
 * If you only want to DELETE the keptn splunk alerts concerning a particular service in a particular project without updating them, just delete one of these : the remediation file, the sli file, the slo file, the service OR the entire project and then execute :
 ```bash
