@@ -132,11 +132,14 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	case keptnv2.ConfigureMonitoringTaskName: // sh.keptn.event.configure-monitoring.triggered
 		logger.Infof("Processing configure-monitoring.Triggered Event")
 
-		eventData := &keptnv2.ConfigureMonitoringTriggeredEventData{}
-		parseKeptnCloudEventPayload(event, eventData)
+		eventDatav1 := &keptnv1.ConfigureMonitoringEventData{}
+		eventDatav2 := &keptnv2.ConfigureMonitoringTriggeredEventData{}
+		parseKeptnCloudEventPayload(event, eventDatav1)
+		parseKeptnCloudEventPayload(event, eventDatav2)
+		eventDatav2.ConfigureMonitoring.Type = eventDatav1.Type
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
-		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventData, env, splunkClient, pollingSystemHasBeenStarted)
+		return handleConfigureMonitoringTriggeredEvent(ddKeptn, event, eventDatav2, env, splunkClient, pollingSystemHasBeenStarted)
 
 	// -------------------------------------------------------
 	// sh.keptn.event.get-sli (sent by lighthouse-service to fetch SLIs from the sli provider)

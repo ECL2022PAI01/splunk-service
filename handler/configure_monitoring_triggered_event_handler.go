@@ -24,8 +24,13 @@ var createAlert = splunkalerts.CreateAlert
 
 // Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig, client *splunk.SplunkClient, pollingSystemHasBeenStarted bool) error {
-	var shkeptncontext string
+	
+	if isNotForSplunk(data.ConfigureMonitoring.Type){
+		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
+		return fmt.Errorf("event is not for splunk-service")
+	}
 
+	var shkeptncontext string
 	//Configuring the logger
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
 	utils.ConfigureLogger(incomingEvent.Context.GetID(), shkeptncontext, "LOG_LEVEL")
@@ -329,4 +334,9 @@ func buildAlertCondition(resultField string, criteria string) string {
 // Appends "keptn" as a suffix
 func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
 	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + KeptnSuffix
+}
+
+// check if the configure monitoring event is not for splunk service
+func isNotForSplunk(service string) bool{
+	return service != "splunk"
 }
