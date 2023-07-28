@@ -30,6 +30,11 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		return fmt.Errorf("event is not for splunk")
 	}
 
+	if isProjectOrServiceNotSet(data){
+		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
+		return fmt.Errorf("event is not for splunk")
+	}
+
 	var shkeptncontext string
 	//Configuring the logger
 	_ = incomingEvent.Context.ExtensionAs("shkeptncontext", &shkeptncontext)
@@ -84,7 +89,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 }
 
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
-func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
+func 
+CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
 	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
 
@@ -337,6 +343,11 @@ func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, sta
 }
 
 // check if the configure monitoring event is not for splunk service
-func isNotForSplunk(service string) bool{
-	return service != "splunk"
+func isNotForSplunk(sliProvider string) bool{
+	return sliProvider != "splunk"
+}
+
+// check if the configure monitoring event is not for splunk service
+func isProjectOrServiceNotSet(data  *keptnv2.ConfigureMonitoringTriggeredEventData) bool{
+	return data.Project=="" || data.Service==""
 }
