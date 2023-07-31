@@ -236,12 +236,15 @@ gotestsum --format standard-verbose -- -timeout=120m  ./test/e2e/...
 
 ### SLI Provider for quality gates
 
-The splunk-service allows keptn to use splunk as its SLI-provider for the quality gates. For an evaluation stage, when an sh.keptn.event.getsli.triggered is received by the splunk-service, that latter sends an sh.keptn.event.getsli.started, executes de splunk searches of the indicators and sends an sh.keptn.event.getsli.finished containing the results for the indicators.
-In order for it to work properly, the slo.yaml and sli.yaml should be uploaded and the monitoring should be configured for the service as explained in the installation section. 
+* The splunk-service allows keptn to use splunk as its SLI-provider for the quality gates. For an evaluation stage, when an sh.keptn.event.getsli.triggered is received by the splunk-service, that latter sends an sh.keptn.event.getsli.started, executes de splunk searches of the indicators and sends an sh.keptn.event.getsli.finished containing the results for the indicators.
+In order for it to work properly, the slo.yaml and sli.yaml should be uploaded and the monitoring should be configured for the service as explained in the installation section.
+* When the timeframe for the get-sli event is not specified in the splunk searches in sli.yaml (via "earliest" and "latest"), the default timeframe used for all the SLIs is the one specified in the shipyard.yaml or in the keptn bridge when only the evaluation is done. If "ealiest" and "latest" are specified in the splunk searches in sli.yaml, they will overwrite the default timeframe.
+:warning: In case you use custom timeframes in your splunk searches, they will overwrite the timeframe from the shipyard or keptn bridge. The timeframe displayed in the keptn bridge is not correct. It's the timeframe from the shipyard or the keptn bridge that is displayed in the bridge.
+
 
 ### Monitoring and Remediation
 
-* For using this functionality, AVOID using comas "," in the indicator names within the sli.yaml file.
+* :warning: For using this functionality, AVOID using comas "," in the indicator names within the sli.yaml file.
 * The splunk-service allows keptn to use splunk in order to monitor the deployed service. Executing the command "keptn configure monitoring splunk --project=<project> --service=<service>" sends an sh.keptn.configure-monitoring.triggered event. Whenever the splunk-service receives that event, it sends the corresponding .started event, creates splunk alerts from the SLIs and SLOs for the stages where slo.yaml and remediation.yaml files are defined and finally sends the corresponding .finished event to keptn. The splunk alerts created are saved searches that run in a periodic way and are in a fired state whenever the alert conditions are met. See the advanced options section for more information.
 * The splunk-service checks periodically whether or not one of the keptn splunk alerts is triggered. Once it detects a triggered keptn alert, an sh.keptn.event.remediation.triggered event is sent to keptn with the details concerning the problem. Keptn then executes the remediation actions specified in the remediation file. 
 * Splunk alerts are deleted and recreated for a particular service in a particular project whenever the keptn configure monitoring command is executed for splunk. This way, it is possible to UPDATE the splunk alerts when changes have been made regarding the sli.yaml and slo.yaml.

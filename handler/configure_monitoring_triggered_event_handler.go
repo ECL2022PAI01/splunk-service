@@ -337,17 +337,17 @@ func buildAlertCondition(resultField string, criteria string) string {
 }
 
 // Builds the name of the alert by appending names of project, stage, service, sli and criteria.
-// Appends "keptn" as a suffix
+// Appends "keptn" as a suffix in order to identu=ify it as an alert for keptn
 func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, stage string, sli string, criteria string) string {
 	return eventData.Project + "," + stage + "," + eventData.Service + "," + sli + "," + criteria + "," + KeptnSuffix
 }
 
-// check if the configure monitoring event is not for splunk service
+// check if the configure monitoring triggered event is not for splunk service
 func isNotForSplunk(sliProvider string) bool{
 	return sliProvider != "splunk"
 }
 
-// check if the configure monitoring event is not for splunk service
+// check if the project and/or the service have not been set in the configure monitoring triggered event
 func isProjectOrServiceNotSet(data  *keptnv2.ConfigureMonitoringTriggeredEventData) bool{
 	return data.Project=="" || data.Service==""
 }
