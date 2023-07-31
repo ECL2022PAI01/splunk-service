@@ -31,8 +31,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	}
 
 	if isProjectOrServiceNotSet(data){
-		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
-		return fmt.Errorf("event is not for splunk")
+		logger.Infof("A project and a service has to be defined")
+		return fmt.Errorf("a project and a service has to be defined")
 	}
 
 	var shkeptncontext string

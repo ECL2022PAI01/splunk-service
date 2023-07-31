@@ -53,7 +53,7 @@ ENV VERSION="${version}"
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /src/splunk-service/splunk-service /splunk-service
 
-EXPOSE 8080
+# EXPOSE 8080
 
 # required for external tools to detect this as a go binary
 ENV GOTRACEBACK=all

@@ -136,6 +136,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		eventDatav2 := &keptnv2.ConfigureMonitoringTriggeredEventData{}
 		parseKeptnCloudEventPayload(event, eventDatav1)
 		parseKeptnCloudEventPayload(event, eventDatav2)
+		
 		eventDatav2.ConfigureMonitoring.Type = eventDatav1.Type
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
