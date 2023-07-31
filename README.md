@@ -115,7 +115,7 @@ For splunk credentials :
   value: ""
 ```
 
-For customizing the alerts set when receiving a comfigure monitoring event :
+For customizing the alerts set when receiving a configure monitoring event :
 
 ```yaml
 #The period during which the triggering of the alert is suppressed after it is already triggered. By default to "3m" (3 minutes)
