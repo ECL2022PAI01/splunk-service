@@ -31,8 +31,8 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 	}
 
 	if isProjectOrServiceNotSet(data){
-		logger.Infof("A project and a service has to be defined")
-		return fmt.Errorf("a project and a service has to be defined")
+		logger.Infof("A project and a service have to be defined")
+		return fmt.Errorf("a project and a service have to be defined")
 	}
 
 	var shkeptncontext string
