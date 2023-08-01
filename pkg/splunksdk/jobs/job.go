@@ -136,10 +136,6 @@ func RetrieveJobResult(client *splunk.SplunkClient, sid string) ([]map[string]st
 
 	// only get the result section of the response
 	type Response struct {
-		preview     bool
-		init_offset int
-		messages    []string
-		fields      []map[string]string
 		Results     []map[string]string `json:"results"`
 	}
 

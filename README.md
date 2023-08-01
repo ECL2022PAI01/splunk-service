@@ -256,6 +256,7 @@ keptn configure monitoring splunk --project <project>  --service <service>
 
 ## Development
 
+
 Development can be conducted using any GoLang compatible IDE/editor (e.g., Jetbrains GoLand, VSCode with Go plugins).
 
 It is recommended to make use of branches as follows:
@@ -278,6 +279,19 @@ If you want to get more insights into processing those CloudEvents or even defin
 look into [main.go](main.go) (specifically `processKeptnCloudEvent`), [chart/templates](chart/templates),
 consult the [Keptn docs](https://keptn.sh/docs/) as well as existing [Keptn Core](https://github.com/keptn/keptn) and
 [Keptn Contrib](https://github.com/keptn-contrib/) services.
+
+### Tips
+
+If you want to build and deploy a new version of your updated service, there is a script (located in [scripts/build-splunk-service.sh](scripts/build-splunk-service.sh)) that will build and deploy the service to your cluster. 
+
+```bash
+# It takes the following arguments:
+# -d: the path to the splunk service directory
+# -u: the docker registry username
+# -v: the version of the service to build and push
+# -l: show the logs of the splunk service pod
+./scripts/build-splunk-service.sh -d ../. -u dockerUsername -v 0.1.0 -l
+```
 
 ### Common tasks
 
