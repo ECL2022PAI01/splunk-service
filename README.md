@@ -102,7 +102,7 @@ For splunk credentials :
 # Splunk username if basic authentication is used
 - name: SP_USERNAME ""
   value: "admin"
-# Splunk username if basic authentication is used
+# Splunk password if basic authentication is used
 - name: SP_PASSWORD ""
   value: ""
 # Splunk token if authentication by token is used
@@ -118,22 +118,22 @@ For splunk credentials :
 For customizing the alerts set when receiving a configure monitoring event :
 
 ```yaml
-#The period during which the triggering of the alert is suppressed after it is already triggered. By default to "3m" (3 minutes)
+# The period during which the triggering of the alert is suppressed after it is already triggered. By default to "3m" (3 minutes)
 - name: ALERT_SUPPRESS_PERIOD
   value: "{{ .Values.splunkservice.alertSuppressPeriod }}"
-#A splunk expression specifying the frequency for the execution of the saved searches. By default to "*/1 * * * *" (every minute)
+# A splunk expression specifying the frequency for the execution of the saved searches. By default to "*/1 * * * *" (every minute)
 - name: CRON_SCHEDULE
   value: "{{ .Values.splunkservice.cronSchedule }}"
-#The earliest time for the saved search. By default to "-3m"
+# The earliest time for the saved search. By default to "-3m"
 - name: DISPATCH_EARLIEST_TIME
   value: "{{ .Values.splunkservice.dispatchEarliestTime }}"
-#The latest time for the saved search. By default to "now"
+# The latest time for the saved search. By default to "now"
 - name: DISPATCH_LATEST_TIME
   value: "{{ .Values.splunkservice.dispatchLatestTime }}"
-#The coma separated list of actions to perform after the triggering of alerts. By default to "". But can be "webhook"
+# The coma separated list of actions to perform after the triggering of alerts. By default to "". But can be "webhook"
 - name: ACTIONS
   value: "{{ .Values.splunkservice.actions }}"
-#Has to be set if webhook is one of the actions to be done
+# Has to be set if webhook is one of the actions to be done
 - name: WEBHOOK_URL
   value: "{{ .Values.splunkservice.webhookUrl }}"
 ```
