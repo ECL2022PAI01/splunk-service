@@ -27,7 +27,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 
 	if isNotForSplunk(data.ConfigureMonitoring.Type) {
 		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
-		return fmt.Errorf("event is not for splunk")
+		return fmt.Errorf("event is not for splunk but for %s", data.ConfigureMonitoring.Type)
 	}
 
 	if isProjectOrServiceNotSet(data) {
@@ -61,8 +61,10 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			// Starts polling for triggered alerts if configure monitoring is successful
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
+  case !pollingSystemHasBeenStarted:
+    logger.Info("Polling system has already been started")
 	default:
-		logger.Info("No alerts configured, no need to start the polling system")
+    logger.Info("No alerts configured, no need to start the polling system")
 	}
 
 	//Making the configure monitoring finished event
@@ -105,6 +107,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
 		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+			logger.Infof("Removing alert %v", alert.Name)
 			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
@@ -119,8 +122,9 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
 	scope.Resource("shipyard.yaml")
-
+	
 	shipyard, err := k.GetShipyard()
+	logger.Infof("Length of alerts list: %v", len(alertsList.Item))
 	if err != nil {
 		return false, err
 	}

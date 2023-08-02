@@ -15,6 +15,16 @@ func ValidateSearchQuery(searchQuery string) string {
 	}
 	return searchQuery
 }
+
+func ValidateAlertQuery(alertQuery string) string {
+	// the search must start with the "search" keyword
+	const query_prefix = "search "
+	if strings.HasPrefix(alertQuery, query_prefix) {
+		return strings.Replace(alertQuery, "search ", "", 1)
+	}
+	return alertQuery
+}
+
 func CreateEndpoint(client *splunk.SplunkClient, service string) {
 	host := client.Host
 	port := client.Port
