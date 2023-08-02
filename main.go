@@ -24,14 +24,12 @@ import (
 )
 
 const (
-	envVarLogLevel          = "LOG_LEVEL"
 	UnhandleKeptnCloudEvent = "Unhandled Keptn Cloud Event : "
 )
 
 var env utils.EnvConfig
 var keptnOptions keptn.KeptnOpts
 var splunkClient *splunk.SplunkClient
-var splunkCreds *utils.SplunkCredentials
 var pollingSystemHasBeenStarted bool
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
@@ -194,7 +192,7 @@ func main() {
 	}
 
 	// create splunk credentials
-	splunkCreds, err = utils.GetSplunkCredentials(env)
+	splunkCreds, err := utils.GetSplunkCredentials(env)
 
 	if err != nil {
 		logger.Fatalf("Failed to get splunk credentials: %s", err)
