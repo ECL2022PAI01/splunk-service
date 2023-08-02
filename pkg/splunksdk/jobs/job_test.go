@@ -14,11 +14,8 @@ import (
 
 func TestGetMetric(t *testing.T) {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		t.Fatalf("Got an error loading .env: %s", err)
-	}
-
+	_ = godotenv.Load(".env")
+	
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`
@@ -69,10 +66,7 @@ func TestGetMetric(t *testing.T) {
 
 func TestCreateJob(t *testing.T) {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		t.Fatalf("Got an error loading .env: %s", err)
-	}
+	_ = godotenv.Load(".env")
 
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
@@ -111,10 +105,7 @@ func TestCreateJob(t *testing.T) {
 
 func TestRetrieveJobResult(t *testing.T) {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		t.Fatalf("Got an error loading .env: %s", err)
-	}
+	_ = godotenv.Load(".env")
 
 	jsonResponseGET := `{
 		"results":[{"count":"2566"}]

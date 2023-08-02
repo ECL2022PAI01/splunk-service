@@ -77,6 +77,7 @@ func TestCloudEventListener(t *testing.T) {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 	env.Port = testPortforMain
+	env.Env = "test"
 
 	var handled bool
 	processKeptnCloudEvent = func(ctx context.Context, event cloudevents.Event) error {
