@@ -24,13 +24,13 @@ var createAlert = splunkalerts.CreateAlert
 
 // Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig, client *splunk.SplunkClient, pollingSystemHasBeenStarted bool) error {
-	
-	if isNotForSplunk(data.ConfigureMonitoring.Type){
+
+	if isNotForSplunk(data.ConfigureMonitoring.Type) {
 		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
 		return fmt.Errorf("event is not for splunk")
 	}
 
-	if isProjectOrServiceNotSet(data){
+	if isProjectOrServiceNotSet(data) {
 		logger.Infof("A project and a service have to be defined")
 		return fmt.Errorf("a project and a service have to be defined")
 	}
@@ -54,12 +54,14 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		logger.Error(err.Error())
 		return err
 	}
-	if !pollingSystemHasBeenStarted && setPollingSystem {
+	
+	switch {
+	case !pollingSystemHasBeenStarted && setPollingSystem: 
 		go func() {
 			// Starts polling for triggered alerts if configure monitoring is successful
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
-	} else {
+	default:
 		logger.Info("No alerts configured, no need to start the polling system")
 	}
 
@@ -89,8 +91,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 }
 
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
-func 
-CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
 	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
 
@@ -98,22 +99,22 @@ CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, ev
 	alertsList, err := splunkalerts.ListAlertsNames(client)
 	if err != nil {
 		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
-		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %v", alertsList, err)
+		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %w", alertsList, err)
 	}
-	
+
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
 		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
 			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
-				return false, fmt.Errorf("error calling RemoveAlert(): %v : %v", alertsList, err)
+				return false, fmt.Errorf("error calling RemoveAlert(): %v : %w", alertsList, err)
 			}
 		}
 	}
-	
+
 	// if no alerts are configured, no need to start the polling system
-	setPollingSystem := false
+	var setPollingSystem bool
 	//Getting the shipyard configuration
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
@@ -212,24 +213,25 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 				for _, criteria := range criteriaGroup.Criteria {
 
 					//building the splunk alert condition
-					//TO SUPPORT RELATIVE CRITERIAS I'LL HAVE TO MODIFY THAT PART
+					//TO SUPPORT RELATIVE CRITERIA I'LL HAVE TO MODIFY THAT PART
 					if strings.Contains(criteria, "+") || strings.Contains(criteria, "-") || strings.Contains(
 						criteria, "%",
 					) || (!strings.Contains(criteria, "<") && !strings.Contains(criteria, ">")) {
 						continue
 					}
 
-					if strings.Contains(criteria, "<=") {
+					switch{
+					case  strings.Contains(criteria, "<=") :
 						criteria = strings.Replace(criteria, "<=", ">", -1)
-					} else if strings.Contains(criteria, "<") {
+					case strings.Contains(criteria, "<") :
 						criteria = strings.Replace(criteria, "<", ">=", -1)
-					} else if strings.Contains(criteria, ">=") {
+					case strings.Contains(criteria, ">=") :
 						criteria = strings.Replace(criteria, ">=", "<", -1)
-					} else if strings.Contains(criteria, ">") {
+					case strings.Contains(criteria, ">") :
 						criteria = strings.Replace(criteria, ">", "<=", -1)
-					} else if strings.Contains(criteria, "=") {
+					case strings.Contains(criteria, "=") :
 						criteria = strings.Replace(criteria, "=", "!=", -1)
-					} else {
+					default :
 						criteria = strings.Replace(criteria, "!=", "=", -1)
 					}
 
@@ -266,7 +268,7 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 					err = createAlert(client, &spAlert)
 					if err != nil {
 						logger.Errorf("Error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
-						return false, fmt.Errorf("error calling CreateAlert(): %v : %v", spAlert.Params.SearchQuery, err)
+						return false, fmt.Errorf("error calling CreateAlert(): %v : %w", spAlert.Params.SearchQuery, err)
 					}
 
 				}
@@ -286,14 +288,14 @@ func retrieveSLOs(resourceHandler *api.ResourceHandler, eventData keptnv2.Config
 
 	resource, err := resourceHandler.GetResource(*resourceScope)
 	if err != nil || resource.ResourceContent == "" {
-		return nil, errors.New("No SLO file available for service " + eventData.Service + " in stage " + stage)
+		return nil, fmt.Errorf("No SLO file available for service %s in stage %s", eventData.Service, stage)
 	}
 	var slos keptnevents.ServiceLevelObjectives
 
 	err = yaml.Unmarshal([]byte(resource.ResourceContent), &slos)
 
 	if err != nil {
-		return nil, errors.New("invalid SLO file format")
+		return nil, fmt.Errorf("invalid SLO file format")
 	}
 
 	return &slos, nil
@@ -327,7 +329,7 @@ func getResultFieldName(searchQuery string) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("no aggregation function found in the search query")
+	return "", fmt.Errorf("no aggregation function found in the search query")
 }
 
 // Appends "search", "result name" and criteria
@@ -343,11 +345,11 @@ func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, sta
 }
 
 // check if the configure monitoring triggered event is not for splunk service
-func isNotForSplunk(sliProvider string) bool{
+func isNotForSplunk(sliProvider string) bool {
 	return sliProvider != "splunk"
 }
 
 // check if the project and/or the service have not been set in the configure monitoring triggered event
-func isProjectOrServiceNotSet(data  *keptnv2.ConfigureMonitoringTriggeredEventData) bool{
-	return data.Project=="" || data.Service==""
+func isProjectOrServiceNotSet(data *keptnv2.ConfigureMonitoringTriggeredEventData) bool {
+	return data.Project == "" || data.Service == ""
 }

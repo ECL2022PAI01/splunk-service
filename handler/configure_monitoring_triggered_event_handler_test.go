@@ -29,7 +29,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	//Building a mock resource service server
 	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
-		t.Errorf("Error reading sli file : %s", err.Error())
+		t.Errorf("Error reading sli file : %v", err)
 		t.Fail()
 	}
 	defer resourceServiceServer.Close()
@@ -61,7 +61,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 		t.Fatal("Error getting keptn event data")
 	}
 
-	alertCreated := false
+	var alertCreated bool
 
 	createAlert = func(client *splunk.SplunkClient, spAlert *alerts.AlertRequest) error {
 
@@ -85,7 +85,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	err = HandleConfigureMonitoringTriggeredEvent(ddKeptn, *incomingEvent, data, env, client, false)
 
 	if err != nil {
-		t.Fatalf("Error: %s", err.Error())
+		t.Fatalf("Error: %v", err)
 	}
 
 	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)

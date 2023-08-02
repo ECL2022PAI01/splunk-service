@@ -78,7 +78,7 @@ func TestFiringAlertsPoll(t *testing.T) {
 	}
 	splunkCreds, err := utils.GetSplunkCredentials(env)
 	if err != nil {
-		t.Fatalf("failed to get Splunk Credentials: %v", err.Error())
+		t.Fatalf("failed to get Splunk Credentials: %v", err)
 	}
 	client := utils.ConnectToSplunk(*splunkCreds, true)
 

@@ -30,10 +30,11 @@ func ConfigureLogger(eventID, keptnContext string, logLevel string) {
 
 	if os.Getenv(logLevel) != "" {
 		logLevel, err := logger.ParseLevel(os.Getenv(logLevel))
-		if err != nil {
-			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
-		} else {
+		switch err {
+		case nil:
 			logger.SetLevel(logLevel)
+		default:
+			logger.WithError(err).Error("could not parse log level provided by 'LOG_LEVEL' env var")
 		}
 	}
 }

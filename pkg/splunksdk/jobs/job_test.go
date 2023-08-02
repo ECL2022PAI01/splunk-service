@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -13,25 +12,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func TestMain(m *testing.M) {
-	initialize()
-	code := m.Run()
-
-	os.Exit(code)
-}
-
-func initialize() {
-	godotenv.Load(".env")
-	if !RunTestsWithEnvVars() {
-		return
-	}
-}
-
-func RunTestsWithEnvVars() bool {
-	return os.Getenv("SPLUNK_ENV") == "LOCAL"
-}
-
 func TestGetMetric(t *testing.T) {
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		t.Fatalf("Got an error loading .env: %s", err)
+	}
+
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`
@@ -82,6 +69,11 @@ func TestGetMetric(t *testing.T) {
 
 func TestCreateJob(t *testing.T) {
 
+	err := godotenv.Load(".env")
+	if err != nil {
+		t.Fatalf("Got an error loading .env: %s", err)
+	}
+
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`
@@ -118,6 +110,11 @@ func TestCreateJob(t *testing.T) {
 }
 
 func TestRetrieveJobResult(t *testing.T) {
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		t.Fatalf("Got an error loading .env: %s", err)
+	}
 
 	jsonResponseGET := `{
 		"results":[{"count":"2566"}]

@@ -123,20 +123,16 @@ func ProcessAndForwardAlertEvent(triggeredInstance splunkalerts.EntryItem, logge
 		},
 	}
 
-	if triggeredInstance.Content.Sid != "" {
+	switch triggeredInstance.Content.Sid {
+	case "":
+		logger.Debug("NO SHKEPTNCONTEXT SET")
+	default :
 		shkeptncontext = createOrApplyKeptnContext(triggeredInstance.Content.Sid + time.Now().Format(time.UnixDate))
 		logger.Debug("shkeptncontext=" + shkeptncontext)
-	} else {
-		logger.Debug("NO SHKEPTNCONTEXT SET")
 	}
 
 	logger.Debug("Sending event to eventbroker")
 	err := createAndSendCE(newEventData, shkeptncontext, ddKeptn, keptnOptions, envConfig)
-	if err != nil {
-		logger.Error("Could not send cloud event: " + err.Error())
-	} else {
-		logger.Debug("event successfully dispatched to eventbroker")
-	}
 
 	return err
 
@@ -171,7 +167,7 @@ func createAndSendCE(problemData RemediationTriggeredEventData, shkeptncontext s
 		}
 
 		if err != nil {
-			return fmt.Errorf("Could not create Keptn Handler: " + err.Error())
+			return fmt.Errorf("Could not create Keptn Handler: %w",err)
 		}
 	}
 
@@ -189,12 +185,16 @@ func createOrApplyKeptnContext(contextID string) string {
 	keptnContext := uuid.New().String()
 	if contextID != "" {
 		_, err := uuid.Parse(contextID)
-		if err != nil {
-			if len(contextID) < 16 {
+		switch err {
+		case nil :
+			keptnContext = contextID
+		default :
+			switch{
+			case len(contextID) < 16 :
 				// use provided contxtId as a seed
 				paddedContext := fmt.Sprintf("%-16v", contextID)
 				uuid.SetRand(strings.NewReader(paddedContext))
-			} else {
+			default :
 				// convert hash of contextID
 				h := sha256.New()
 				h.Write([]byte(contextID))
@@ -205,8 +205,6 @@ func createOrApplyKeptnContext(contextID string) string {
 
 			keptnContext = uuid.New().String()
 			uuid.SetRand(nil)
-		} else {
-			keptnContext = contextID
 		}
 	}
 	return keptnContext
@@ -222,7 +220,7 @@ func isTestKeptn(i interface{}) bool {
 }
 
 // FiringAlertsPoll will handle all requests for '/health' and '/ready'
-func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) error {
+func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptnOptions keptn.KeptnOpts, envConfig utils.EnvConfig) {
 
 	shkeptncontext := uuid.New().String()
 	logger := keptn.NewLogger(shkeptncontext, "", serviceName)
@@ -247,7 +245,14 @@ func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptn
 
 				for _, triggeredInstance := range triggeredInstances.Entry {
 					if triggeredInstance.Content.TriggerTime <= int(time.Now().Unix()) && triggeredInstance.Content.TriggerTime > int(time.Now().Unix())-pollingFrequency-2 {
-						ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn, keptnOptions, envConfig)
+						err = ProcessAndForwardAlertEvent(triggeredInstance, logger, client, ddKeptn, keptnOptions, envConfig)
+						switch err {
+						case nil :
+							logger.Debug("Event successfully dispatched to eventbroker")
+							
+						default :
+							logger.Errorf("Could not Process and Forward cloud event: %v", err)
+						}
 					}
 				}
 
@@ -256,7 +261,7 @@ func FiringAlertsPoll(client *splunk.SplunkClient, ddKeptn *keptnv2.Keptn, keptn
 		}
 		// Condition only verified in case of a test
 		if ddKeptn != nil && isTestKeptn(ddKeptn.EventSender) {
-			return nil
+			return
 		}
 		time.Sleep(pollingFrequency * time.Second)
 	}

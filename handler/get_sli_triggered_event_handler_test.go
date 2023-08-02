@@ -126,7 +126,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	//Building a mock resource service server
 	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
-		t.Fatalf("Error reading sli file : %s", err.Error())
+		t.Fatalf("Error reading sli file : %v", err)
 	}
 	defer resourceServiceServer.Close()
 
@@ -150,7 +150,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	err = incomingEvent.DataAs(data)
 
 	if err != nil {
-		t.Fatalf("Error while getting keptn event data : %s", err.Error())
+		t.Fatalf("Error while getting keptn event data : %v", err)
 	}
 
 	// create splunk credentials
@@ -164,7 +164,7 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	err = HandleGetSliTriggeredEvent(ddKeptn, *incomingEvent, data, client)
 
 	if err != nil {
-		t.Fatalf("Error : %s", err.Error())
+		t.Fatalf("Error : %v", err)
 	}
 
 	gotEvents := len(ddKeptn.EventSender.(*fake.EventSender).SentEvents)
@@ -189,19 +189,20 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	var respData keptnv2.GetSLIFinishedEventData
 	err = datacodec.Decode(context.Background(), finishedEvent.DataMediaType(), finishedEvent.Data(), &respData)
 	if err != nil {
-		t.Fatalf("Unable to decode data from the event : %v", err.Error())
+		t.Fatalf("Unable to decode data from the event : %v", err)
 	}
 	// print respData
-	if respData.GetSLI.IndicatorValues == nil {
+	switch indicValues := respData.GetSLI.IndicatorValues; indicValues {
+	case nil :
 		t.Fatal("No results added into the response event for the indicators.")
-	} else {
-		//printing SLI results if no error has occured
-		for _, sliResult := range respData.GetSLI.IndicatorValues {
-			if sliResult.Value != float64(defaultSplunkTestResult) {
-				t.Fatalf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
-
-			} else {
+	default :
+		//printing SLI results if no error has occurred
+		for _, sliResult := range indicValues {
+			switch sliValue := sliResult.Value; sliValue {
+			case float64(defaultSplunkTestResult):
 				t.Logf("SLI Results for indicator %s : %v", sliResult.Metric, sliResult.Value)
+			default:
+				t.Fatalf("Wrong value for the metric %s : %v", sliResult.Metric, sliResult.Value)
 			}
 		}
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -33,7 +32,7 @@ var env utils.EnvConfig
 var keptnOptions keptn.KeptnOpts
 var splunkClient *splunk.SplunkClient
 var splunkCreds *utils.SplunkCredentials
-var pollingSystemHasBeenStarted = false
+var pollingSystemHasBeenStarted bool
 
 // based on https://github.com/sirupsen/logrus/pull/653#issuecomment-454467900
 
@@ -43,7 +42,7 @@ var pollingSystemHasBeenStarted = false
 func parseKeptnCloudEventPayload(event cloudevents.Event, data interface{}) error {
 	err := event.DataAs(data)
 	if err != nil {
-		logger.Errorf("Got Data Error: %s", err.Error())
+		logger.Errorf("Got Data Error: %v", err)
 		return err
 	}
 	return nil
@@ -71,14 +70,14 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	if env.Env == "local" {
 		authToken := os.Getenv("KEPTN_API_TOKEN")
 		if authToken == "" {
-			return errors.New("KEPTN_API_TOKEN not set")
+			return fmt.Errorf("KEPTN_API_TOKEN not set")
 		}
 		authHeader := "x-token"
 		ddKeptn.ResourceHandler = api.NewAuthenticatedResourceHandler(ddKeptn.ResourceHandler.BaseURL, authToken, authHeader, ddKeptn.ResourceHandler.HTTPClient, ddKeptn.ResourceHandler.Scheme)
 	}
 
 	if err != nil {
-		return errors.New("Could not create Keptn Handler: " + err.Error())
+		return fmt.Errorf("Could not create Keptn Handler: %w", err)
 	}
 
 	logger.Infof("gotEvent(%s): %s - %s", event.Type(), ddKeptn.KeptnContext, event.Context.GetID())
@@ -125,7 +124,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 	* Feel free to delete parts that you don't need.
 	**/
 
-	switch event.Type() {
+	switch eType := event.Type(); eType {
 
 	// -------------------------------------------------------
 	// sh.keptn.event.configure-monitoring (sent by keptnCLI to configure monitoring)
@@ -134,9 +133,16 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 		eventDatav1 := &keptnv1.ConfigureMonitoringEventData{}
 		eventDatav2 := &keptnv2.ConfigureMonitoringTriggeredEventData{}
-		parseKeptnCloudEventPayload(event, eventDatav1)
-		parseKeptnCloudEventPayload(event, eventDatav2)
-		
+
+		err = parseKeptnCloudEventPayload(event, eventDatav1)
+		if err != nil {
+			return fmt.Errorf("Enable to parse keptn cloud event payload %w", err)
+		}
+		err = parseKeptnCloudEventPayload(event, eventDatav2)
+		if err != nil {
+			return fmt.Errorf("Enable to parse keptn cloud event payload %w", err)
+		}
+
 		eventDatav2.ConfigureMonitoring.Type = eventDatav1.Type
 		event.SetType(keptnv2.GetTriggeredEventType(keptnv2.ConfigureMonitoringTaskName))
 
@@ -148,16 +154,23 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 		logger.Infof("Processing get-sli.triggered Event")
 
 		eventData := &keptnv2.GetSLITriggeredEventData{}
-		parseKeptnCloudEventPayload(event, eventData)
+		err = parseKeptnCloudEventPayload(event, eventData)
+		if err != nil {
+			return fmt.Errorf("Enable to parse keptn cloud event payload %w", err)
+		}
 
 		return handleGetSliTriggeredEvent(ddKeptn, event, eventData, splunkClient)
 
-	}
+	// -------------------------------------------------------
 	// Unknown Event -> Throw Error!
-	err = fmt.Errorf("%s %s", UnhandleKeptnCloudEvent, event.Type())
+	default :
+		err = fmt.Errorf("%s %s", UnhandleKeptnCloudEvent, eType)
+		logger.Errorf("got error while processing cloud event : %v", err)
+		return err
 
-	logger.Errorf("got error while processing cloud event : %s", err.Error())
-	return err
+	}
+	
+	
 }
 
 /**
@@ -167,7 +180,7 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
  * Environment Variables
  * env=runlocal   -> will fetch resources from local drive instead of configuration service
  */
-var cloudEventListener = CloudEventListener
+// var cloudEventListener = CloudEventListener
 var processKeptnCloudEvent = ProcessKeptnCloudEvent
 var handleConfigureMonitoringTriggeredEvent = handler.HandleConfigureMonitoringTriggeredEvent
 var handleGetSliTriggeredEvent = handler.HandleGetSliTriggeredEvent
@@ -196,26 +209,34 @@ func main() {
 	}
 
 	for _, alert := range alertsList.Item {
-		if strings.HasSuffix(alert.Name, handler.KeptnSuffix) {
-			go func() {
-				logger.Info("Start polling for triggered alerts ...")
-				alerts.FiringAlertsPoll(splunkClient, nil, keptnOptions, env)
-			}()
-			pollingSystemHasBeenStarted = true
 
-			break
+		if !strings.HasSuffix(alert.Name, handler.KeptnSuffix) {
+			continue
 		}
+
+		go func() {
+			logger.Info("Start polling for triggered alerts ...")
+			alerts.FiringAlertsPoll(splunkClient, nil, keptnOptions, env)
+		}()
+		pollingSystemHasBeenStarted = true
+		break
+
 	}
 
-	os.Exit(cloudEventListener(os.Args[1:]))
+	CloudEventListener(os.Args[1:])
 }
 
 /**
  * Opens up a listener on localhost:port/path and passes incoming requets to gotEvent
  */
-func CloudEventListener(args []string) int {
-	if env.Env == "local" {
-		godotenv.Load(".env.local")
+func CloudEventListener(args []string) {
+	switch env.Env {
+	case "local":
+		err := godotenv.Load(".env.local")
+		if err != nil {
+			logger.Fatalf("failed to load .env.local, %v", err)
+		}
+
 		logger.Info("env=local: Running with local filesystem to fetch resources")
 		keptnOptions.UseLocalFileSystem = true
 
@@ -226,9 +247,10 @@ func CloudEventListener(args []string) int {
 		env.SplunkUsername = os.Getenv("SPLUNK_USERNAME")
 		env.SplunkPassword = os.Getenv("SPLUNK_PASSWORD")
 		env.SplunkSessionKey = os.Getenv("SPLUNK_SESSIONKEY")
-	} else {
+	default:
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
+	
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)
@@ -251,5 +273,5 @@ func CloudEventListener(args []string) int {
 
 	logger.Infof("Starting receiver")
 	logger.Fatal(c.StartReceiver(ctx, processKeptnCloudEvent).Error())
-	return 0
+
 }

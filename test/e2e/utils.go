@@ -31,7 +31,7 @@ type KeptnConnectionDetails struct {
 
 // readKeptnConnectionDetailsFromEnv parses the environment variables and creates a KeptnConnectionDetails
 func readKeptnConnectionDetailsFromEnv() KeptnConnectionDetails {
-	godotenv.Load(".env")
+	_ = godotenv.Load(".env")
 	return KeptnConnectionDetails{
 		Endpoint: os.Getenv("KEPTN_ENDPOINT"),
 		APIToken: os.Getenv("KEPTN_API_TOKEN"),
@@ -287,15 +287,17 @@ func NewK8sClient() (*kubernetes.Clientset, error) {
 
 	// Get full path of the kubeconfig file:
 	var kubeconfig string
-	if os.Getenv("KUBECONFIG") != "" {
-		kubeconfig = os.Getenv("KUBECONFIG")
-	} else {
+
+	switch kubeConf := os.Getenv("KUBECONFIG"); kubeConf{
+	case "" :
 		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get user home dir %w", err)
 		}
 
 		kubeconfig = filepath.Join(userHomeDir, ".kube", "config")
+	default :
+		kubeconfig = kubeConf
 	}
 
 	// create k8s client from the given configuration
