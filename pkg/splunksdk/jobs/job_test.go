@@ -26,10 +26,10 @@ func TestGetMetric(t *testing.T) {
 
 	responses := make([]map[string]interface{}, 2)
 	responses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
+		http.MethodPost: jsonResponsePOST,
 	}
 	responses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
+		http.MethodGet: jsonResponseGET,
 	}
 
 	server := splunkTest.MultitpleMockRequest(responses, true)

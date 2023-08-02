@@ -184,7 +184,7 @@ func sendTestCloudEvent(eventFileName string) error {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:"+fmt.Sprint(testPortforMain), bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:"+fmt.Sprint(testPortforMain), bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("Error : %w\n", err)
 	}

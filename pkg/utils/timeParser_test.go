@@ -51,9 +51,8 @@ func checkRetrieveSearchTimeRange(t *testing.T, splunkRequestParams *splunkjob.S
 
 	switch{
 	case splunkRequestParams.EarliestTime != expectedEarliestTime || splunkRequestParams.LatestTime != expectedLatestTime :
-		t.Errorf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
+		t.Fatalf("EarliestTime value %s and LatestTime value %s in params are incorrect, should be %s and %s.",
 			splunkRequestParams.EarliestTime, splunkRequestParams.LatestTime, expectedEarliestTime, expectedLatestTime)
-		t.Fail()
 	default :
 		t.Log("Checked")
 	}

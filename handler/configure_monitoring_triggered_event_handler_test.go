@@ -29,8 +29,7 @@ func TestHandleConfigureMonitoringTriggeredEvent(t *testing.T) {
 	//Building a mock resource service server
 	resourceServiceServer, err := buildMockResourceServiceServer(sliFilePath, shipyardFilePath, sloFilePath, remediationFilePath)
 	if err != nil {
-		t.Errorf("Error reading sli file : %v", err)
-		t.Fail()
+		t.Fatalf("Error reading sli file : %v", err)
 	}
 	defer resourceServiceServer.Close()
 

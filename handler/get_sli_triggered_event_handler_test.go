@@ -227,8 +227,8 @@ func buildMockSplunkServer(t *testing.T) *httptest.Server {
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
 		"getAlertsNames": getAlertsNamesResponse,
-		"POST":           jsonResponsePOST,
-		"GET":            jsonResponseGET,
+		http.MethodPost:           jsonResponsePOST,
+		http.MethodGet:            jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

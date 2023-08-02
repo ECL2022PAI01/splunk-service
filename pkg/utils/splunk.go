@@ -113,10 +113,10 @@ func BuildMockSplunkServer(splunkResult float64) *httptest.Server {
 	}`
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
+		http.MethodPost: jsonResponsePOST,
 	}
 	splunkResponses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
+		http.MethodGet: jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

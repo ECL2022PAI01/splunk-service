@@ -11,14 +11,13 @@ import (
 func TestGetSplunkCredentials(t *testing.T) {
 	err := godotenv.Load(".env.local")
 	env := EnvConfig{}
+	env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
+	env.SplunkHost = os.Getenv("SPLUNK_HOST")
+	env.SplunkPort = os.Getenv("SPLUNK_PORT")
 	if err != nil {
 		env.SplunkApiToken = "splunkApiTOken"
 		env.SplunkHost = "splunkHost"
 		env.SplunkPort = "splunkPort"
-	}else{
-		env.SplunkApiToken = os.Getenv("SPLUNK_API_TOKEN")
-		env.SplunkHost = os.Getenv("SPLUNK_HOST")
-		env.SplunkPort = os.Getenv("SPLUNK_PORT")
 	}
 
 	sp, err := GetSplunkCredentials(env)

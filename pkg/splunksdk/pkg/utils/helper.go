@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,35 +18,31 @@ const GetTriggeredInstances = "getTriggeredInstances"
 // mock an http server
 func MockRequest(response string, sslVerificationActivated bool) *httptest.Server {
 	var server *httptest.Server
+	handlerFunction := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		writeResponses(response, w, r)
+	})
 	switch sslVerificationActivated {
 	case true:
-		server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			writeResponses(response, w, r)
-		}))
+		server = httptest.NewTLSServer(handlerFunction)
 
 	default:
-		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			writeResponses(response, w, r)
-		}))
+		server = httptest.NewServer(handlerFunction)
 	}
 	return server
 }
 
 func MultitpleMockRequest(responses []map[string]interface{}, sslVerificationActivated bool) *httptest.Server {
 	var server *httptest.Server
+	handlerFunction := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		writeResponses(responses, w, r)
+	})
 	switch sslVerificationActivated {
 	case true:
-		server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			writeResponses(responses, w, r)
-		}))
+		server = httptest.NewTLSServer(handlerFunction)
 	default:
-		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			writeResponses(responses, w, r)
-		}))
+		server = httptest.NewServer(handlerFunction)
 	}
 	return server
 }
@@ -56,23 +53,23 @@ func writeResponses(responses interface{}, w http.ResponseWriter, r *http.Reques
 	case []map[string]interface{}:
 		for _, response := range resps {
 			switch method := r.Method; method {
-			case "GET":
+			case http.MethodGet:
 				switch {
 				case response[GetTriggeredAlerts] != nil && strings.HasSuffix(r.URL.Path, "services/alerts/fired_alerts/"):
-					_, _ = (w).Write([]byte(response[GetTriggeredAlerts].(string)))
+					_, _ = fmt.Fprintln(w, response[GetTriggeredAlerts])
 				case response[GetTriggeredInstances] != nil && strings.Contains(r.URL.Path, "search/alerts/fired_alerts/"):
-					_, _ = (w).Write([]byte(response[GetTriggeredInstances].(string)))
+					_, _ = fmt.Fprintln(w, response[GetTriggeredInstances])
 				case response[GetAlertsNames] != nil && strings.Contains(r.URL.Path, "services/saved/searches/"):
-					_, _ = (w).Write([]byte(response[GetAlertsNames].(string)))
-				case response["GET"] != nil && r.Method == "GET":
-					_, _ = (w).Write([]byte(response["GET"].(string)))
+					_, _ = fmt.Fprintln(w, response[GetAlertsNames])
+				case response[method] != nil:
+					_, _ = fmt.Fprintln(w, response[method])
 				}
-			case "POST":
+			case http.MethodPost:
 				switch {
 				case response[CreateAlerts] != nil && strings.Contains(r.URL.Path, "services/saved/searches/"):
-					_, _ = (w).Write([]byte(response[CreateAlerts].(string)))
-				case response["POST"] != nil:
-					_, _ = (w).Write([]byte(response["POST"].(string)))
+					_, _ = fmt.Fprintln(w, response[CreateAlerts])
+				case response[method] != nil:
+					_, _ = fmt.Fprintln(w, response[method])
 				}
 			}
 		}
