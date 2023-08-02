@@ -24,13 +24,13 @@ var createAlert = splunkalerts.CreateAlert
 
 // Handles configure monitoring event
 func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevents.Event, data *keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig, client *splunk.SplunkClient, pollingSystemHasBeenStarted bool) error {
-	
-	if isNotForSplunk(data.ConfigureMonitoring.Type){
+
+	if isNotForSplunk(data.ConfigureMonitoring.Type) {
 		logger.Infof("Event is not for splunk but for %s", data.ConfigureMonitoring.Type)
-		return fmt.Errorf("event is not for splunk")
+		return fmt.Errorf("event is not for splunk but for %s", data.ConfigureMonitoring.Type)
 	}
 
-	if isProjectOrServiceNotSet(data){
+	if isProjectOrServiceNotSet(data) {
 		logger.Infof("A project and a service have to be defined")
 		return fmt.Errorf("a project and a service have to be defined")
 	}
@@ -59,8 +59,10 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 			// Starts polling for triggered alerts if configure monitoring is successful
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
-	} else {
+	} else if !setPollingSystem {
 		logger.Info("No alerts configured, no need to start the polling system")
+	} else {
+		logger.Info("Polling system has already been started")
 	}
 
 	//Making the configure monitoring finished event
@@ -89,8 +91,7 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 }
 
 // Creates alerts for each stage defined in the shipyard file after removing potential ancient alerts of the service
-func 
-CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
+func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData keptnv2.ConfigureMonitoringTriggeredEventData, envConfig utils.EnvConfig) (bool, error) {
 
 	logger.Infof("Removing previous alerts set for the service %v in project %v", eventData.Service, eventData.Project)
 
@@ -100,10 +101,11 @@ CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, ev
 		logger.Errorf("Error calling ListAlertsNames(): %v : %v", alertsList, err)
 		return false, fmt.Errorf("error calling ListAlertsNames(): %v : %v", alertsList, err)
 	}
-	
+
 	//removing all preexisting alerts concerning the project and the service
 	for _, alert := range alertsList.Item {
 		if strings.HasSuffix(alert.Name, KeptnSuffix) && strings.Contains(alert.Name, eventData.Project) && strings.Contains(alert.Name, eventData.Service) {
+			logger.Infof("Removing alert %v", alert.Name)
 			err := splunkalerts.RemoveAlert(client, alert.Name)
 			if err != nil {
 				logger.Errorf("Error calling RemoveAlert(): %v : %v", alertsList, err)
@@ -118,8 +120,9 @@ CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Keptn, ev
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
 	scope.Resource("shipyard.yaml")
-
+	
 	shipyard, err := k.GetShipyard()
+	logger.Infof("Length of alerts list: %v", len(alertsList.Item))
 	if err != nil {
 		return false, err
 	}
@@ -343,11 +346,11 @@ func buildAlertName(eventData keptnv2.ConfigureMonitoringTriggeredEventData, sta
 }
 
 // check if the configure monitoring triggered event is not for splunk service
-func isNotForSplunk(sliProvider string) bool{
+func isNotForSplunk(sliProvider string) bool {
 	return sliProvider != "splunk"
 }
 
 // check if the project and/or the service have not been set in the configure monitoring triggered event
-func isProjectOrServiceNotSet(data  *keptnv2.ConfigureMonitoringTriggeredEventData) bool{
-	return data.Project=="" || data.Service==""
+func isProjectOrServiceNotSet(data *keptnv2.ConfigureMonitoringTriggeredEventData) bool {
+	return data.Project == "" || data.Service == ""
 }

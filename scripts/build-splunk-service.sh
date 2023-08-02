@@ -110,11 +110,11 @@ cd $servicePath # go to the splunk service directory
 docker build . -t $dockerUsername/splunk-service:$serviceVersion --network=host && docker push $dockerUsername/splunk-service:$serviceVersion
 
 # remove an existing helm chart of the splunk service
-if [[ $(get_splunk_pod) ]]; then
-	helm uninstall -n keptn splunk-service
-	echo "Waiting for the previous splunk pods to be terminated"
-	checking_pod_termination
-fi
+# if [[ $(get_splunk_pod) ]]; then
+# 	helm uninstall -n keptn splunk-service
+# 	echo "Waiting for the previous splunk pods to be terminated"
+# 	checking_pod_termination
+# fi
 
 # release the new chart
 chartName=splunk-service.tgz

@@ -85,7 +85,7 @@ func CreateAlert(client *splunk.SplunkClient, spAlert *AlertRequest) error {
 
 	// create the endpoint for the request
 	utils.CreateEndpoint(client, savedSearchesPath)
-	spAlert.Params.SearchQuery = utils.ValidateSearchQuery(spAlert.Params.SearchQuery)
+	spAlert.Params.SearchQuery = utils.ValidateAlertQuery(spAlert.Params.SearchQuery)
 
 	resp, err := PostAlert(client, spAlert)
 
