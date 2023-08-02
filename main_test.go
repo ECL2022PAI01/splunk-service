@@ -29,7 +29,7 @@ var testPortforMain = 38888
 func TestParseKeptnCloudEventPayload(t *testing.T) {
 	incomingEvent, err := extractEvent("test/events/get-sli.triggered.json")
 	if err != nil {
-		t.Fatalf("Error getting keptn event : %s", err.Error())
+		t.Fatalf("Error getting keptn event : %v", err)
 	}
 	eventData := &keptnv2.GetSLITriggeredEventData{}
 	err = parseKeptnCloudEventPayload(*incomingEvent, eventData)
@@ -77,8 +77,9 @@ func TestCloudEventListener(t *testing.T) {
 		logger.Fatalf("Failed to process env var: %s", err)
 	}
 	env.Port = testPortforMain
+	env.Env = "test"
 
-	handled := false
+	var handled bool
 	processKeptnCloudEvent = func(ctx context.Context, event cloudevents.Event) error {
 		handled = true
 		return nil
@@ -90,7 +91,7 @@ func TestCloudEventListener(t *testing.T) {
 	time.Sleep(time.Duration(2) * time.Second)
 	err := sendTestCloudEvent("test/events/get-sli.triggered.json")
 	if err != nil {
-		logger.Fatalf("Couldn't send cloud event : %s", err.Error())
+		logger.Fatalf("Couldn't send cloud event : %v", err)
 	}
 
 	if handled == false {
@@ -143,7 +144,7 @@ func checkProcessKeptnCloudEvent(t *testing.T, fileName string, calledSLI *bool,
 
 	incomingEvent, err := extractEvent(fileName)
 	if err != nil {
-		t.Fatalf("Error getting keptn event : %s", err.Error())
+		t.Fatalf("Error getting keptn event : %v", err)
 	}
 	err = processKeptnCloudEvent(context.Background(), *incomingEvent)
 
@@ -183,7 +184,7 @@ func sendTestCloudEvent(eventFileName string) error {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:"+fmt.Sprint(testPortforMain), bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:"+fmt.Sprint(testPortforMain), bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("Error : %w\n", err)
 	}

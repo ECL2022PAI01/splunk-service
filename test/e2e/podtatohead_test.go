@@ -34,7 +34,9 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		podtatoShipyardFile,
 		podtatoJobConfigFile,
 	)
-	testEnv.API.DeleteProject(testEnv.EventData.Project)
+	require.NoError(t, err)
+	
+	err = testEnv.API.DeleteProject(testEnv.EventData.Project)
 	require.NoError(t, err)
 
 	additionalResources := []struct {
@@ -63,7 +65,11 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Make sure project is delete after the tests are completed
-	defer testEnv.Cleanup()
+	defer func() {
+		if err := testEnv.Cleanup(); err != nil {
+			require.NoError(t, err)
+		}
+	}()
 
 	// Upload additional resources to the keptn project
 	for _, resource := range additionalResources {

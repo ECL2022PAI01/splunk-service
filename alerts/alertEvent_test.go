@@ -3,6 +3,7 @@ package alerts
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -78,7 +79,7 @@ func TestFiringAlertsPoll(t *testing.T) {
 	}
 	splunkCreds, err := utils.GetSplunkCredentials(env)
 	if err != nil {
-		t.Fatalf("failed to get Splunk Credentials: %v", err.Error())
+		t.Fatalf("failed to get Splunk Credentials: %v", err)
 	}
 	client := utils.ConnectToSplunk(*splunkCreds, true)
 
@@ -160,8 +161,8 @@ func buildMockAlertSplunkServer(t *testing.T) *httptest.Server {
 	splunkResponses[0] = map[string]interface{}{
 		"getTriggeredAlerts":    getFiredAlertsResponse,
 		"getTriggeredInstances": getFiredAlertInstancesResponse,
-		"POST":                  jsonResponsePOST,
-		"GET":                   jsonResponseGET,
+		http.MethodPost:                  jsonResponsePOST,
+		http.MethodGet:                   jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

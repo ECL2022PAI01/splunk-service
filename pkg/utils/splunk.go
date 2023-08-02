@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +27,8 @@ func GetSplunkCredentials(env EnvConfig) (*SplunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
 	splunkCreds := SplunkCredentials{}
-	if env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") {
+	switch{
+	case env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") :
 		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
 		splunkCreds.Token = env.SplunkApiToken
 		splunkCreds.Port = env.SplunkPort
@@ -38,7 +38,7 @@ func GetSplunkCredentials(env EnvConfig) (*SplunkCredentials, error) {
 
 		logger.Info("Successfully retrieved splunk credentials")
 
-	} else {
+	default :
 		if env.SplunkHost == "" {
 			logger.Error("SP_HOST not set")
 		}
@@ -54,7 +54,7 @@ func GetSplunkCredentials(env EnvConfig) (*SplunkCredentials, error) {
 		if env.SplunkSessionKey == "" {
 			logger.Error("SP_SESSION_KEY not set")
 		}
-		return nil, errors.New("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
+		return nil, fmt.Errorf("invalid credentials found in SP_HOST, SP_PORT, SP_HOST, SP_API_TOKEN, SP_USERNAME, SP_PASSWORD and/or SP_SESSION_KEY")
 	}
 
 	return &splunkCreds, nil
@@ -65,7 +65,8 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 
 	logger.Info("Connecting to Splunk ...")
 	var client *splunk.SplunkClient
-	if splunkCreds.Token != "" {
+	switch{
+	case splunkCreds.Token != "" :
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -75,7 +76,7 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 			splunkCreds.Token,
 			skipSSL,
 		)
-	} else if splunkCreds.SessionKey != "" {
+	case splunkCreds.SessionKey != "" :
 		client = splunk.NewClientAuthenticatedBySessionKey(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -85,7 +86,7 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 			splunkCreds.SessionKey,
 			skipSSL,
 		)
-	} else {
+	default :
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -112,10 +113,10 @@ func BuildMockSplunkServer(splunkResult float64) *httptest.Server {
 	}`
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
+		http.MethodPost: jsonResponsePOST,
 	}
 	splunkResponses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
+		http.MethodGet: jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

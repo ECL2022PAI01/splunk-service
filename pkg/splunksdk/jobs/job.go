@@ -36,20 +36,20 @@ func GetMetricFromNewJob(client *splunk.SplunkClient, spRequest *SearchRequest) 
 
 	sid, err := CreateJob(client, spRequest, jobsPathv2)
 	if err != nil {
-		return -1, fmt.Errorf("error while creating the job : %s", err)
+		return -1, fmt.Errorf("error while creating the job : %w", err)
 	}
 
 	res, err := RetrieveJobResult(client, sid)
 
 	if err != nil {
-		return -1, fmt.Errorf("error while handling the results. Error message : %s", err)
+		return -1, fmt.Errorf("error while handling the results. Error message : %w", err)
 	}
 	// if the result is not a metric
 	if len(res) != 1 {
 		if len(res) == 0 {
 			err = fmt.Errorf("no result found")
 		}
-		return -1, fmt.Errorf("result is not a metric. Error message : %v", err)
+		return -1, fmt.Errorf("result is not a metric. Error message : %w", err)
 	}
 	var metrics []string
 
@@ -58,7 +58,7 @@ func GetMetricFromNewJob(client *splunk.SplunkClient, spRequest *SearchRequest) 
 	}
 	metric, err := strconv.ParseFloat(metrics[0], 64)
 	if err != nil {
-		return -1, fmt.Errorf("convert metric to float failed. Error message : %s", err)
+		return -1, fmt.Errorf("convert metric to float failed. Error message : %w", err)
 	}
 
 	return metric, nil
@@ -73,29 +73,30 @@ func CreateJob(client *splunk.SplunkClient, spRequest *SearchRequest, service st
 	resp, err := PostJob(client, spRequest)
 
 	if err != nil {
-		return "", fmt.Errorf("error while making the post request : %s", err)
+		return "", fmt.Errorf("error while making the post request : %w", err)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	// handle error
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
-		if err == nil {
+		switch err {
+		case nil :
 			return "", fmt.Errorf("http error :  %s", status)
-		} else {
+		default :
 			return "", fmt.Errorf("http error :  %s", resp.Status)
 		}
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("error while getting the body of the post request : %s", err)
+		return "", fmt.Errorf("error while getting the body of the post request : %w", err)
 	}
 
 	// create the new endpoint for the post request
 	var sid string
 	sid, err = getSID(body)
 	if err != nil {
-		return "", fmt.Errorf("error : %s", err)
+		return "", fmt.Errorf("error : %w", err)
 	}
 
 	return sid, nil
@@ -116,7 +117,7 @@ func RetrieveJobResult(client *splunk.SplunkClient, sid string) ([]map[string]st
 	// make the get request
 	getResp, err := GetJob(client)
 	if err != nil {
-		return nil, fmt.Errorf("error while making the get request : %s", err)
+		return nil, fmt.Errorf("error while making the get request : %w", err)
 	}
 
 	// get the body of the response
@@ -124,14 +125,15 @@ func RetrieveJobResult(client *splunk.SplunkClient, sid string) ([]map[string]st
 	// handle error
 	if !strings.HasPrefix(strconv.Itoa(getResp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(getBody)
-		if err == nil {
+		switch err {
+		case nil :
 			return nil, fmt.Errorf("http error :  %s", status)
-		} else {
+		default :
 			return nil, fmt.Errorf("http error :  %s", getResp.Status)
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error while getting the body of the get request : %s", err)
+		return nil, fmt.Errorf("error while getting the body of the get request : %w", err)
 	}
 
 	// only get the result section of the response

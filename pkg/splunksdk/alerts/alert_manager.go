@@ -9,12 +9,12 @@ import (
 
 func PostAlert(client *splunk.SplunkClient, spAlert *AlertRequest) (*http.Response, error) {
 
-	return HttpAlertRequest(client, "POST", spAlert)
+	return HttpAlertRequest(client, http.MethodPost, spAlert)
 }
 
 func GetAlerts(client *splunk.SplunkClient) (*http.Response, error) {
 
-	return HttpAlertRequest(client, "GET", nil)
+	return HttpAlertRequest(client, http.MethodGet, nil)
 }
 
 func DeleteAlert(client *splunk.SplunkClient, spAlert *AlertRequest) (*http.Response, error) {
@@ -34,7 +34,7 @@ func HttpAlertRequest(client *splunk.SplunkClient, method string, spAlert *Alert
 	params := url.Values{}
 	params.Add("output_mode", spAlert.Params.OutputMode)
 
-	if method == "POST" {
+	if method == http.MethodPost {
 
 		if spAlert.Params.Name != "" {
 			params.Add("name", spAlert.Params.Name)

@@ -1,3 +1,4 @@
+import http
 import requests, os, time, re, json
 from datetime import datetime
 from random import randint
@@ -18,7 +19,7 @@ class Splunksender(object):
         body["sourcetype"] = sourcetype
         body["source"] = source
         response = requests.request(
-            "POST",
+            http.MethodPost,
             f"https://{self.instance}",
             headers=headers,
             data=json.dumps(body),

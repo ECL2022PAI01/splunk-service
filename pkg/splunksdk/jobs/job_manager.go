@@ -10,12 +10,12 @@ import (
 
 func PostJob(client *splunk.SplunkClient, spRequest *SearchRequest) (*http.Response, error) {
 
-	return HttpJobRequest(client, "POST", spRequest)
+	return HttpJobRequest(client, http.MethodPost, spRequest)
 }
 
 func GetJob(client *splunk.SplunkClient) (*http.Response, error) {
 
-	return HttpJobRequest(client, "GET", nil)
+	return HttpJobRequest(client, http.MethodGet, nil)
 }
 
 func HttpJobRequest(client *splunk.SplunkClient, method string, spRequest *SearchRequest) (*http.Response, error) {
@@ -32,7 +32,7 @@ func HttpJobRequest(client *splunk.SplunkClient, method string, spRequest *Searc
 	params.Add("output_mode", spRequest.Params.OutputMode)
 	params.Add("exec_mode", spRequest.Params.ExecMode)
 
-	if method == "POST" {
+	if method == http.MethodPost {
 		params.Add("search", utils.ValidateSearchQuery(spRequest.Params.SearchQuery))
 		if spRequest.Params.EarliestTime != "" {
 			params.Add("earliest_time", spRequest.Params.EarliestTime)

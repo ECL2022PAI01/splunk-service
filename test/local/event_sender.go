@@ -38,7 +38,7 @@ func main() {
 		"type": "sh.keptn.event.get-sli.triggered"}`,
 	)
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://localhost:8080/", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Printf("Error : %s\n", err)
 		return

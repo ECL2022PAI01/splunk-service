@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -13,25 +12,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func TestMain(m *testing.M) {
-	initialize()
-	code := m.Run()
-
-	os.Exit(code)
-}
-
-func initialize() {
-	godotenv.Load(".env")
-	if !RunTestsWithEnvVars() {
-		return
-	}
-}
-
-func RunTestsWithEnvVars() bool {
-	return os.Getenv("SPLUNK_ENV") == "LOCAL"
-}
-
 func TestGetMetric(t *testing.T) {
+
+	_ = godotenv.Load(".env")
+	
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`
@@ -42,10 +26,10 @@ func TestGetMetric(t *testing.T) {
 
 	responses := make([]map[string]interface{}, 2)
 	responses[0] = map[string]interface{}{
-		"POST": jsonResponsePOST,
+		http.MethodPost: jsonResponsePOST,
 	}
 	responses[1] = map[string]interface{}{
-		"GET": jsonResponseGET,
+		http.MethodGet: jsonResponseGET,
 	}
 
 	server := splunkTest.MultitpleMockRequest(responses, true)
@@ -81,6 +65,8 @@ func TestGetMetric(t *testing.T) {
 }
 
 func TestCreateJob(t *testing.T) {
+
+	_ = godotenv.Load(".env")
 
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
@@ -118,6 +104,8 @@ func TestCreateJob(t *testing.T) {
 }
 
 func TestRetrieveJobResult(t *testing.T) {
+
+	_ = godotenv.Load(".env")
 
 	jsonResponseGET := `{
 		"results":[{"count":"2566"}]

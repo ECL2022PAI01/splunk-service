@@ -106,7 +106,7 @@ func HandleGetSliTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEvent cloudevent
 	if err != nil {
 		getSliFinishedEventData.EventData.Status = keptnv2.StatusErrored
 		getSliFinishedEventData.EventData.Result = keptnv2.ResultFailed
-		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %s", serviceName, err.Error())
+		getSliFinishedEventData.EventData.Message = fmt.Sprintf("error from the %s while getting slis : %v", serviceName, err)
 	}
 
 	logger.Infof("SLI finished event: %v", *getSliFinishedEventData)
