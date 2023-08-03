@@ -124,7 +124,6 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	scope.Resource("shipyard.yaml")
 	
 	shipyard, err := k.GetShipyard()
-	logger.Infof("Length of alerts list: %v", len(alertsList.Item))
 	if err != nil {
 		return false, err
 	}
