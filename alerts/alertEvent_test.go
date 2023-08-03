@@ -161,8 +161,8 @@ func buildMockAlertSplunkServer(t *testing.T) *httptest.Server {
 	splunkResponses[0] = map[string]interface{}{
 		"getTriggeredAlerts":    getFiredAlertsResponse,
 		"getTriggeredInstances": getFiredAlertInstancesResponse,
-		http.MethodPost:                  jsonResponsePOST,
-		http.MethodGet:                   jsonResponseGET,
+		http.MethodPost:         jsonResponsePOST,
+		http.MethodGet:          jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

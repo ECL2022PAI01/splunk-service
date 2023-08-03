@@ -17,26 +17,26 @@ import (
 //		3.  Basic Authentication
 func CreateAuthenticationKey(client *SplunkClient) (string, error) {
 
-	switch{
-	case client.Token != "" :
-		switch{
-		case strings.HasPrefix(client.Token, "Splunk") :
+	switch {
+	case client.Token != "":
+		switch {
+		case strings.HasPrefix(client.Token, "Splunk"):
 			return "", fmt.Errorf("wrong authentication method. HTTP Authorization tokens used instead of Splunk Authentication tokens")
-		case strings.HasPrefix(client.Token, "Basic") :
+		case strings.HasPrefix(client.Token, "Basic"):
 			return "", fmt.Errorf("wrong authentication method. Basic Authentication used instead of Splunk Authentication tokens")
-		case !strings.HasPrefix(client.Token, "Bearer") :
+		case !strings.HasPrefix(client.Token, "Bearer"):
 			return "Bearer " + client.Token, nil
 		}
-	case client.SessionKey != "" :
-		switch{
-		case strings.HasPrefix(client.SessionKey, "Bearer") :
+	case client.SessionKey != "":
+		switch {
+		case strings.HasPrefix(client.SessionKey, "Bearer"):
 			return "", fmt.Errorf("wrong authentication method. Splunk Authentication tokens used instead of HTTP Authorization tokens")
-		case strings.HasPrefix(client.SessionKey, "Basic") :
+		case strings.HasPrefix(client.SessionKey, "Basic"):
 			return "", fmt.Errorf("wrong authentication method. Basic Authentication used instead of HTTP Authorization tokens")
-		case !strings.HasPrefix(client.SessionKey, "Splunk") :
+		case !strings.HasPrefix(client.SessionKey, "Splunk"):
 			return "Splunk " + client.SessionKey, nil
 		}
-	case client.Username != "" && client.Password != "" :
+	case client.Username != "" && client.Password != "":
 		return "Basic " + base64.StdEncoding.EncodeToString([]byte(client.Username+":"+client.Password)), nil
 	}
 

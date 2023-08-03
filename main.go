@@ -161,14 +161,13 @@ func ProcessKeptnCloudEvent(ctx context.Context, event cloudevents.Event) error 
 
 	// -------------------------------------------------------
 	// Unknown Event -> Throw Error!
-	default :
+	default:
 		err = fmt.Errorf("%s %s", UnhandleKeptnCloudEvent, eType)
 		logger.Errorf("got error while processing cloud event : %v", err)
 		return err
 
 	}
-	
-	
+
 }
 
 /**
@@ -248,7 +247,6 @@ func CloudEventListener(args []string) {
 	default:
 		keptnOptions.ConfigurationServiceURL = env.ConfigurationServiceUrl
 	}
-	
 
 	logger.Info("Starting splunk-service...", env.Env)
 	logger.Infof("    on Port = %d; Path=%s", env.Port, env.Path)

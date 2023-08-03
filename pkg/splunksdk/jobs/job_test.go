@@ -15,7 +15,7 @@ import (
 func TestGetMetric(t *testing.T) {
 
 	_ = godotenv.Load(".env")
-	
+
 	jsonResponsePOST := `{
 		"sid": "1689673231.191"
 	}`

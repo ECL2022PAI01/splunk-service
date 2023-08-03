@@ -81,9 +81,9 @@ func CreateJob(client *splunk.SplunkClient, spRequest *SearchRequest, service st
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return "", fmt.Errorf("http error :  %s", status)
-		default :
+		default:
 			return "", fmt.Errorf("http error :  %s", resp.Status)
 		}
 	}
@@ -126,9 +126,9 @@ func RetrieveJobResult(client *splunk.SplunkClient, sid string) ([]map[string]st
 	if !strings.HasPrefix(strconv.Itoa(getResp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(getBody)
 		switch err {
-		case nil :
+		case nil:
 			return nil, fmt.Errorf("http error :  %s", status)
-		default :
+		default:
 			return nil, fmt.Errorf("http error :  %s", getResp.Status)
 		}
 	}
@@ -138,7 +138,7 @@ func RetrieveJobResult(client *splunk.SplunkClient, sid string) ([]map[string]st
 
 	// only get the result section of the response
 	type Response struct {
-		Results     []map[string]string `json:"results"`
+		Results []map[string]string `json:"results"`
 	}
 
 	results := Response{}

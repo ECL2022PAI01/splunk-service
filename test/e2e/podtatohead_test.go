@@ -35,7 +35,7 @@ func TestPodtatoheadEvaluation(t *testing.T) {
 		podtatoJobConfigFile,
 	)
 	require.NoError(t, err)
-	
+
 	err = testEnv.API.DeleteProject(testEnv.EventData.Project)
 	require.NoError(t, err)
 

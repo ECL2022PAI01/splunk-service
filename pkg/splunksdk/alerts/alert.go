@@ -107,9 +107,9 @@ func CreateAlert(client *splunk.SplunkClient, spAlert *AlertRequest) error {
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return fmt.Errorf("alert creation : http error :  %s \nResponse : %v", status, string(respDump))
-		default :
+		default:
 			return fmt.Errorf("alert creation : http error :  %s \nResponse : %v", resp.Status, string(respDump))
 		}
 	}
@@ -150,9 +150,9 @@ func RemoveAlert(client *splunk.SplunkClient, alertName string) error {
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return fmt.Errorf("alert Removing : http error :  %s \nResponse : %v", status, string(respDump))
-		default :
+		default:
 			return fmt.Errorf("alert Removing : http error :  %s \nResponse : %v", resp.Status, string(respDump))
 		}
 	}
@@ -192,9 +192,9 @@ func ListAlertsNames(client *splunk.SplunkClient) (splunkAlertList, error) {
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return alertList, fmt.Errorf("alerts' names listing : http error :  %s \nResponse : %v", status, string(respDump))
-		default :
+		default:
 			return alertList, fmt.Errorf("alerts' names listing : http error :  %s \nResponse : %v", resp.Status, string(respDump))
 		}
 	}
@@ -238,9 +238,9 @@ func GetTriggeredAlerts(client *splunk.SplunkClient) (TriggeredAlerts, error) {
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return triggeredAlerts, fmt.Errorf("triggered alerts' names listing : http error :  %s \nResponse : %s", status, string(respDump))
-		default :
+		default:
 			return triggeredAlerts, fmt.Errorf("triggered alerts' names listing : http error :  %s \nResponse : %s", resp.Status, string(respDump))
 		}
 	}
@@ -284,9 +284,9 @@ func GetInstancesOfTriggeredAlert(client *splunk.SplunkClient, link string) (Tri
 	if !strings.HasPrefix(strconv.Itoa(resp.StatusCode), "2") {
 		status, err := splunk.HandleHttpError(body)
 		switch err {
-		case nil :
+		case nil:
 			return triggeredInstances, fmt.Errorf("triggered instances' names listing : http error :  %s \nResponse : %s, LINK : %s", status, string(respDump), client.Endpoint)
-		default :
+		default:
 			return triggeredInstances, fmt.Errorf("triggered instances' names listing : http error :  %s \nResponse : %s, LINK : %s", status, string(respDump), client.Endpoint)
 		}
 	}

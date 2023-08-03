@@ -27,8 +27,8 @@ func GetSplunkCredentials(env EnvConfig) (*SplunkCredentials, error) {
 
 	logger.Info("Trying to retrieve splunk credentials ...")
 	splunkCreds := SplunkCredentials{}
-	switch{
-	case env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != "") :
+	switch {
+	case env.SplunkHost != "" && env.SplunkPort != "" && (env.SplunkApiToken != "" || (env.SplunkUsername != "" && env.SplunkPassword != "") || env.SplunkSessionKey != ""):
 		splunkCreds.Host = strings.ReplaceAll(env.SplunkHost, " ", "")
 		splunkCreds.Token = env.SplunkApiToken
 		splunkCreds.Port = env.SplunkPort
@@ -38,7 +38,7 @@ func GetSplunkCredentials(env EnvConfig) (*SplunkCredentials, error) {
 
 		logger.Info("Successfully retrieved splunk credentials")
 
-	default :
+	default:
 		if env.SplunkHost == "" {
 			logger.Error("SP_HOST not set")
 		}
@@ -65,8 +65,8 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 
 	logger.Info("Connecting to Splunk ...")
 	var client *splunk.SplunkClient
-	switch{
-	case splunkCreds.Token != "" :
+	switch {
+	case splunkCreds.Token != "":
 		client = splunk.NewClientAuthenticatedByToken(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -76,7 +76,7 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 			splunkCreds.Token,
 			skipSSL,
 		)
-	case splunkCreds.SessionKey != "" :
+	case splunkCreds.SessionKey != "":
 		client = splunk.NewClientAuthenticatedBySessionKey(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,
@@ -86,7 +86,7 @@ func ConnectToSplunk(splunkCreds SplunkCredentials, skipSSL bool) *splunk.Splunk
 			splunkCreds.SessionKey,
 			skipSSL,
 		)
-	default :
+	default:
 		client = splunk.NewBasicAuthenticatedClient(
 			&http.Client{
 				Timeout: time.Duration(60) * time.Second,

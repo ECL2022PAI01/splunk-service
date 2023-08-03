@@ -193,9 +193,9 @@ func TestHandleGetSliTriggered(t *testing.T) {
 	}
 	// print respData
 	switch indicValues := respData.GetSLI.IndicatorValues; indicValues {
-	case nil :
+	case nil:
 		t.Fatal("No results added into the response event for the indicators.")
-	default :
+	default:
 		//printing SLI results if no error has occurred
 		for _, sliResult := range indicValues {
 			switch sliValue := sliResult.Value; sliValue {
@@ -227,8 +227,8 @@ func buildMockSplunkServer(t *testing.T) *httptest.Server {
 	splunkResponses := make([]map[string]interface{}, 2)
 	splunkResponses[0] = map[string]interface{}{
 		"getAlertsNames": getAlertsNamesResponse,
-		http.MethodPost:           jsonResponsePOST,
-		http.MethodGet:            jsonResponseGET,
+		http.MethodPost:  jsonResponsePOST,
+		http.MethodGet:   jsonResponseGET,
 	}
 	splunkServer := splunktest.MultitpleMockRequest(splunkResponses, true)
 

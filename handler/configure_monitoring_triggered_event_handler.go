@@ -54,17 +54,17 @@ func HandleConfigureMonitoringTriggeredEvent(ddKeptn *keptnv2.Keptn, incomingEve
 		logger.Error(err.Error())
 		return err
 	}
-	
+
 	switch {
-	case !pollingSystemHasBeenStarted && setPollingSystem: 
+	case !pollingSystemHasBeenStarted && setPollingSystem:
 		go func() {
 			// Starts polling for triggered alerts if configure monitoring is successful
 			alerts.FiringAlertsPoll(client, ddKeptn, keptn.KeptnOpts{}, envConfig)
 		}()
-  case !pollingSystemHasBeenStarted:
-    logger.Info("Polling system has already been started")
+	case !pollingSystemHasBeenStarted:
+		logger.Info("Polling system has already been started")
 	default:
-    logger.Info("No alerts configured, no need to start the polling system")
+		logger.Info("No alerts configured, no need to start the polling system")
 	}
 
 	//Making the configure monitoring finished event
@@ -122,7 +122,7 @@ func CreateSplunkAlertsForEachStage(client *splunk.SplunkClient, k *keptnv2.Kept
 	scope := api.NewResourceScope()
 	scope.Project(eventData.Project)
 	scope.Resource("shipyard.yaml")
-	
+
 	shipyard, err := k.GetShipyard()
 	if err != nil {
 		return false, err
@@ -223,18 +223,18 @@ func CreateSplunkAlerts(client *splunk.SplunkClient, k *keptnv2.Keptn, eventData
 						continue
 					}
 
-					switch{
-					case  strings.Contains(criteria, "<=") :
+					switch {
+					case strings.Contains(criteria, "<="):
 						criteria = strings.Replace(criteria, "<=", ">", -1)
-					case strings.Contains(criteria, "<") :
+					case strings.Contains(criteria, "<"):
 						criteria = strings.Replace(criteria, "<", ">=", -1)
-					case strings.Contains(criteria, ">=") :
+					case strings.Contains(criteria, ">="):
 						criteria = strings.Replace(criteria, ">=", "<", -1)
-					case strings.Contains(criteria, ">") :
+					case strings.Contains(criteria, ">"):
 						criteria = strings.Replace(criteria, ">", "<=", -1)
-					case strings.Contains(criteria, "=") :
+					case strings.Contains(criteria, "="):
 						criteria = strings.Replace(criteria, "=", "!=", -1)
-					default :
+					default:
 						criteria = strings.Replace(criteria, "!=", "=", -1)
 					}
 

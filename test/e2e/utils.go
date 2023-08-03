@@ -288,15 +288,15 @@ func NewK8sClient() (*kubernetes.Clientset, error) {
 	// Get full path of the kubeconfig file:
 	var kubeconfig string
 
-	switch kubeConf := os.Getenv("KUBECONFIG"); kubeConf{
-	case "" :
+	switch kubeConf := os.Getenv("KUBECONFIG"); kubeConf {
+	case "":
 		userHomeDir, err := os.UserHomeDir()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get user home dir %w", err)
 		}
 
 		kubeconfig = filepath.Join(userHomeDir, ".kube", "config")
-	default :
+	default:
 		kubeconfig = kubeConf
 	}
 
@@ -326,7 +326,7 @@ func GetGiteaToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("GITEA - error marshaling JSON: %w", err)
 	}
-	
+
 	req, err := http.NewRequest(http.MethodPost, os.Getenv("GITEA_ENDPOINT_TOKEN")+"/api/v1/users/"+os.Getenv("GITEA_ADMIN_USERNAME")+"/tokens", bytes.NewBuffer(body))
 	if err != nil {
 		return "", fmt.Errorf("GITEA - error while creating request : %w", err)
